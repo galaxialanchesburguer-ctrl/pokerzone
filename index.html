@@ -278,11 +278,94 @@ function updatePlayerSuggestions() {
     block: "start"
   });
 }
-function renderResultRows(){
- $("result-rows").innerHTML=editorResults.length?editorResults.sort((a,b)=>a.position-b.position).map((r,i)=>`<tr><td class="player-cell">${esc(r.name)}</td><td><input type="number" min="1" value="${r.position}" data-pos="${r.player_id}" ${isStaff?"":"disabled"}></td><td><input type="number" value="${r.points}" data-points="${r.player_id}" ${isStaff?"":"disabled"}></td><td class="${isStaff?"":"hidden"}"><button class="btn danger" data-remove="${r.player_id}">Remover</button></td></tr>`).join(""):'<tr><td colspan="4" class="empty">Nenhum resultado nesta etapa.</td></tr>';
- document.querySelectorAll("[data-pos]").forEach(el=>el.addEventListener("change",()=>{const r=editorResults.find(x=>x.player_id===el.dataset.pos);if(r)r.position=Number(el.value)}));
- document.querySelectorAll("[data-points]").forEach(el=>el.addEventListener("change",()=>{const r=editorResults.find(x=>x.player_id===el.dataset.points);if(r)r.points=Number(el.value)}));
- document.querySelectorAll("[data-remove]").forEach(el=>el.addEventListener("click",()=>{editorResults=editorResults.filter(x=>x.player_id!==el.dataset.remove);renderResultRows()}));
+function calculateStagePoints() {
+  const totalPlayers = editorResults.length;
+
+  editorResults.forEach(r => {
+    const multiplier =
+      r.position === 1 ? 20 :
+      r.position <= 9 ? 15 : 10;
+
+    r.points = Math.max(
+      0,
+      (totalPlayers - r.position + 1) * multiplier
+    );
+  });
+}
+
+function renderResultRows() {
+  $("result-rows").innerHTML = editorResults.length
+    ? editorResults
+        .sort((a, b) => a.position - b.position)
+        .map(r => `
+          <tr>
+            <td class="player-cell">${esc(r.name)}</td>
+            <td>
+              <input
+                type="number"
+                min="1"
+                value="${r.position}"
+                data-pos="${r.player_id}"
+                ${isStaff ? "" : "disabled"}
+              >
+            </td>
+            <td>
+              <input
+                type="number"
+                value="${r.points}"
+                data-points="${r.player_id}"
+                ${isStaff ? "" : "disabled"}
+              >
+            </td>
+            <td class="${isStaff ? "" : "hidden"}">
+              <button class="btn danger" data-remove="${r.player_id}">
+                Remover
+              </button>
+            </td>
+          </tr>
+        `).join("")
+    : '<tr><td colspan="4" class="empty">Nenhum resultado nesta etapa.</td></tr>';
+
+  document.querySelectorAll("[data-pos]").forEach(el => {
+    el.addEventListener("change", () => {
+      const player = editorResults.find(
+        r => r.player_id === el.dataset.pos
+      );
+
+      if (player) {
+        player.position = Number(el.value);
+        calculateStagePoints();
+        renderResultRows();
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-points]").forEach(el => {
+    el.addEventListener("change", () => {
+      const player = editorResults.find(
+        r => r.player_id === el.dataset.points
+      );
+
+      if (player) {
+        player.points = Number(el.value);
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-remove]").forEach(el => {
+    el.addEventListener("click", () => {
+      editorResults = editorResults.filter(
+  r => r.player_id !== el.dataset.remove
+);
+
+editorResults.forEach((r, index) => {
+  r.position = index + 1;
+});
+
+calculateStagePoints();
+renderResultRows();
+    });
+  });
 }
 $("add-player").addEventListener("click", async () => {
   if (!isStaff) return;
@@ -350,18 +433,22 @@ $("add-player").addEventListener("click", async () => {
   }
 
   editorResults.push({
-    id: null,
-    player_id: player.id,
-    name: player.name,
-    position: editorResults.length + 1,
-    points: 0
-  });
+  id: null,
+  player_id: player.id,
+  name: player.name,
+  position: editorResults.length + 1,
+  points: 0
+});
 
-  input.value = "";
-  feedback.classList.remove("hidden");
+calculateStagePoints();
+
+input.value = "";
+feedback.classList.remove("hidden");
+renderResultRows();
+$("calculate-points").addEventListener("click", () => {
+  calculateStagePoints();
   renderResultRows();
 });
-$("calculate-points").addEventListener("click",()=>{const n=editorResults.length;editorResults.forEach(r=>{const mult=r.position===1?20:r.position<=9?15:10;r.points=(n-r.position+1)*mult});renderResultRows()});
 $("new-stage").addEventListener("click", () => {
   currentStage = null;
   editorResults = [];
@@ -489,6 +576,7 @@ async function saveStage() {
   $("stage-editor").classList.add("hidden");
   await refreshAll();
 }
+ $("save-stage").addEventListener("click", saveStage);
 async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){console.error(e);msg("Erro: "+e.message)}}
 $("login-open").addEventListener("click",()=>$("login-box").classList.remove("hidden"));
 $("login-close").addEventListener("click",()=>$("login-box").classList.add("hidden"));
