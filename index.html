@@ -80,8 +80,6 @@ footer{text-align:center;color:#666;font-size:11px;padding:35px 15px;border-top:
  <section class="box"><div class="box-head"><h2>RANKING DA TEMPORADA</h2><input class="search" id="search" type="search" placeholder="Pesquisar jogador..." autocomplete="off"></div>
  <div class="table-wrap"><table><thead><tr><th>POS.</th><th>JOGADOR</th><th>PONTOS</th><th>ETAPAS</th></tr></thead><tbody id="ranking"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table></div></section>
 </section>
- 
-</section>
 
 <section id="final-ranking-view" class="hidden">
   <h2 class="section-title">Classificação final</h2>
@@ -160,7 +158,15 @@ let season=null, players=[], stages=[], currentStage=null, editorResults=[], isS
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function msg(text){$("connection-status").textContent=text}
-function showTab(id){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===id));$("ranking-view").classList.toggle("hidden",id!=="ranking-view");$("stages-view").classList.toggle("hidden",id!=="stages-view")}
+function showTab(id){
+  document.querySelectorAll(".tab").forEach(b=>{
+    b.classList.toggle("active",b.dataset.tab===id);
+  });
+
+  $("ranking-view").classList.toggle("hidden",id!=="ranking-view");
+  $("final-ranking-view").classList.toggle("hidden",id!=="final-ranking-view");
+  $("stages-view").classList.toggle("hidden",id!=="stages-view");
+}
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
 function renderRanking(list){
  const tb=$("ranking");if(!list.length){tb.innerHTML='<tr><td colspan="4" class="empty">Nenhum jogador encontrado.</td></tr>';return}
@@ -169,21 +175,120 @@ function renderRanking(list){
 function renderPodium(list){const positions=[{p:list[1],n:2},{p:list[0],n:1},{p:list[2],n:3}],medals=["🥇","🥈","🥉"];
  $("podium").innerHTML=positions.map(x=>`<div class="podium-card ${x.n===1?"first":""}"><div class="medal">${medals[x.n-1]}</div><div class="player-name">${esc(x.p?.name||"—")}</div><div class="points">${x.p?x.p.points.toLocaleString("pt-BR"):"0"} <small>PTS</small></div><div class="position-label">${x.n}º LUGAR</div></div>`).join("")}
 async function loadRanking(){
- const {data:s,error:se}=await db.from("seasons").select("id,name").eq("status","active").limit(1).maybeSingle();if(se)throw se;
- season=s;if(!s){$("season-name").textContent="Nenhuma temporada ativa";$("season-status").textContent="Temporada não iniciada";return}
- $("season-name").textContent=s.name;$("season-status").innerHTML="<span>●</span> Temporada ativa";
- const [{data:ps,error:pe},{data:rs,error:re},{data:adj,error:ae}]=await Promise.all([
- db.from("players").select("id,display_name").eq("is_active",true),
- db.from("results").select("points,position,player:players(id,display_name),stage:stages!inner(season_id,status)").eq("stage.season_id",s.id).eq("stage.status","published"),
- db.from("season_player_adjustments").select("player_id,points_adjustment").eq("season_id",s.id)
- ]);if(pe)throw pe;if(re)throw re;if(ae)throw ae;
- const totals={};ps.forEach(p=>totals[p.id]={id:p.id,name:p.display_name,points:0,firstPlaces:0,stagesPlayed:0,adjustment:0});
- rs.forEach(r=>{if(!r.player)return;const t=totals[r.player.id]||(totals[r.player.id]={id:r.player.id,name:r.player.display_name,points:0,firstPlaces:0,stagesPlayed:0,adjustment:0});t.points+=Number(r.points)||0;t.stagesPlayed++;if(Number(r.position)===1)t.firstPlaces++});
- (adj||[]).forEach(a=>{if(totals[a.player_id]){totals[a.player_id].adjustment=Number(a.points_adjustment)||0;totals[a.player_id].points+=totals[a.player_id].adjustment}});
-players=Object.values(totals)
-.filter(p=>p.points>0 && p.stagesPlayed>0)
-.sort((a,b)=>b.points-a.points||b.firstPlaces-a.firstPlaces||b.stagesPlayed-a.stagesPlayed||a.name.localeCompare(b.name,"pt-BR"));
- filterRanking();renderPodium(players);
+ const {data:s,error:se}=await db.from("seasons").select("id,name").eq("status","active").limit(1).maybeSingle();
+ if(se)throw se;
+
+ season=s;
+
+ if(!s){
+  $("season-name").textContent="Nenhuma temporada ativa";
+  $("season-status").textContent="Temporada não iniciada";
+  return;
+ }
+
+ $("season-name").textContent=s.name;
+ $("season-status").innerHTML="<span>●</span> Temporada ativa";
+
+ const [{data:ps,error:pe},{data:rs,error:re},{data:adj,error:ae},{data:st,error:ste}]=await Promise.all([
+  db.from("players").select("id,display_name").eq("is_active",true),
+  db.from("results").select("points,position,player:players(id,display_name),stage:stages!inner(id,season_id,status)").eq("stage.season_id",s.id).eq("stage.status","published"),
+  db.from("season_player_adjustments").select("player_id,points_adjustment").eq("season_id",s.id),
+  db.from("stages").select("id").eq("season_id",s.id).eq("status","published")
+ ]);
+
+ if(pe)throw pe;
+ if(re)throw re;
+ if(ae)throw ae;
+ if(ste)throw ste;
+
+ // RANKING GERAL
+ const totals={};
+
+ ps.forEach(p=>{
+  totals[p.id]={
+   id:p.id,
+   name:p.display_name,
+   points:0,
+   firstPlaces:0,
+   stagesPlayed:0,
+   adjustment:0
+  };
+ });
+
+ rs.forEach(r=>{
+  if(!r.player)return;
+
+  const t=totals[r.player.id]||(totals[r.player.id]={
+   id:r.player.id,
+   name:r.player.display_name,
+   points:0,
+   firstPlaces:0,
+   stagesPlayed:0,
+   adjustment:0
+  });
+
+  t.points+=Number(r.points)||0;
+  t.stagesPlayed++;
+
+  if(Number(r.position)===1)t.firstPlaces++;
+ });
+
+ (adj||[]).forEach(a=>{
+  if(totals[a.player_id]){
+   totals[a.player_id].adjustment=Number(a.points_adjustment)||0;
+   totals[a.player_id].points+=totals[a.player_id].adjustment;
+  }
+ });
+
+ players=Object.values(totals)
+  .filter(p=>p.points>0 && p.stagesPlayed>0)
+  .sort((a,b)=>b.points-a.points||b.firstPlaces-a.firstPlaces||b.stagesPlayed-a.stagesPlayed||a.name.localeCompare(b.name,"pt-BR"));
+
+ filterRanking();
+ renderPodium(players);
+
+ // RANKING FINAL: descarta os 3 piores resultados
+ const stageIds=(st||[]).map(stage=>stage.id);
+ const finalPlayers=ps.map(p=>{
+  const scores=stageIds.map(()=>0);
+
+  rs.forEach(r=>{
+   if(r.player && r.player.id===p.id && r.stage){
+    const index=stageIds.indexOf(r.stage.id);
+    if(index!==-1)scores[index]=Number(r.points)||0;
+   }
+  });
+
+  const sorted=[...scores].sort((a,b)=>a-b);
+  const discarded=sorted.slice(0,3);
+  const discardedPoints=discarded.reduce((sum,n)=>sum+n,0);
+  const adjustment=Number((adj||[]).find(a=>a.player_id===p.id)?.points_adjustment)||0;
+  const finalPoints=scores.reduce((sum,n)=>sum+n,0)-discardedPoints+adjustment;
+
+  return {
+   id:p.id,
+   name:p.display_name,
+   points:finalPoints,
+   discardedPoints,
+   stagesPlayed:rs.filter(r=>r.player && r.player.id===p.id).length
+  };
+ });
+
+ finalPlayers
+  .filter(p=>p.points>0)
+  .sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,"pt-BR"));
+
+ $("final-ranking").innerHTML=finalPlayers
+  .filter(p=>p.points>0)
+  .sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,"pt-BR"))
+  .map((p,i)=>`
+   <tr>
+    <td>${i+1}º</td>
+    <td>${p.name}</td>
+    <td><strong>${p.points}</strong></td>
+    <td>${p.discardedPoints}</td>
+   </tr>
+  `).join("") || '<tr><td colspan="4" class="empty">Nenhum resultado disponível.</td></tr>';
 }
 function filterRanking(){const q=$("search").value.toLowerCase().trim();renderRanking(players.filter(p=>p.name.toLowerCase().includes(q)))}
 $("search").addEventListener("input",filterRanking);
