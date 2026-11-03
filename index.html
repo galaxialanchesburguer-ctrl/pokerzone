@@ -328,29 +328,9 @@ footer {
   POKERZONE © 2026 • TODOS OS DIREITOS RESERVADOS
 </footer>
 
+
 <script>
-const players = [
-  ["Jogador 01", 2140],
-  ["Jogador 02", 1850],
-  ["Jogador 03", 1620],
-  ["Jogador 04", 1480],
-  ["Jogador 05", 1320],
-  ["Jogador 06", 1190],
-  ["Jogador 07", 1080],
-  ["Jogador 08", 970],
-  ["Jogador 09", 890],
-  ["Jogador 10", 810],
-  ["Jogador 11", 740],
-  ["Jogador 12", 680],
-  ["Jogador 13", 610],
-  ["Jogador 14", 550],
-  ["Jogador 15", 490],
-  ["Jogador 16", 430],
-  ["Jogador 17", 370],
-  ["Jogador 18", 310],
-  ["Jogador 19", 250],
-  ["Jogador 20", 190]
-];
+let players = [];
 
 function renderRanking(list) {
   const tbody = document.getElementById("ranking");
@@ -361,11 +341,11 @@ function renderRanking(list) {
     return;
   }
 
-  tbody.innerHTML = list.map((player, index) => `
+  tbody.innerHTML = list.slice(0, 20).map((player, index) => `
     <tr>
-      <td class="rank-number">${players.indexOf(player) + 1}º</td>
-      <td class="player-cell">${player[0]}</td>
-      <td class="points-cell">${player[1].toLocaleString("pt-BR")} pts</td>
+      <td class="rank-number">${index + 1}º</td>
+      <td class="player-cell">${player.name}</td>
+      <td class="points-cell">${player.points.toLocaleString("pt-BR")} pts</td>
     </tr>
   `).join("");
 }
@@ -376,57 +356,80 @@ function filterPlayers() {
     .trim();
 
   const filtered = players.filter(player =>
-    player[0].toLowerCase().includes(term)
+    player.name.toLowerCase().includes(term)
   );
 
   renderRanking(filtered);
 }
 
-renderRanking(players);
-</script>
+async function carregarRanking() {
+  const tbody = document.getElementById("ranking");
 
+  tbody.innerHTML =
+    '<tr><td colspan="3" class="empty">Carregando classificação...</td></tr>';
 
-<div id="connection-status" style="
-  position: fixed;
-  bottom: 12px;
-  right: 12px;
-  padding: 9px 14px;
-  border-radius: 6px;
-  background: #292929;
-  color: #ddd;
-  font-size: 12px;
-  z-index: 9999;
-">
-  Verificando conexão...
-</div>
+  const { data: season, error: seasonError } = await db
+    .from("seasons")
+    .select("id, name")
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const SUPABASE_URL = "https://fwwkmpnwsyppctxgetkj.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_SlbpXf6oi5Bw70ABeYp0Eg_nrZ9bQqm";
-
-  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  async function testarConexao() {
-    const status = document.getElementById("connection-status");
-
-    const { error } = await db
-      .from("players")
-      .select("id")
-      .limit(1);
-
-    if (error) {
-      status.textContent = "Erro de conexão com o banco";
-      status.style.color = "#ff6666";
-      console.error(error);
-      return;
-    }
-
-    status.textContent = "● Supabase conectado";
-    status.style.color = "#36c982";
+  if (seasonError || !season) {
+    tbody.innerHTML =
+      '<tr><td colspan="3" class="empty">Nenhuma temporada ativa encontrada.</td></tr>';
+    console.error(seasonError);
+    return;
   }
 
-  testarConexao();
+  const { data: results, error } = await db
+    .from("results")
+    .select(`
+      points,
+      player:players (
+        id,
+        display_name
+      ),
+      stage:stages!inner (
+        season_id,
+        status
+      )
+    `)
+    .eq("stage.season_id", season.id)
+    .eq("stage.status", "published");
+
+  if (error) {
+    tbody.innerHTML =
+      '<tr><td colspan="3" class="empty">Erro ao carregar o ranking.</td></tr>';
+    console.error(error);
+    return;
+  }
+
+  const totals = {};
+
+  results.forEach(result => {
+    if (!result.player) return;
+
+    const id = result.player.id;
+
+    if (!totals[id]) {
+      totals[id] = {
+        name: result.player.display_name,
+        points: 0
+      };
+    }
+
+    totals[id].points += Number(result.points);
+  });
+
+  players = Object.values(totals).sort((a, b) =>
+    b.points - a.points
+  );
+
+  renderRanking(players);
+}
+
+carregarRanking();
 </script>
 
 <script>
@@ -439,22 +442,6 @@ renderRanking(players);
     SUPABASE_KEY
   );
 
-  async function testarConexao() {
-    const { data, error } = await db
-      .from("players")
-      .select("id")
-      .limit(1);
-
-    if (error) {
-      console.error("Erro na conexão:", error.message);
-      return;
-    }
-
-    console.log("PokerZone conectado ao Supabase!");
-  }
-
-  testarConexao();
-</script>
 
 </body>
 </html>
