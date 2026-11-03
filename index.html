@@ -88,7 +88,17 @@ footer{text-align:center;color:#666;font-size:11px;padding:35px 15px;border-top:
    <label>Status<select id="stage-status"><option value="draft">Rascunho</option><option value="published">Publicada</option></select></label>
   </div>
   <div class="panel-pad admin-only"><div class="notice">Edite posições e pontos diretamente. Para retirar um jogador da etapa, remova sua linha. A ausência não gera pontos.</div>
-   <div class="row"><select id="add-player-select"><option value="">Adicionar jogador...</option></select><button class="btn secondary" id="add-player">Adicionar jogador</button><button class="btn secondary" id="calculate-points">Calcular pontos pela fórmula</button></div>
+  <div class="row">
+  <input
+    id="player-search"
+    list="player-suggestions"
+    placeholder="Digite o nome do jogador..."
+    autocomplete="off"
+  >
+  <datalist id="player-suggestions"></datalist>
+  <button class="btn secondary" id="add-player">Adicionar jogador</button>
+</div>
+<div id="player-feedback" class="notice hidden"></div>
   </div>
   <div class="table-wrap"><table class="editor-table"><thead><tr><th>JOGADOR</th><th>POSIÇÃO</th><th>PONTOS</th><th class="admin-only">AÇÃO</th></tr></thead><tbody id="result-rows"><tr><td colspan="4" class="empty">Selecione uma etapa.</td></tr></tbody></table></div>
  </div>
@@ -134,7 +144,17 @@ $("search").addEventListener("input",filterRanking);
 async function checkSession(){
  const {data:{session}}=await db.auth.getSession();isStaff=false;
  if(session){const {data:profile}=await db.from("profiles").select("role").eq("id",session.user.id).maybeSingle();isStaff=!!profile&&["admin","organizer"].includes(profile.role)}
- document.querySelectorAll(".admin-only").forEach(el=>el.style.display=isStaff?"":"none");
+document.querySelectorAll(".admin-only").forEach(el => {
+  if (!isStaff) {
+    el.style.display = "none";
+  } else if (el.tagName === "TD" || el.tagName === "TH") {
+    el.style.display = "table-cell";
+  } else if (el.tagName === "DIV") {
+    el.style.display = "block";
+  } else {
+    el.style.display = "inline-block";
+  }
+});
  $("login-open").classList.toggle("hidden",isStaff);$("logout-btn").classList.toggle("hidden",!isStaff);
  if(isStaff)msg("● Acesso administrativo");else msg("● Consulta pública");
 }
@@ -146,15 +166,66 @@ async function loadStages(){
  $("stage-list").innerHTML=stages.length?stages.map(s=>`<div class="stage-item"><div><strong>${esc(s.name||"ETAPA "+s.stage_number)}</strong><small>${new Date(s.played_at+"T12:00:00").toLocaleDateString("pt-BR")} • ${s.status==="published"?"Publicada":"Rascunho"}</small></div><div class="actions"><span class="tag">${s.participant_count||0} participantes</span><button class="btn secondary" data-edit-stage="${s.id}">${isStaff?"Editar":"Ver resultados"}</button></div></div>`).join(""):'<div class="empty">Nenhuma etapa disponível.</div>';
  document.querySelectorAll("[data-edit-stage]").forEach(b=>b.addEventListener("click",()=>openStage(b.dataset.editStage)));
 }
-async function openStage(id){
- currentStage=stages.find(s=>s.id===id);if(!currentStage)return;
- $("stage-editor").classList.remove("hidden");$("editor-title").textContent=currentStage.name;
- $("stage-number").value=currentStage.stage_number;$("stage-name").value=currentStage.name;$("stage-date").value=currentStage.played_at;$("stage-status").value=currentStage.status;
- ["stage-number","stage-name","stage-date","stage-status","add-player-select","add-player","calculate-points","save-stage"].forEach(id=>$(id).disabled=!isStaff);
- const {data,error}=await db.from("results").select("id,player_id,position,points,player:players(id,display_name)").eq("stage_id",id).order("position");if(error){alert(error.message);return}
- editorResults=(data||[]).map(r=>({id:r.id,player_id:r.player_id,name:r.player?.display_name||"Jogador",position:r.position,points:r.points}));
- $("add-player-select").innerHTML='<option value="">Adicionar jogador...</option>'+players.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("");
- renderResultRows();$("stage-editor").scrollIntoView({behavior:"smooth",block:"start"});
+function updatePlayerSuggestions() {
+  $("player-suggestions").innerHTML = players
+    .map(p => `<option value="${esc(p.name)}"></option>`)
+    .join("");
+}
+ async function openStage(id) {
+  currentStage = stages.find(s => s.id === id);
+  if (!currentStage) return;
+
+  $("stage-editor").classList.remove("hidden");
+  $("editor-title").textContent = currentStage.name;
+
+  $("stage-number").value = currentStage.stage_number;
+  $("stage-name").value = currentStage.name;
+  $("stage-date").value = currentStage.played_at;
+  $("stage-status").value = currentStage.status;
+
+  [
+    "stage-number",
+    "stage-name",
+    "stage-date",
+    "stage-status",
+    "add-player",
+    "calculate-points",
+    "save-stage"
+  ].forEach(id => {
+    $(id).disabled = !isStaff;
+  });
+
+  const { data, error } = await db
+    .from("results")
+    .select("id,player_id,position,points,player:players(id,display_name)")
+    .eq("stage_id", id)
+    .order("position");
+
+  if (error) {
+    alert("Erro ao carregar resultados: " + error.message);
+    return;
+  }
+
+  editorResults = (data || []).map(r => ({
+    id: r.id,
+    player_id: r.player_id,
+    name: r.player?.display_name || "Jogador",
+    position: r.position,
+    points: r.points
+  }));
+
+  // Atualiza as sugestões de jogadores cadastrados.
+  updatePlayerSuggestions();
+
+  $("player-search").value = "";
+  $("player-feedback").classList.add("hidden");
+
+  renderResultRows();
+
+  $("stage-editor").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
 }
 function renderResultRows(){
  $("result-rows").innerHTML=editorResults.length?editorResults.sort((a,b)=>a.position-b.position).map((r,i)=>`<tr><td class="player-cell">${esc(r.name)}</td><td><input type="number" min="1" value="${r.position}" data-pos="${r.player_id}" ${isStaff?"":"disabled"}></td><td><input type="number" value="${r.points}" data-points="${r.player_id}" ${isStaff?"":"disabled"}></td><td class="${isStaff?"":"hidden"}"><button class="btn danger" data-remove="${r.player_id}">Remover</button></td></tr>`).join(""):'<tr><td colspan="4" class="empty">Nenhum resultado nesta etapa.</td></tr>';
@@ -162,11 +233,111 @@ function renderResultRows(){
  document.querySelectorAll("[data-points]").forEach(el=>el.addEventListener("change",()=>{const r=editorResults.find(x=>x.player_id===el.dataset.points);if(r)r.points=Number(el.value)}));
  document.querySelectorAll("[data-remove]").forEach(el=>el.addEventListener("click",()=>{editorResults=editorResults.filter(x=>x.player_id!==el.dataset.remove);renderResultRows()}));
 }
-$("add-player").addEventListener("click",()=>{const id=$("add-player-select").value,p=players.find(x=>x.id===id);if(!p||editorResults.some(x=>x.player_id===id))return;editorResults.push({id:null,player_id:id,name:p.name,position:editorResults.length+1,points:0});renderResultRows()});
+$("add-player").addEventListener("click", async () => {
+  if (!isStaff) return;
+
+  const input = $("player-search");
+  const feedback = $("player-feedback");
+  const name = input.value.trim();
+
+  feedback.classList.add("hidden");
+
+  if (!name) {
+    alert("Digite o nome do jogador.");
+    return;
+  }
+
+  const normalize = value =>
+    value.normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+
+  let player = players.find(
+    p => normalize(p.name) === normalize(name)
+  );
+
+  if (!player) {
+    const { data, error } = await db
+      .from("players")
+      .insert({
+        full_name: name,
+        display_name: name,
+        is_active: true
+      })
+      .select("id, display_name")
+      .single();
+
+    if (error) {
+      alert("Erro ao cadastrar jogador: " + error.message);
+      return;
+    }
+
+    player = {
+      id: data.id,
+      name: data.display_name
+    };
+
+    players.push({
+      id: player.id,
+      name: player.name,
+      points: 0,
+      stagesPlayed: 0,
+      firstPlaces: 0,
+      adjustment: 0
+    });
+
+    updatePlayerSuggestions();
+    feedback.textContent = "Jogador cadastrado e adicionado!";
+  } else {
+    feedback.textContent = "Jogador adicionado à etapa!";
+  }
+
+  if (editorResults.some(r => r.player_id === player.id)) {
+    alert("Esse jogador já está nesta etapa.");
+    return;
+  }
+
+  editorResults.push({
+    id: null,
+    player_id: player.id,
+    name: player.name,
+    position: editorResults.length + 1,
+    points: 0
+  });
+
+  input.value = "";
+  feedback.classList.remove("hidden");
+  renderResultRows();
+});
 $("calculate-points").addEventListener("click",()=>{const n=editorResults.length;editorResults.forEach(r=>{const mult=r.position===1?20:r.position<=9?15:10;r.points=(n-r.position+1)*mult});renderResultRows()});
-$("new-stage").addEventListener("click",()=>{currentStage=null;editorResults=[];$("stage-editor").classList.remove("hidden");$("editor-title").textContent="Nova etapa";$("stage-number").value=stages.reduce((m,s)=>Math.max(m,s.stage_number),0)+1;$("stage-name").value="ETAPA "+$("stage-number").value;$("stage-date").value=new Date().toISOString().slice(0,10);$("stage-status").value="draft";$("result-rows").innerHTML='<tr><td colspan="4" class="empty">Adicione jogadores após salvar a etapa.</td></tr>';});
-$("close-editor").addEventListener("click",()=>$("stage-editor").classList.add("hidden"));
-$("save-stage").addEventListener("click",saveStage);
+$("new-stage").addEventListener("click", () => {
+  currentStage = null;
+  editorResults = [];
+
+  $("stage-editor").classList.remove("hidden");
+  $("editor-title").textContent = "Nova etapa";
+
+  $("stage-number").value =
+    stages.reduce((m, s) => Math.max(m, s.stage_number), 0) + 1;
+
+  $("stage-name").value = "ETAPA " + $("stage-number").value;
+  $("stage-date").value = new Date().toISOString().slice(0, 10);
+  $("stage-status").value = "draft";
+
+  $("player-search").value = "";
+  $("player-feedback").classList.add("hidden");
+
+  updatePlayerSuggestions();
+
+  $("result-rows").innerHTML =
+    '<tr><td colspan="4" class="empty">Adicione jogadores à etapa.</td></tr>';
+
+  $("stage-editor").scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+});
 async function saveStage() {
   if (!isStaff || !season) return;
 
