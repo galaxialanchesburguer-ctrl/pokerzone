@@ -292,9 +292,10 @@ async function loadRanking(){
    id:p.id,
    name:p.display_name,
    points:finalPoints,
+   sumPoints:scores.reduce((sum,n)=>sum+n,0),
    discardedPoints,
    stagesPlayed:rs.filter(r=>r.player && r.player.id===p.id).length
-  };
+};
  });
 
  finalPlayers
@@ -313,10 +314,11 @@ $("final-ranking").innerHTML=finalSorted
     ${esc(p.name)}
     ${i<10?'<span class="qualified-badge">VAGA GARANTIDA PARA A FT</span>':""}
    </td>
+   <td>${p.sumPoints.toLocaleString("pt-BR")}</td>
+   <td>${p.discardedPoints.toLocaleString("pt-BR")}</td>
    <td><strong>${p.points.toLocaleString("pt-BR")}</strong></td>
-   <td>${p.discardedPoints}</td>
   </tr>
- `).join("") || '<tr><td colspan="4" class="empty">Nenhum resultado disponível.</td></tr>';
+ `).join("") || '<tr><td colspan="5" class="empty">Nenhum resultado disponível.</td></tr>';
 
 const finalPodiumList=finalSorted;
 
