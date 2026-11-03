@@ -582,6 +582,49 @@ input:focus,select:focus {
     font-size: 24px;
   }
 }
+ /* ===== AJUSTE MOBILE - RANKING FINAL ===== */
+@media(max-width:700px) {
+  #final-ranking-view .table-wrap {
+    overflow-x: hidden;
+  }
+
+  #final-ranking-view table {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  #final-ranking-view th,
+  #final-ranking-view td {
+    padding: 9px 3px;
+    font-size: 10px;
+    overflow-wrap: anywhere;
+  }
+
+  #final-ranking-view th:nth-child(1),
+  #final-ranking-view td:nth-child(1) {
+    width: 9%;
+  }
+
+  #final-ranking-view th:nth-child(2),
+  #final-ranking-view td:nth-child(2) {
+    width: 27%;
+  }
+
+  #final-ranking-view th:nth-child(3),
+  #final-ranking-view td:nth-child(3) {
+    width: 16%;
+  }
+
+  #final-ranking-view th:nth-child(4),
+  #final-ranking-view td:nth-child(4) {
+    width: 17%;
+  }
+
+  #final-ranking-view th:nth-child(5),
+  #final-ranking-view td:nth-child(5) {
+    width: 31%;
+  }
+}
 </style>
 </head>
 <body>
