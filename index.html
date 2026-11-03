@@ -158,13 +158,59 @@ document.querySelectorAll(".admin-only").forEach(el => {
  $("login-open").classList.toggle("hidden",isStaff);$("logout-btn").classList.toggle("hidden",!isStaff);
  if(isStaff)msg("● Acesso administrativo");else msg("● Consulta pública");
 }
-async function loadStages(){
- if(!season)return;
- let query=db.from("stages").select("id,season_id,stage_number,name,played_at,participant_count,status").eq("season_id",season.id).order("stage_number");
- if(!isStaff)query=query.eq("status","published");
- const {data,error}=await query;if(error)throw error;stages=data||[];
- $("stage-list").innerHTML=stages.length?stages.map(s=>`<div class="stage-item"><div><strong>${esc(s.name||"ETAPA "+s.stage_number)}</strong><small>${new Date(s.played_at+"T12:00:00").toLocaleDateString("pt-BR")} • ${s.status==="published"?"Publicada":"Rascunho"}</small></div><div class="actions"><span class="tag">${s.participant_count||0} participantes</span><button class="btn secondary" data-edit-stage="${s.id}">${isStaff?"Editar":"Ver resultados"}</button></div></div>`).join(""):'<div class="empty">Nenhuma etapa disponível.</div>';
- document.querySelectorAll("[data-edit-stage]").forEach(b=>b.addEventListener("click",()=>openStage(b.dataset.editStage)));
+async function loadStages() {
+  if (!season) {
+    $("stage-list").innerHTML =
+      '<div class="empty">Nenhuma temporada carregada.</div>';
+    return;
+  }
+
+  $("stage-list").innerHTML =
+    '<div class="empty">Carregando etapas...</div>';
+
+  try {
+    let query = db
+      .from("stages")
+      .select("id,season_id,stage_number,name,played_at,participant_count,status")
+      .eq("season_id", season.id)
+      .order("stage_number");
+
+    if (!isStaff) {
+      query = query.eq("status", "published");
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    stages = data || [];
+
+    $("stage-list").innerHTML = stages.length
+      ? stages.map(s => `
+          <div class="stage-item">
+            <div>
+              <strong>${esc(s.name || "ETAPA " + s.stage_number)}</strong>
+              <small>${new Date(s.played_at + "T12:00:00").toLocaleDateString("pt-BR")} • ${s.status === "published" ? "Publicada" : "Rascunho"}</small>
+            </div>
+            <div class="actions">
+              <span class="tag">${s.participant_count || 0} participantes</span>
+              <button class="btn secondary" data-edit-stage="${s.id}">
+                ${isStaff ? "Editar" : "Ver resultados"}
+              </button>
+            </div>
+          </div>
+        `).join("")
+      : '<div class="empty">Nenhuma etapa disponível.</div>';
+
+    document.querySelectorAll("[data-edit-stage]").forEach(b => {
+      b.addEventListener("click", () => openStage(b.dataset.editStage));
+    });
+
+  } catch (error) {
+    console.error("Erro ao carregar etapas:", error);
+    $("stage-list").innerHTML =
+      '<div class="empty">Erro ao carregar etapas. Verifique o console.</div>';
+  }
 }
 function updatePlayerSuggestions() {
   $("player-suggestions").innerHTML = players
