@@ -2,66 +2,388 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#101010">
-  <title>PokerZone | Ranking de Poker</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: #101010;
-      color: #fff;
-      font-family: Arial, sans-serif;
-    }
-    header {
-      padding: 24px;
-      border-bottom: 1px solid #292929;
-      text-align: center;
-    }
-    .logo {
-      font-size: 32px;
-      font-weight: 900;
-      font-style: italic;
-      letter-spacing: -2px;
-    }
-    .logo span { color: #ed3038; }
-    main {
-      max-width: 900px;
-      margin: 70px auto;
-      padding: 24px;
-      text-align: center;
-    }
-    h1 { font-size: 42px; }
-    h1 span { color: #ed3038; }
-    p { color: #aaa; line-height: 1.6; }
-    .ranking {
-      margin-top: 40px;
-      padding: 28px;
-      background: #1b1b1b;
-      border: 1px solid #333;
-      border-radius: 12px;
-    }
-    .ranking h2 { margin-top: 0; }
-    .ranking p { margin-bottom: 0; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101010">
+<title>PokerZone | Ranking Oficial</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #101010;
+  color: #f5f5f5;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+header {
+  height: 76px;
+  border-bottom: 1px solid #292929;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 7%;
+}
+
+.logo {
+  font-size: 27px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -1.5px;
+}
+
+.logo span { color: #ed3038; }
+
+.header-tag {
+  color: #aaa;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 45px 22px;
+}
+
+.season {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  color: #ed3038;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+
+h1 {
+  font-size: clamp(28px, 5vw, 43px);
+  margin: 10px 0;
+  font-weight: 900;
+  font-style: italic;
+}
+
+h1 span { color: #ed3038; }
+
+.season-info {
+  color: #999;
+  font-size: 13px;
+}
+
+.status {
+  border: 1px solid #333;
+  padding: 10px 15px;
+  border-radius: 5px;
+  color: #ddd;
+  font-size: 12px;
+}
+
+.status span { color: #36c982; }
+
+.section-title {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 48px 0 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.section-title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 17px;
+  background: #ed3038;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  align-items: end;
+}
+
+.podium-card {
+  background: #191919;
+  border: 1px solid #303030;
+  border-radius: 9px;
+  padding: 25px 12px;
+  text-align: center;
+}
+
+.podium-card.first {
+  border-color: #9c793c;
+  background: linear-gradient(180deg, #302719, #191919 75%);
+  padding-top: 35px;
+}
+
+.medal {
+  font-size: 29px;
+  margin-bottom: 12px;
+}
+
+.player-name {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.points {
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.points small {
+  font-size: 10px;
+  color: #999;
+  font-weight: normal;
+}
+
+.position-label {
+  color: #aaa;
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-top: 10px;
+}
+
+.ranking-box {
+  background: #191919;
+  border: 1px solid #303030;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.ranking-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ranking-head h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.search {
+  background: #101010;
+  color: white;
+  border: 1px solid #383838;
+  border-radius: 5px;
+  padding: 12px 14px;
+  width: min(100%, 270px);
+  outline: none;
+}
+
+.search:focus { border-color: #ed3038; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th {
+  color: #888;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 14px 18px;
+  background: #141414;
+}
+
+td {
+  padding: 17px 18px;
+  border-top: 1px solid #292929;
+  font-size: 13px;
+}
+
+tr:hover td { background: #202020; }
+
+.rank-number {
+  color: #ed3038;
+  font-weight: bold;
+}
+
+.player-cell { font-weight: bold; }
+
+.points-cell {
+  font-weight: bold;
+  color: #fff;
+}
+
+.empty {
+  text-align: center;
+  padding: 30px;
+  color: #999;
+}
+
+footer {
+  text-align: center;
+  color: #666;
+  font-size: 11px;
+  padding: 35px 15px;
+  border-top: 1px solid #292929;
+  margin-top: 60px;
+}
+
+@media(max-width: 600px) {
+  header { padding: 0 18px; }
+  .header-tag { font-size: 9px; }
+  main { padding: 30px 14px; }
+  .podium { gap: 7px; }
+  .podium-card { padding: 18px 5px; }
+  .podium-card.first { padding-top: 25px; }
+  .player-name { font-size: 12px; }
+  .points { font-size: 19px; }
+  .medal { font-size: 23px; }
+  th, td { padding: 13px 9px; }
+  th { font-size: 9px; }
+  td { font-size: 11px; }
+}
+</style>
 </head>
+
 <body>
-  <header>
-    <div class="logo">POKER<span>ZONE</span></div>
-  </header>
 
-  <main>
-    <h1>O ranking começa <span>aqui.</span></h1>
-    <p>
-      Acompanhe os torneios, os jogadores e a disputa
-      pelo topo do PokerZone.
-    </p>
+<header>
+  <div class="logo">POKER<span>ZONE</span></div>
+  <div class="header-tag">RANKING OFICIAL</div>
+</header>
 
-    <section class="ranking">
-      <h2>RANKING DA TEMPORADA</h2>
-      <p>Em breve: classificação oficial dos jogadores.</p>
-    </section>
-  </main>
+<main>
+
+  <section class="season">
+    <div>
+      <div class="eyebrow">COMPETIÇÃO • TEMPORADA 2026</div>
+      <h1>RANKING <span>GERAL</span></h1>
+      <div class="season-info">Temporada de PokerZone</div>
+    </div>
+    <div class="status"><span>●</span> Temporada ativa</div>
+  </section>
+
+  <h2 class="section-title">Pódio da temporada</h2>
+
+  <section class="podium">
+    <div class="podium-card">
+      <div class="medal">🥈</div>
+      <div class="player-name">Jogador 02</div>
+      <div class="points">1.850 <small>PTS</small></div>
+      <div class="position-label">2º LUGAR</div>
+    </div>
+
+    <div class="podium-card first">
+      <div class="medal">🥇</div>
+      <div class="player-name">Jogador 01</div>
+      <div class="points">2.140 <small>PTS</small></div>
+      <div class="position-label">1º LUGAR</div>
+    </div>
+
+    <div class="podium-card">
+      <div class="medal">🥉</div>
+      <div class="player-name">Jogador 03</div>
+      <div class="points">1.620 <small>PTS</small></div>
+      <div class="position-label">3º LUGAR</div>
+    </div>
+  </section>
+
+  <h2 class="section-title">Classificação completa</h2>
+
+  <section class="ranking-box">
+    <div class="ranking-head">
+      <h2>TOP 20 JOGADORES</h2>
+      <input
+        class="search"
+        id="search"
+        type="search"
+        placeholder="Pesquisar jogador..."
+        oninput="filterPlayers()"
+      >
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>POS.</th>
+          <th>JOGADOR</th>
+          <th>PONTOS</th>
+        </tr>
+      </thead>
+      <tbody id="ranking"></tbody>
+    </table>
+  </section>
+
+</main>
+
+<footer>
+  POKERZONE © 2026 • TODOS OS DIREITOS RESERVADOS
+</footer>
+
+<script>
+const players = [
+  ["Jogador 01", 2140],
+  ["Jogador 02", 1850],
+  ["Jogador 03", 1620],
+  ["Jogador 04", 1480],
+  ["Jogador 05", 1320],
+  ["Jogador 06", 1190],
+  ["Jogador 07", 1080],
+  ["Jogador 08", 970],
+  ["Jogador 09", 890],
+  ["Jogador 10", 810],
+  ["Jogador 11", 740],
+  ["Jogador 12", 680],
+  ["Jogador 13", 610],
+  ["Jogador 14", 550],
+  ["Jogador 15", 490],
+  ["Jogador 16", 430],
+  ["Jogador 17", 370],
+  ["Jogador 18", 310],
+  ["Jogador 19", 250],
+  ["Jogador 20", 190]
+];
+
+function renderRanking(list) {
+  const tbody = document.getElementById("ranking");
+
+  if (list.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="3" class="empty">Nenhum jogador encontrado.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map((player, index) => `
+    <tr>
+      <td class="rank-number">${players.indexOf(player) + 1}º</td>
+      <td class="player-cell">${player[0]}</td>
+      <td class="points-cell">${player[1].toLocaleString("pt-BR")} pts</td>
+    </tr>
+  `).join("");
+}
+
+function filterPlayers() {
+  const term = document.getElementById("search").value
+    .toLowerCase()
+    .trim();
+
+  const filtered = players.filter(player =>
+    player[0].toLowerCase().includes(term)
+  );
+
+  renderRanking(filtered);
+}
+
+renderRanking(players);
+</script>
+
 </body>
 </html>
