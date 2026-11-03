@@ -53,6 +53,27 @@ tr:hover td{background:#202020}
 .panel-pad{padding:18px}
 .notice{padding:12px 14px;border:1px solid #4b3d20;background:#241e13;color:#e8d39b;border-radius:6px;font-size:13px;margin:14px 0}
 .hidden{display:none!important}
+ .qualified-row{
+ background:rgba(46,160,67,.10);
+}
+
+.qualified-row td:first-child{
+ border-left:3px solid #35b96b;
+ font-weight:bold;
+}
+
+.qualified-badge{
+ display:inline-block;
+ margin-left:8px;
+ padding:4px 7px;
+ border-radius:4px;
+ background:#1d6339;
+ color:#d9ffe5;
+ font-size:9px;
+ font-weight:bold;
+ letter-spacing:.5px;
+ vertical-align:middle;
+}
 .admin-only{display:none}
 .stage-item{display:flex;justify-content:space-between;gap:15px;align-items:center;padding:15px 18px;border-top:1px solid #292929}
 .stage-item strong{display:block;margin-bottom:5px}.stage-item small{color:var(--muted)}
@@ -280,20 +301,24 @@ async function loadRanking(){
   .filter(p=>p.points>0)
   .sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,"pt-BR"));
 
- $("final-ranking").innerHTML=finalPlayers
-  .filter(p=>p.points>0)
-  .sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,"pt-BR"))
-  .map((p,i)=>`
-   <tr>
-    <td>${i+1}º</td>
-    <td>${p.name}</td>
-    <td><strong>${p.points.toLocaleString("pt-BR")}</strong></td>
-    <td>${p.discardedPoints}</td>
-   </tr>
-  `).join("") || '<tr><td colspan="4" class="empty">Nenhum resultado disponível.</td></tr>';
-  const finalPodiumList=finalPlayers
-  .filter(p=>p.points>0)
-  .sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,"pt-BR"));
+const finalSorted=finalPlayers
+ .filter(p=>p.points>0)
+ .sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,"pt-BR"));
+
+$("final-ranking").innerHTML=finalSorted
+ .map((p,i)=>`
+  <tr class="${i<10?"qualified-row":""}">
+   <td>${i+1}º</td>
+   <td>
+    ${esc(p.name)}
+    ${i<10?'<span class="qualified-badge">CLASSIFICADO</span>':""}
+   </td>
+   <td><strong>${p.points.toLocaleString("pt-BR")}</strong></td>
+   <td>${p.discardedPoints}</td>
+  </tr>
+ `).join("") || '<tr><td colspan="4" class="empty">Nenhum resultado disponível.</td></tr>';
+
+const finalPodiumList=finalSorted;
 
  renderFinalPodium(finalPodiumList);
 }
