@@ -346,7 +346,8 @@ input:focus,select:focus {
 }
 
 #final-ranking-view table {
-  min-width: 760px;
+  width: 100%;
+  min-width: 0;
 }
 
 #final-ranking-view th {
@@ -376,11 +377,14 @@ input:focus,select:focus {
 }
 
 #final-ranking-view tbody td:last-child strong {
-  display: inline-block;
-  min-width: 85px;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   text-align: center;
-  padding: 8px 12px;
-  border-radius: 20px;
+  padding: 5px 2px;
+  font-size: 10px;
+  border-radius: 10px;
   background: rgba(237,48,56,.15);
   border: 1px solid rgba(237,48,56,.35);
   color: #ff737b;
@@ -594,11 +598,13 @@ input:focus,select:focus {
   }
 
   #final-ranking-view th,
-  #final-ranking-view td {
-    padding: 9px 3px;
-    font-size: 10px;
-    overflow-wrap: anywhere;
-  }
+#final-ranking-view td {
+  padding: 8px 2px;
+  font-size: 9px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
 
   #final-ranking-view th:nth-child(1),
   #final-ranking-view td:nth-child(1) {
