@@ -167,20 +167,105 @@ $("calculate-points").addEventListener("click",()=>{const n=editorResults.length
 $("new-stage").addEventListener("click",()=>{currentStage=null;editorResults=[];$("stage-editor").classList.remove("hidden");$("editor-title").textContent="Nova etapa";$("stage-number").value=stages.reduce((m,s)=>Math.max(m,s.stage_number),0)+1;$("stage-name").value="ETAPA "+$("stage-number").value;$("stage-date").value=new Date().toISOString().slice(0,10);$("stage-status").value="draft";$("result-rows").innerHTML='<tr><td colspan="4" class="empty">Adicione jogadores após salvar a etapa.</td></tr>';});
 $("close-editor").addEventListener("click",()=>$("stage-editor").classList.add("hidden"));
 $("save-stage").addEventListener("click",saveStage);
-async function saveStage(){
- if(!isStaff||!season)return;
- const number=Number($("stage-number").value),name=$("stage-name").value.trim(),date=$("stage-date").value,status=$("stage-status").value;
- if(!number||!name||!date){alert("Preencha número, nome e data.");return}
- const payload={season_id:season.id,stage_number:number,name,played_at:date,status,participant_count:editorResults.length};
- let stageId=currentStage?.id;
- let response=stageId?await db.from("stages").update(payload).eq("id",stageId).select("id").single():await db.from("stages").insert(payload).select("id").single();
- if(response.error){alert("Erro ao salvar etapa: "+response.error.message);return}stageId=response.data.id;
- const positions=editorResults.map(r=>r.position);if(new Set(positions).size!==positions.length||positions.some(p=>!Number.isInteger(p)||p<1)){alert("Existem posições inválidas ou repetidas.");return}
- const {data:old,error:oldErr}=await db.from("results").select("id,player_id").eq("stage_id",stageId);if(oldErr){alert(oldErr.message);return}
- const keep=new Set(editorResults.map(r=>r.player_id)),remove=(old||[]).filter(r=>!keep.has(r.player_id)).map(r=>r.id);
- if(remove.length){const {error}=await db.from("results").delete().in("id",remove);if(error){alert(error.message);return}}
- if(editorResults.length){const payloadResults=editorResults.map(r=>({stage_id:stageId,player_id:r.player_id,position:r.position,points:r.points}));const {error}=await db.from("results").upsert(payloadResults,{onConflict:"stage_id,player_id"});if(error){alert("Erro ao salvar resultados: "+error.message);return}}
- alert("Etapa e resultados salvos.");$("stage-editor").classList.add("hidden");await refreshAll();
+async function saveStage() {
+  if (!isStaff || !season) return;
+
+  const number = Number($("stage-number").value);
+  const name = $("stage-name").value.trim();
+  const date = $("stage-date").value;
+  const status = $("stage-status").value;
+
+  if (!number || !name || !date) {
+    alert("Preencha número, nome e data.");
+    return;
+  }
+
+  const positions = editorResults.map(r => Number(r.position));
+  if (
+    positions.some(p => !Number.isInteger(p) || p < 1) ||
+    new Set(positions).size !== positions.length
+  ) {
+    alert("Existem posições inválidas ou repetidas.");
+    return;
+  }
+
+  if (editorResults.some(r => !Number.isInteger(Number(r.points)))) {
+    alert("Confira os pontos dos jogadores.");
+    return;
+  }
+
+  const stageData = {
+    season_id: season.id,
+    stage_number: number,
+    name,
+    played_at: date,
+    status,
+    participant_count: editorResults.length
+  };
+
+  let stageId = currentStage?.id;
+
+  // Cria a etapa como rascunho, caso seja nova.
+  if (!stageId) {
+    const { data, error } = await db
+      .from("stages")
+      .insert({ ...stageData, status: "draft" })
+      .select("id")
+      .single();
+
+    if (error) {
+      alert("Erro ao criar etapa: " + error.message);
+      return;
+    }
+
+    stageId = data.id;
+  }
+
+  // Remove os resultados anteriores para evitar conflito
+  // quando posições de jogadores são alteradas.
+  const { error: deleteError } = await db
+    .from("results")
+    .delete()
+    .eq("stage_id", stageId);
+
+  if (deleteError) {
+    alert("Erro ao preparar resultados: " + deleteError.message);
+    return;
+  }
+
+  // Insere novamente todos os resultados editados.
+  if (editorResults.length) {
+    const rows = editorResults.map(r => ({
+      stage_id: stageId,
+      player_id: r.player_id,
+      position: Number(r.position),
+      points: Number(r.points)
+    }));
+
+    const { error: insertError } = await db
+      .from("results")
+      .insert(rows);
+
+    if (insertError) {
+      alert("Erro ao salvar resultados: " + insertError.message);
+      return;
+    }
+  }
+
+  // Atualiza os dados e o status da etapa.
+  const { error: updateError } = await db
+    .from("stages")
+    .update(stageData)
+    .eq("id", stageId);
+
+  if (updateError) {
+    alert("Resultados salvos, mas houve erro ao atualizar a etapa: " + updateError.message);
+    return;
+  }
+
+  alert("Etapa salva com sucesso!");
+  $("stage-editor").classList.add("hidden");
+  await refreshAll();
 }
 async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){console.error(e);msg("Erro: "+e.message)}}
 $("login-open").addEventListener("click",()=>$("login-box").classList.remove("hidden"));
