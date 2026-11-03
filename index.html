@@ -845,10 +845,12 @@ $("final-ranking").innerHTML=finalSorted
    <td><strong>${p.points.toLocaleString("pt-BR")}</strong></td>
   </tr>
  `).join("") || '<tr><td colspan="5" class="empty">Nenhum resultado disponível.</td></tr>';
- $("final-player-count").textContent = finalSorted.length;
+/*
+$("final-player-count").textContent = finalSorted.length;
 $("final-qualified-count").textContent = Math.min(finalSorted.length, 10) + "/10";
- $("final-summary").querySelector(".summary-card:first-child strong").textContent =
+$("final-summary").querySelector(".summary-card:first-child strong").textContent =
   Math.max(0, 10 - finalSorted.length);
+*/
 
 const finalPodiumList=finalSorted;
 
