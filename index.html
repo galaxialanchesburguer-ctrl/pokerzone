@@ -299,18 +299,28 @@ function renderResultRows() {
         .map(r => `
           <tr>
             <td class="player-cell">
-              <select
-                data-player="${r.player_id}"
-                ${isStaff ? "" : "disabled"}
-              >
-                ${players.map(p => `
-                  <option
-                    value="${p.id}"
-                    ${p.id === r.player_id ? "selected" : ""}
-                  >${esc(p.name)}</option>
-                `).join("")}
-              </select>
-            </td>
+  <div class="row">
+    <select
+      data-player="${r.player_id}"
+      ${isStaff ? "" : "disabled"}
+    >
+      ${players.map(p => `
+        <option
+          value="${p.id}"
+          ${p.id === r.player_id ? "selected" : ""}
+        >${esc(p.name)}</option>
+      `).join("")}
+    </select>
+
+    <button
+      class="btn secondary"
+      data-rename="${r.player_id}"
+      type="button"
+      title="Editar nome"
+      ${isStaff ? "" : "disabled"}
+    >✎</button>
+  </div>
+</td>
             <td>
               <input
                 type="number"
@@ -365,7 +375,54 @@ function renderResultRows() {
       renderResultRows();
     });
   });
+document.querySelectorAll("[data-rename]").forEach(el => {
+  el.addEventListener("click", async () => {
+    if (!isStaff) return;
 
+    const playerId = el.dataset.rename;
+
+    const player = players.find(p => p.id === playerId);
+
+    if (!player) return;
+
+    const newName = prompt("Digite o novo nome do jogador:", player.name);
+
+    if (newName === null) return;
+
+    const cleanName = newName.trim();
+
+    if (!cleanName) {
+      alert("O nome não pode ficar vazio.");
+      return;
+    }
+
+    const { error } = await db
+      .from("players")
+      .update({
+        full_name: cleanName,
+        display_name: cleanName
+      })
+      .eq("id", playerId);
+
+    if (error) {
+      alert("Erro ao atualizar nome: " + error.message);
+      return;
+    }
+
+    player.name = cleanName;
+
+    editorResults.forEach(r => {
+      if (r.player_id === playerId) {
+        r.name = cleanName;
+      }
+    });
+
+    await refreshAll();
+    await openStage(currentStage.id);
+
+    alert("Nome atualizado com sucesso!");
+  });
+});
   document.querySelectorAll("[data-pos]").forEach(el => {
     el.addEventListener("change", () => {
       const player = editorResults.find(
