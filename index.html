@@ -385,7 +385,49 @@ function filterPlayers() {
 renderRanking(players);
 </script>
 
+
+<div id="connection-status" style="
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  padding: 9px 14px;
+  border-radius: 6px;
+  background: #292929;
+  color: #ddd;
+  font-size: 12px;
+  z-index: 9999;
+">
+  Verificando conexão...
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://fwwkmpnwsyppctxgetkj.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_SlbpXf6oi5Bw70ABeYp0Eg_nrZ9bQqm";
+
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function testarConexao() {
+    const status = document.getElementById("connection-status");
+
+    const { error } = await db
+      .from("players")
+      .select("id")
+      .limit(1);
+
+    if (error) {
+      status.textContent = "Erro de conexão com o banco";
+      status.style.color = "#ff6666";
+      console.error(error);
+      return;
+    }
+
+    status.textContent = "● Supabase conectado";
+    status.style.color = "#36c982";
+  }
+
+  testarConexao();
+</script>
 
 <script>
   const SUPABASE_URL = "https://fwwkmpnwsyppctxgetkj.supabase.co";
