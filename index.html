@@ -81,6 +81,507 @@ tr:hover td{background:#202020}
 .connection-status{position:fixed;bottom:12px;right:12px;padding:9px 14px;border-radius:6px;background:#292929;color:#ddd;font-size:12px;z-index:10}
 footer{text-align:center;color:#666;font-size:11px;padding:35px 15px;border-top:1px solid #292929;margin-top:55px}
 @media(max-width:700px){header{padding:0 18px}.header-tag{font-size:9px}main{padding:27px 14px}.podium{gap:7px}.podium-card{padding:18px 5px}.podium-card.first{padding-top:25px}.player-name{font-size:12px}.points{font-size:19px}.medal{font-size:23px}.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}th,td{padding:12px 9px}.stage-item{align-items:flex-start;flex-direction:column}}
+/* ===== NOVA IDENTIDADE VISUAL POKERZONE ===== */
+
+body {
+  background:
+    radial-gradient(ellipse at 50% 0%, #321014 0%, transparent 48%),
+    #080808;
+}
+
+header {
+  background: rgba(10,10,10,.95);
+  border-bottom: 1px solid #3b171a;
+  min-height: 82px;
+}
+
+.logo {
+  font-size: 30px;
+  letter-spacing: -1.5px;
+}
+
+main {
+  max-width: 1250px;
+}
+
+.tabs {
+  gap: 10px;
+  border-bottom: 1px solid #3a2022;
+}
+
+.tab {
+  border-radius: 7px 7px 0 0;
+  padding: 15px 22px;
+  transition: .2s;
+}
+
+.tab.active {
+  color: white;
+  background: linear-gradient(135deg,#e92732,#a90d18);
+  border-bottom-color: #ff4650;
+}
+
+.box {
+  background: linear-gradient(145deg,#1b1b1b,#101010);
+  border: 1px solid #383030;
+  border-radius: 13px;
+  box-shadow: 0 12px 35px rgba(0,0,0,.25);
+}
+
+.box-head {
+  padding: 22px;
+}
+
+.box-head h2 {
+  font-size: 17px;
+  letter-spacing: .5px;
+}
+
+.section-title {
+  font-size: 20px;
+}
+
+.podium-card {
+  background: linear-gradient(145deg,#202020,#111);
+  border: 1px solid #393939;
+  border-radius: 13px;
+  transition: transform .2s,border-color .2s;
+}
+
+.podium-card:hover {
+  transform: translateY(-5px);
+  border-color: #ed3038;
+}
+
+.podium-card.first {
+  border: 1px solid #c99a35;
+  background: linear-gradient(180deg,#392a12,#1b1710 75%);
+  box-shadow: 0 0 25px rgba(201,154,53,.12);
+}
+
+.btn {
+  background: linear-gradient(135deg,#f23842,#bd101c);
+  border-radius: 7px;
+  transition: .2s;
+}
+
+.btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.btn.secondary {
+  background: #202020;
+  border: 1px solid #454545;
+}
+
+table {
+  border-spacing: 0;
+}
+
+th {
+  background: #111;
+  color: #aaa;
+  padding: 17px 16px;
+}
+
+td {
+  padding: 16px;
+}
+
+tbody tr:hover td {
+  background: rgba(237,48,56,.07);
+}
+
+.search {
+  border-radius: 25px;
+  padding: 12px 17px;
+  background: #101010;
+}
+
+input:focus,select:focus {
+  border-color: #ed3038;
+  box-shadow: 0 0 0 3px rgba(237,48,56,.12);
+}
+
+.qualified-row {
+  background: rgba(237,48,56,.08);
+}
+
+.qualified-row td:first-child {
+  border-left: 3px solid #ed3038;
+}
+
+.qualified-badge {
+  background: #74151c;
+  border: 1px solid #c52b35;
+  color: #fff;
+  border-radius: 20px;
+}
+
+@media(max-width:700px) {
+  .tabs {
+    overflow-x: auto;
+  }
+
+  .tab {
+    white-space: nowrap;
+    padding: 13px 15px;
+  }
+
+  .box-head {
+    padding: 15px;
+  }
+}
+ /* ===== PODIO PREMIUM ===== */
+
+.podium {
+  gap: 18px;
+  align-items: end;
+  padding: 12px 0 20px;
+}
+
+.podium-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 205px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: .25s ease;
+}
+
+.podium-card:hover {
+  transform: translateY(-7px);
+}
+
+.podium-card:nth-child(1) {
+  border-color: #8b929e;
+  background: linear-gradient(160deg,#292d35,#141414 75%);
+}
+
+.podium-card.first {
+  min-height: 245px;
+  border: 1px solid #d9a52e;
+  background: linear-gradient(160deg,#49330d,#21190b 75%);
+  box-shadow: 0 0 30px rgba(218,165,46,.13);
+}
+
+.podium-card:nth-child(3) {
+  border-color: #a75e38;
+  background: linear-gradient(160deg,#382116,#171311 75%);
+}
+
+.podium-card .medal {
+  font-size: 38px;
+  margin-bottom: 15px;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,.5));
+}
+
+.podium-card.first .medal {
+  font-size: 48px;
+}
+
+.podium-card .player-name {
+  font-size: 17px;
+  letter-spacing: .3px;
+}
+
+.podium-card .points {
+  font-size: 27px;
+  margin-top: 5px;
+}
+
+.podium-card.first .points {
+  color: #ffd36a;
+}
+
+.podium-card:nth-child(1) .points {
+  color: #d8dce5;
+}
+
+.podium-card:nth-child(3) .points {
+  color: #e99a68;
+}
+
+.podium-card .position-label {
+  margin-top: 13px;
+  font-weight: bold;
+}
+
+@media(max-width:700px) {
+  .podium {
+    gap: 7px;
+  }
+
+  .podium-card {
+    min-height: 175px;
+    padding: 15px 5px;
+  }
+
+  .podium-card.first {
+    min-height: 205px;
+  }
+
+  .podium-card .medal {
+    font-size: 27px;
+  }
+
+  .podium-card.first .medal {
+    font-size: 34px;
+  }
+
+  .podium-card .player-name {
+    font-size: 11px;
+  }
+
+  .podium-card .points {
+    font-size: 17px;
+  }
+}
+ /* ===== TABELA DO RANKING FINAL ===== */
+
+#final-ranking-view .table-wrap {
+  border-radius: 0 0 13px 13px;
+}
+
+#final-ranking-view table {
+  min-width: 760px;
+}
+
+#final-ranking-view th {
+  font-size: 10px;
+  color: #aaa;
+  letter-spacing: 1px;
+  padding: 18px 15px;
+}
+
+#final-ranking-view td {
+  padding: 17px 15px;
+  border-top: 1px solid #292323;
+}
+
+#final-ranking-view tbody tr {
+  transition: background .2s;
+}
+
+#final-ranking-view tbody tr:hover td {
+  background: rgba(237,48,56,.12);
+}
+
+#final-ranking-view tbody td:first-child {
+  color: #ed3038;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+#final-ranking-view tbody td:last-child strong {
+  display: inline-block;
+  min-width: 85px;
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 20px;
+  background: rgba(237,48,56,.15);
+  border: 1px solid rgba(237,48,56,.35);
+  color: #ff737b;
+}
+
+#final-ranking-view .qualified-row {
+  background: rgba(237,48,56,.045);
+}
+
+#final-ranking-view .qualified-badge {
+  margin-top: 5px;
+  font-size: 9px;
+}
+
+@media(max-width:700px) {
+  #final-ranking-view .qualified-badge {
+    display: block;
+    width: fit-content;
+    margin: 7px 0 0;
+  }
+}
+ /* ===== BUSCA INTERATIVA ===== */
+
+.search {
+  width: min(100%, 300px);
+  padding: 13px 18px 13px 42px;
+  border: 1px solid #3b3030;
+  background:
+    #101010
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%23ed3038' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E")
+    no-repeat 14px center;
+  transition: .2s;
+}
+
+.search:focus {
+  width: min(100%, 340px);
+  border-color: #ed3038;
+  box-shadow: 0 0 15px rgba(237,48,56,.15);
+}
+
+.search::placeholder {
+  color: #777;
+}
+
+@media(max-width:700px) {
+  .search,
+  .search:focus {
+    width: 100%;
+  }
+}
+ /* ===== NAVEGAÇÃO MODERNA ===== */
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 7px;
+  background: #141414;
+  border: 1px solid #302727;
+  border-radius: 10px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.tab {
+  border: 0;
+  border-radius: 7px;
+  padding: 13px 22px;
+  color: #999;
+  background: transparent;
+  white-space: nowrap;
+  transition: .2s ease;
+}
+
+.tab:hover {
+  color: white;
+  background: #292020;
+}
+
+.tab.active {
+  color: white;
+  background: linear-gradient(135deg,#ed3038,#a90d18);
+  box-shadow: 0 4px 14px rgba(237,48,56,.2);
+  border-bottom: 0;
+}
+
+@media(max-width:700px) {
+  .tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 13px 12px;
+    font-size: 12px;
+  }
+}
+ /* ===== ZONA DE CLASSIFICAÇÃO FT ===== */
+
+#final-ranking-view .qualified-row {
+  background: linear-gradient(
+    90deg,
+    rgba(237,48,56,.12),
+    rgba(237,48,56,.025)
+  );
+}
+
+#final-ranking-view .qualified-row:hover td {
+  background: rgba(237,48,56,.17);
+}
+
+#final-ranking-view .qualified-row td:first-child {
+  color: #ff626b;
+  font-size: 15px;
+}
+
+#final-ranking-view .qualified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: rgba(237,48,56,.17);
+  border: 1px solid rgba(237,48,56,.45);
+  color: #ff858b;
+  font-size: 9px;
+  letter-spacing: .4px;
+}
+
+#final-ranking-view .qualified-badge::before {
+  content: "♠";
+  font-size: 11px;
+}
+
+@media(max-width:700px) {
+  #final-ranking-view .qualified-badge {
+    font-size: 8px;
+  }
+}
+ /* ===== PAINEL RESUMO DA FT ===== */
+
+.final-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0 18px 20px;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 20px;
+  background: linear-gradient(145deg,#202020,#121212);
+  border: 1px solid #393030;
+  border-radius: 11px;
+  transition: .2s ease;
+}
+
+.summary-card:hover {
+  border-color: #ed3038;
+  transform: translateY(-3px);
+}
+
+.summary-card span {
+  color: #999;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.summary-card strong {
+  color: #fff;
+  font-size: 29px;
+  font-weight: 900;
+}
+
+.summary-card:first-child strong {
+  color: #ffd36a;
+}
+
+.summary-card small {
+  color: #888;
+  font-size: 11px;
+}
+
+@media(max-width:700px) {
+  .final-summary {
+    grid-template-columns: 1fr;
+    margin: 0 12px 16px;
+    gap: 9px;
+  }
+
+  .summary-card {
+    padding: 15px;
+  }
+
+  .summary-card strong {
+    font-size: 24px;
+  }
+}
 </style>
 </head>
 <body>
@@ -99,7 +600,26 @@ footer{text-align:center;color:#666;font-size:11px;padding:35px 15px;border-top:
  <h2 class="section-title">Pódio da temporada</h2><section class="podium" id="podium"></section>
  <h2 class="section-title">Classificação completa</h2>
  <section class="box"><div class="box-head"><h2>RANKING DA TEMPORADA</h2><input class="search" id="search" type="search" placeholder="Pesquisar jogador..." autocomplete="off"></div>
- <div class="table-wrap"><table><thead><tr><th>POS.</th><th>JOGADOR</th><th>PONTOS</th><th>ETAPAS</th></tr></thead><tbody id="ranking"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table></div></section>
+<div class="final-summary" id="final-summary">
+  <div class="summary-card">
+    <span>VAGAS PARA A FT</span>
+    <strong>10</strong>
+    <small>Classificam-se os 10 primeiros</small>
+  </div>
+
+  <div class="summary-card">
+    <span>JOGADORES NO RANKING</span>
+    <strong id="final-player-count">0</strong>
+    <small>Com pontuação final positiva</small>
+  </div>
+
+  <div class="summary-card">
+    <span>VAGAS PREENCHIDAS</span>
+    <strong id="final-qualified-count">0/10</strong>
+    <small>Entre os classificados atuais</small>
+  </div>
+</div>
+  <div class="table-wrap"><table><thead><tr><th>POS.</th><th>JOGADOR</th><th>PONTOS</th><th>ETAPAS</th></tr></thead><tbody id="ranking"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table></div></section>
 </section>
 <section id="final-ranking-view" class="hidden">
 
@@ -320,6 +840,10 @@ $("final-ranking").innerHTML=finalSorted
    <td><strong>${p.points.toLocaleString("pt-BR")}</strong></td>
   </tr>
  `).join("") || '<tr><td colspan="5" class="empty">Nenhum resultado disponível.</td></tr>';
+ $("final-player-count").textContent = finalSorted.length;
+$("final-qualified-count").textContent = Math.min(finalSorted.length, 10) + "/10";
+ $("final-summary").querySelector(".summary-card:first-child strong").textContent =
+  Math.max(0, 10 - finalSorted.length);
 
 const finalPodiumList=finalSorted;
 
