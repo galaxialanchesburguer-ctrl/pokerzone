@@ -385,5 +385,34 @@ function filterPlayers() {
 renderRanking(players);
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  const SUPABASE_URL = "https://fwwkmpnwsyppctxgetkj.supabase.co";
+
+  const SUPABASE_KEY = "sb_publishable_SlbpXf6oi5Bw70ABeYp0Eg_nrZ9bQqm";
+
+  const db = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  async function testarConexao() {
+    const { data, error } = await db
+      .from("players")
+      .select("id")
+      .limit(1);
+
+    if (error) {
+      console.error("Erro na conexão:", error.message);
+      return;
+    }
+
+    console.log("PokerZone conectado ao Supabase!");
+  }
+
+  testarConexao();
+</script>
+
 </body>
 </html>
