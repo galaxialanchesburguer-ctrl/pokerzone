@@ -172,7 +172,7 @@ function showTab(id){
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
 function renderRanking(list){
  const tb=$("ranking");if(!list.length){tb.innerHTML='<tr><td colspan="4" class="empty">Nenhum jogador encontrado.</td></tr>';return}
- tb.innerHTML=list.map((p,i)=>`<tr><td class="rank-number">${i+1}º</td><td class="player-cell">${esc(p.name)}</td><td class="points-cell">${p.points.toLocaleString("pt-BR")} pts</td><td>${p.stagesPlayed}</td></tr>`).join("");
+ tb.innerHTML=list.map((p,i)=>`<tr><td class="rank-number">${i+1}º</td><td class="player-cell">${esc(p.name)}</td><td class="points-cell">${p.points.toLocaleString("pt-BR")}</td><td>${p.stagesPlayed}</td></tr>`).join("");
 }
 function renderPodium(list){const positions=[{p:list[1],n:2},{p:list[0],n:1},{p:list[2],n:3}],medals=["🥇","🥈","🥉"];
  $("podium").innerHTML=positions.map(x=>`<div class="podium-card ${x.n===1?"first":""}"><div class="medal">${medals[x.n-1]}</div><div class="player-name">${esc(x.p?.name||"—")}</div><div class="points">${x.p?x.p.points.toLocaleString("pt-BR"):"0"} <small>PTS</small></div><div class="position-label">${x.n}º LUGAR</div></div>`).join("")}
@@ -287,7 +287,7 @@ async function loadRanking(){
    <tr>
     <td>${i+1}º</td>
     <td>${p.name}</td>
-    <td><strong>${p.points}</strong></td>
+    <td><strong>${p.points.toLocaleString("pt-BR")}</strong></td>
     <td>${p.discardedPoints}</td>
    </tr>
   `).join("") || '<tr><td colspan="4" class="empty">Nenhum resultado disponível.</td></tr>';
