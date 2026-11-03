@@ -2,255 +2,335 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#101010">
-<title>PokerZone | Ranking Oficial</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101010">
+  <meta name="description" content="PokerZone - Ranking oficial da competição de poker.">
+  <title>PokerZone | Ranking Oficial</title>
 
-<style>
-* { box-sizing: border-box; }
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-body {
-  margin: 0;
-  background: #101010;
-  color: #f5f5f5;
-  font-family: Arial, Helvetica, sans-serif;
-}
+    body {
+      background: #101010;
+      color: #f5f5f5;
+      font-family: Arial, Helvetica, sans-serif;
+      min-height: 100vh;
+    }
 
-header {
-  height: 76px;
-  border-bottom: 1px solid #292929;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 7%;
-}
+    header {
+      min-height: 76px;
+      border-bottom: 1px solid #292929;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 7%;
+    }
 
-.logo {
-  font-size: 27px;
-  font-weight: 900;
-  font-style: italic;
-  letter-spacing: -1.5px;
-}
+    .logo {
+      font-size: 27px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: -1.5px;
+    }
 
-.logo span { color: #ed3038; }
+    .logo span {
+      color: #ed3038;
+    }
 
-.header-tag {
-  color: #aaa;
-  font-size: 12px;
-  letter-spacing: 2px;
-}
+    .header-tag {
+      color: #aaa;
+      font-size: 12px;
+      letter-spacing: 2px;
+    }
 
-main {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 45px 22px;
-}
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 45px 22px;
+    }
 
-.season {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  flex-wrap: wrap;
-}
+    .season {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
 
-.eyebrow {
-  color: #ed3038;
-  font-size: 11px;
-  font-weight: bold;
-  letter-spacing: 3px;
-}
+    .eyebrow {
+      color: #ed3038;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 3px;
+    }
 
-h1 {
-  font-size: clamp(28px, 5vw, 43px);
-  margin: 10px 0;
-  font-weight: 900;
-  font-style: italic;
-}
+    h1 {
+      font-size: clamp(28px, 5vw, 43px);
+      margin: 10px 0;
+      font-weight: 900;
+      font-style: italic;
+    }
 
-h1 span { color: #ed3038; }
+    h1 span {
+      color: #ed3038;
+    }
 
-.season-info {
-  color: #999;
-  font-size: 13px;
-}
+    .season-info {
+      color: #999;
+      font-size: 13px;
+    }
 
-.status {
-  border: 1px solid #333;
-  padding: 10px 15px;
-  border-radius: 5px;
-  color: #ddd;
-  font-size: 12px;
-}
+    .status {
+      border: 1px solid #333;
+      padding: 10px 15px;
+      border-radius: 5px;
+      color: #ddd;
+      font-size: 12px;
+    }
 
-.status span { color: #36c982; }
+    .status span {
+      color: #36c982;
+    }
 
-.section-title {
-  font-size: 18px;
-  font-weight: 800;
-  margin: 48px 0 20px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin: 48px 0 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
 
-.section-title::before {
-  content: "";
-  display: inline-block;
-  width: 4px;
-  height: 17px;
-  background: #ed3038;
-  margin-right: 10px;
-  vertical-align: middle;
-}
+    .section-title::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 17px;
+      background: #ed3038;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
 
-.podium {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  align-items: end;
-}
+    .podium {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      align-items: end;
+    }
 
-.podium-card {
-  background: #191919;
-  border: 1px solid #303030;
-  border-radius: 9px;
-  padding: 25px 12px;
-  text-align: center;
-}
+    .podium-card {
+      background: #191919;
+      border: 1px solid #303030;
+      border-radius: 9px;
+      padding: 25px 12px;
+      text-align: center;
+      min-width: 0;
+    }
 
-.podium-card.first {
-  border-color: #9c793c;
-  background: linear-gradient(180deg, #302719, #191919 75%);
-  padding-top: 35px;
-}
+    .podium-card.first {
+      border-color: #9c793c;
+      background: linear-gradient(180deg, #302719, #191919 75%);
+      padding-top: 35px;
+    }
 
-.medal {
-  font-size: 29px;
-  margin-bottom: 12px;
-}
+    .medal {
+      font-size: 29px;
+      margin-bottom: 12px;
+    }
 
-.player-name {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
+    .player-name {
+      font-size: 15px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      overflow-wrap: anywhere;
+    }
 
-.points {
-  font-size: 24px;
-  font-weight: 900;
-}
+    .points {
+      font-size: 24px;
+      font-weight: 900;
+    }
 
-.points small {
-  font-size: 10px;
-  color: #999;
-  font-weight: normal;
-}
+    .points small {
+      font-size: 10px;
+      color: #999;
+      font-weight: normal;
+    }
 
-.position-label {
-  color: #aaa;
-  font-size: 10px;
-  letter-spacing: 2px;
-  margin-top: 10px;
-}
+    .position-label {
+      color: #aaa;
+      font-size: 10px;
+      letter-spacing: 2px;
+      margin-top: 10px;
+    }
 
-.ranking-box {
-  background: #191919;
-  border: 1px solid #303030;
-  border-radius: 9px;
-  overflow: hidden;
-}
+    .ranking-box {
+      background: #191919;
+      border: 1px solid #303030;
+      border-radius: 9px;
+      overflow: hidden;
+    }
 
-.ranking-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+    .ranking-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
 
-.ranking-head h2 {
-  margin: 0;
-  font-size: 17px;
-}
+    .ranking-head h2 {
+      margin: 0;
+      font-size: 17px;
+    }
 
-.search {
-  background: #101010;
-  color: white;
-  border: 1px solid #383838;
-  border-radius: 5px;
-  padding: 12px 14px;
-  width: min(100%, 270px);
-  outline: none;
-}
+    .search {
+      background: #101010;
+      color: white;
+      border: 1px solid #383838;
+      border-radius: 5px;
+      padding: 12px 14px;
+      width: min(100%, 270px);
+      outline: none;
+    }
 
-.search:focus { border-color: #ed3038; }
+    .search:focus {
+      border-color: #ed3038;
+    }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
+    .table-wrap {
+      overflow-x: auto;
+    }
 
-th {
-  color: #888;
-  font-size: 10px;
-  letter-spacing: 1px;
-  padding: 14px 18px;
-  background: #141414;
-}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
 
-td {
-  padding: 17px 18px;
-  border-top: 1px solid #292929;
-  font-size: 13px;
-}
+    th {
+      color: #888;
+      font-size: 10px;
+      letter-spacing: 1px;
+      padding: 14px 18px;
+      background: #141414;
+      white-space: nowrap;
+    }
 
-tr:hover td { background: #202020; }
+    td {
+      padding: 17px 18px;
+      border-top: 1px solid #292929;
+      font-size: 13px;
+    }
 
-.rank-number {
-  color: #ed3038;
-  font-weight: bold;
-}
+    tr:hover td {
+      background: #202020;
+    }
 
-.player-cell { font-weight: bold; }
+    .rank-number {
+      color: #ed3038;
+      font-weight: bold;
+    }
 
-.points-cell {
-  font-weight: bold;
-  color: #fff;
-}
+    .player-cell {
+      font-weight: bold;
+    }
 
-.empty {
-  text-align: center;
-  padding: 30px;
-  color: #999;
-}
+    .points-cell {
+      font-weight: bold;
+      color: #fff;
+      white-space: nowrap;
+    }
 
-footer {
-  text-align: center;
-  color: #666;
-  font-size: 11px;
-  padding: 35px 15px;
-  border-top: 1px solid #292929;
-  margin-top: 60px;
-}
+    .empty {
+      text-align: center;
+      padding: 30px;
+      color: #999;
+    }
 
-@media(max-width: 600px) {
-  header { padding: 0 18px; }
-  .header-tag { font-size: 9px; }
-  main { padding: 30px 14px; }
-  .podium { gap: 7px; }
-  .podium-card { padding: 18px 5px; }
-  .podium-card.first { padding-top: 25px; }
-  .player-name { font-size: 12px; }
-  .points { font-size: 19px; }
-  .medal { font-size: 23px; }
-  th, td { padding: 13px 9px; }
-  th { font-size: 9px; }
-  td { font-size: 11px; }
-}
-</style>
+    .connection-status {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      padding: 9px 14px;
+      border-radius: 6px;
+      background: #292929;
+      color: #ddd;
+      font-size: 12px;
+      z-index: 10;
+    }
+
+    footer {
+      text-align: center;
+      color: #666;
+      font-size: 11px;
+      padding: 35px 15px;
+      border-top: 1px solid #292929;
+      margin-top: 60px;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 0 18px;
+      }
+
+      .header-tag {
+        font-size: 9px;
+      }
+
+      main {
+        padding: 30px 14px;
+      }
+
+      .podium {
+        gap: 7px;
+      }
+
+      .podium-card {
+        padding: 18px 5px;
+      }
+
+      .podium-card.first {
+        padding-top: 25px;
+      }
+
+      .player-name {
+        font-size: 12px;
+      }
+
+      .points {
+        font-size: 19px;
+      }
+
+      .medal {
+        font-size: 23px;
+      }
+
+      th, td {
+        padding: 13px 9px;
+      }
+
+      th {
+        font-size: 9px;
+      }
+
+      td {
+        font-size: 11px;
+      }
+
+      .ranking-head {
+        padding: 15px;
+      }
+
+      .search {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -264,35 +344,30 @@ footer {
 
   <section class="season">
     <div>
-      <div class="eyebrow">COMPETIÇÃO • TEMPORADA 2026</div>
+      <div class="eyebrow">COMPETIÇÃO • POKERZONE</div>
       <h1>RANKING <span>GERAL</span></h1>
-      <div class="season-info">Temporada de PokerZone</div>
+      <div class="season-info" id="season-name">Carregando temporada...</div>
     </div>
-    <div class="status"><span>●</span> Temporada ativa</div>
+
+    <div class="status" id="season-status">
+      <span>●</span> Verificando temporada
+    </div>
   </section>
 
   <h2 class="section-title">Pódio da temporada</h2>
 
-  <section class="podium">
+  <section class="podium" id="podium">
     <div class="podium-card">
       <div class="medal">🥈</div>
-      <div class="player-name">Jogador 02</div>
-      <div class="points">1.850 <small>PTS</small></div>
-      <div class="position-label">2º LUGAR</div>
+      <div class="player-name">Carregando...</div>
     </div>
-
     <div class="podium-card first">
       <div class="medal">🥇</div>
-      <div class="player-name">Jogador 01</div>
-      <div class="points">2.140 <small>PTS</small></div>
-      <div class="position-label">1º LUGAR</div>
+      <div class="player-name">Carregando...</div>
     </div>
-
     <div class="podium-card">
       <div class="medal">🥉</div>
-      <div class="player-name">Jogador 03</div>
-      <div class="points">1.620 <small>PTS</small></div>
-      <div class="position-label">3º LUGAR</div>
+      <div class="player-name">Carregando...</div>
     </div>
   </section>
 
@@ -301,25 +376,32 @@ footer {
   <section class="ranking-box">
     <div class="ranking-head">
       <h2>TOP 20 JOGADORES</h2>
+
       <input
         class="search"
         id="search"
         type="search"
         placeholder="Pesquisar jogador..."
-        oninput="filterPlayers()"
+        autocomplete="off"
       >
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>POS.</th>
-          <th>JOGADOR</th>
-          <th>PONTOS</th>
-        </tr>
-      </thead>
-      <tbody id="ranking"></tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>POS.</th>
+            <th>JOGADOR</th>
+            <th>PONTOS</th>
+          </tr>
+        </thead>
+        <tbody id="ranking">
+          <tr>
+            <td colspan="3" class="empty">Carregando classificação...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
 </main>
@@ -328,120 +410,229 @@ footer {
   POKERZONE © 2026 • TODOS OS DIREITOS RESERVADOS
 </footer>
 
+<div id="connection-status" class="connection-status">
+  Verificando conexão...
+</div>
 
-<script>
-let players = [];
-
-function renderRanking(list) {
-  const tbody = document.getElementById("ranking");
-
-  if (list.length === 0) {
-    tbody.innerHTML =
-      '<tr><td colspan="3" class="empty">Nenhum jogador encontrado.</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = list.slice(0, 20).map((player, index) => `
-    <tr>
-      <td class="rank-number">${index + 1}º</td>
-      <td class="player-cell">${player.name}</td>
-      <td class="points-cell">${player.points.toLocaleString("pt-BR")} pts</td>
-    </tr>
-  `).join("");
-}
-
-function filterPlayers() {
-  const term = document.getElementById("search").value
-    .toLowerCase()
-    .trim();
-
-  const filtered = players.filter(player =>
-    player.name.toLowerCase().includes(term)
-  );
-
-  renderRanking(filtered);
-}
-
-async function carregarRanking() {
-  const tbody = document.getElementById("ranking");
-
-  tbody.innerHTML =
-    '<tr><td colspan="3" class="empty">Carregando classificação...</td></tr>';
-
-  const { data: season, error: seasonError } = await db
-    .from("seasons")
-    .select("id, name")
-    .eq("status", "active")
-    .limit(1)
-    .maybeSingle();
-
-  if (seasonError || !season) {
-    tbody.innerHTML =
-      '<tr><td colspan="3" class="empty">Nenhuma temporada ativa encontrada.</td></tr>';
-    console.error(seasonError);
-    return;
-  }
-
-  const { data: results, error } = await db
-    .from("results")
-    .select(`
-      points,
-      player:players (
-        id,
-        display_name
-      ),
-      stage:stages!inner (
-        season_id,
-        status
-      )
-    `)
-    .eq("stage.season_id", season.id)
-    .eq("stage.status", "published");
-
-  if (error) {
-    tbody.innerHTML =
-      '<tr><td colspan="3" class="empty">Erro ao carregar o ranking.</td></tr>';
-    console.error(error);
-    return;
-  }
-
-  const totals = {};
-
-  results.forEach(result => {
-    if (!result.player) return;
-
-    const id = result.player.id;
-
-    if (!totals[id]) {
-      totals[id] = {
-        name: result.player.display_name,
-        points: 0
-      };
-    }
-
-    totals[id].points += Number(result.points);
-  });
-
-  players = Object.values(totals).sort((a, b) =>
-    b.points - a.points
-  );
-
-  renderRanking(players);
-}
-
-carregarRanking();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
   const SUPABASE_URL = "https://fwwkmpnwsyppctxgetkj.supabase.co";
-
   const SUPABASE_KEY = "sb_publishable_SlbpXf6oi5Bw70ABeYp0Eg_nrZ9bQqm";
 
-  const db = supabase.createClient(
+  const db = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
   );
 
+  let players = [];
+
+  const medals = ["🥇", "🥈", "🥉"];
+
+  function escaparHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, character => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[character]);
+  }
+
+  function renderRanking(list) {
+    const tbody = document.getElementById("ranking");
+
+    if (list.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="3" class="empty">Nenhum jogador encontrado.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.slice(0, 20).map((player, index) => `
+      <tr>
+        <td class="rank-number">${index + 1}º</td>
+        <td class="player-cell">${escaparHTML(player.name)}</td>
+        <td class="points-cell">${player.points.toLocaleString("pt-BR")} pts</td>
+      </tr>
+    `).join("");
+  }
+
+  function renderPodium(list) {
+    const podium = document.getElementById("podium");
+
+    const positions = [
+      { player: list[1], place: 2 },
+      { player: list[0], place: 1 },
+      { player: list[2], place: 3 }
+    ];
+
+    podium.innerHTML = positions.map(item => {
+      const player = item.player;
+      const firstClass = item.place === 1 ? "first" : "";
+
+      return `
+        <div class="podium-card ${firstClass}">
+          <div class="medal">${medals[item.place - 1]}</div>
+          <div class="player-name">${player ? escaparHTML(player.name) : "—"}</div>
+          <div class="points">${player ? player.points.toLocaleString("pt-BR") : "0"} <small>PTS</small></div>
+          <div class="position-label">${item.place}º LUGAR</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function filterPlayers() {
+    const term = document.getElementById("search").value
+      .toLowerCase()
+      .trim();
+
+    const filtered = players.filter(player =>
+      player.name.toLowerCase().includes(term)
+    );
+
+    renderRanking(filtered);
+  }
+
+  async function testarConexao() {
+    const status = document.getElementById("connection-status");
+
+    try {
+      const { error } = await db
+        .from("players")
+        .select("id")
+        .limit(1);
+
+      if (error) throw error;
+
+      status.textContent = "● Supabase conectado";
+      status.style.color = "#36c982";
+
+    } catch (error) {
+      status.textContent = "Erro de conexão com o banco";
+      status.style.color = "#ff6666";
+      console.error("Erro Supabase:", error);
+    }
+  }
+
+  async function carregarRanking() {
+    const tbody = document.getElementById("ranking");
+    const seasonName = document.getElementById("season-name");
+    const seasonStatus = document.getElementById("season-status");
+
+    try {
+      const { data: season, error: seasonError } = await db
+        .from("seasons")
+        .select("id, name")
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle();
+
+      if (seasonError) throw seasonError;
+
+      if (!season) {
+        seasonName.textContent = "Nenhuma temporada cadastrada.";
+        seasonStatus.innerHTML = "Temporada não iniciada";
+
+        tbody.innerHTML =
+          '<tr><td colspan="3" class="empty">Ainda não existe uma temporada ativa.</td></tr>';
+
+        renderPodium([]);
+        return;
+      }
+
+      seasonName.textContent = season.name;
+      seasonStatus.innerHTML = '<span>●</span> Temporada ativa';
+
+      const { data: registeredPlayers, error: playersError } = await db
+        .from("players")
+        .select("id, display_name")
+        .eq("is_active", true);
+
+      if (playersError) throw playersError;
+
+      const { data: results, error: resultsError } = await db
+        .from("results")
+        .select(`
+          points,
+          position,
+          player:players (
+            id,
+            display_name
+          ),
+          stage:stages!inner (
+            season_id,
+            status
+          )
+        `)
+        .eq("stage.season_id", season.id)
+        .eq("stage.status", "published");
+
+      if (resultsError) throw resultsError;
+
+      const totals = {};
+
+      registeredPlayers.forEach(player => {
+        totals[player.id] = {
+          name: player.display_name,
+          points: 0,
+          firstPlaces: 0,
+          stagesPlayed: 0
+        };
+      });
+
+      results.forEach(result => {
+        if (!result.player) return;
+
+        const id = result.player.id;
+
+        if (!totals[id]) {
+          totals[id] = {
+            name: result.player.display_name,
+            points: 0,
+            firstPlaces: 0,
+            stagesPlayed: 0
+          };
+        }
+
+        totals[id].points += Number(result.points);
+        totals[id].stagesPlayed += 1;
+
+        if (Number(result.position) === 1) {
+          totals[id].firstPlaces += 1;
+        }
+      });
+
+      players = Object.values(totals).sort((a, b) =>
+        b.points - a.points ||
+        b.firstPlaces - a.firstPlaces ||
+        b.stagesPlayed - a.stagesPlayed
+      );
+
+      renderRanking(players);
+      renderPodium(players);
+
+    } catch (error) {
+      console.error("Erro ao carregar ranking:", error);
+
+      tbody.innerHTML =
+        '<tr><td colspan="3" class="empty">Não foi possível carregar o ranking. Verifique o banco de dados.</td></tr>';
+
+      seasonName.textContent = "Erro ao consultar temporada";
+    }
+  }
+
+  document.getElementById("search").addEventListener(
+    "input",
+    filterPlayers
+  );
+
+  async function iniciar() {
+    await testarConexao();
+    await carregarRanking();
+  }
+
+  iniciar();
+</script>
 
 </body>
 </html>
