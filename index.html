@@ -141,7 +141,9 @@ async function loadRanking(){
  const totals={};ps.forEach(p=>totals[p.id]={id:p.id,name:p.display_name,points:0,firstPlaces:0,stagesPlayed:0,adjustment:0});
  rs.forEach(r=>{if(!r.player)return;const t=totals[r.player.id]||(totals[r.player.id]={id:r.player.id,name:r.player.display_name,points:0,firstPlaces:0,stagesPlayed:0,adjustment:0});t.points+=Number(r.points)||0;t.stagesPlayed++;if(Number(r.position)===1)t.firstPlaces++});
  (adj||[]).forEach(a=>{if(totals[a.player_id]){totals[a.player_id].adjustment=Number(a.points_adjustment)||0;totals[a.player_id].points+=totals[a.player_id].adjustment}});
- players=Object.values(totals).sort((a,b)=>b.points-a.points||b.firstPlaces-a.firstPlaces||b.stagesPlayed-a.stagesPlayed||a.name.localeCompare(b.name,"pt-BR"));
+players=Object.values(totals)
+.filter(p=>p.points>0 && p.stagesPlayed>0)
+.sort((a,b)=>b.points-a.points||b.firstPlaces-a.firstPlaces||b.stagesPlayed-a.stagesPlayed||a.name.localeCompare(b.name,"pt-BR"));
  filterRanking();renderPodium(players);
 }
 function filterRanking(){const q=$("search").value.toLowerCase().trim();renderRanking(players.filter(p=>p.name.toLowerCase().includes(q)))}
