@@ -69,13 +69,52 @@ footer{text-align:center;color:#666;font-size:11px;padding:35px 15px;border-top:
  <div><div class="eyebrow">COMPETIÇÃO • POKERZONE</div><h1>POKER<span>ZONE</span></h1><div class="season-info" id="season-name">Carregando temporada...</div></div>
  <div class="row"><div class="status" id="season-status"><span>●</span> Verificando</div><button class="btn secondary" id="login-open">Área administrativa</button><button class="btn secondary hidden" id="logout-btn">Sair</button></div>
 </section>
-<nav class="tabs"><button class="tab active" data-tab="ranking-view">Ranking geral</button><button class="tab" data-tab="stages-view">Etapas</button></nav>
+<nav class="tabs">
+  <button class="tab active" data-tab="ranking-view">Ranking geral</button>
+  <button class="tab" data-tab="final-ranking-view">Ranking final</button>
+  <button class="tab" data-tab="stages-view">Etapas</button>
+</nav>
 <section id="ranking-view">
  <h2 class="section-title">Pódio da temporada</h2><section class="podium" id="podium"></section>
  <h2 class="section-title">Classificação completa</h2>
  <section class="box"><div class="box-head"><h2>RANKING DA TEMPORADA</h2><input class="search" id="search" type="search" placeholder="Pesquisar jogador..." autocomplete="off"></div>
  <div class="table-wrap"><table><thead><tr><th>POS.</th><th>JOGADOR</th><th>PONTOS</th><th>ETAPAS</th></tr></thead><tbody id="ranking"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table></div></section>
 </section>
+ 
+</section>
+
+<section id="final-ranking-view" class="hidden">
+  <h2 class="section-title">Classificação final</h2>
+  <div class="notice">
+    Ranking com descarte dos 3 piores resultados de cada jogador,
+    incluindo etapas não disputadas.
+  </div>
+
+  <section class="box">
+    <div class="box-head">
+      <h2>RANKING FINAL DA TEMPORADA</h2>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>POS.</th>
+            <th>JOGADOR</th>
+            <th>PONTOS FINAIS</th>
+            <th>DESCARTES</th>
+          </tr>
+        </thead>
+        <tbody id="final-ranking">
+          <tr>
+            <td colspan="4" class="empty">Carregando...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+
 <section id="stages-view" class="hidden">
  <div class="box"><div class="box-head"><h2>ETAPAS DA TEMPORADA</h2><button class="btn admin-only" id="new-stage">+ Criar etapa</button></div>
  <div id="stage-list"><div class="empty">Carregando etapas...</div></div></div>
