@@ -1006,6 +1006,81 @@ input:focus,select:focus {
     font-size: 10px;
   }
 }
+ /* TELA INICIAL DOS TORNEIOS */
+#home-tournaments {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 45px 20px;
+}
+
+.home-header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.home-header h1 {
+  font-size: clamp(38px, 7vw, 58px);
+  color: #ed3038;
+  letter-spacing: -2px;
+}
+
+.home-header p {
+  color: #999;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.home-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+
+.home-actions button {
+  min-width: 180px;
+}
+
+#home-tournaments .box {
+  margin-bottom: 18px;
+}
+
+#home-tournaments .panel-pad {
+  padding: 20px;
+}
+
+#home-tournaments label {
+  display: block;
+  margin: 14px 0 7px;
+  color: #ccc;
+  font-size: 13px;
+}
+
+#home-tournaments input,
+#home-tournaments textarea,
+#home-tournaments select {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+#home-tournaments #save-new-tournament {
+  margin-top: 15px;
+}
+
+@media (max-width: 600px) {
+  #home-tournaments {
+    padding: 30px 12px;
+  }
+
+  .home-actions {
+    flex-direction: column;
+  }
+
+  .home-actions button {
+    width: 100%;
+  }
+}
 </style>
 </head>
 <body>
@@ -1013,6 +1088,7 @@ input:focus,select:focus {
 <main>
  <!-- TELA INICIAL DOS TORNEIOS -->
 <section id="home-tournaments">
+
   <div class="home-header">
     <h1>POKERZONE</h1>
     <p>Escolha um torneio para continuar</p>
@@ -1022,73 +1098,80 @@ input:focus,select:focus {
     <button id="create-tournament-btn" class="btn">
       + Criar torneio
     </button>
-   <div id="create-tournament-area" class="box hidden">
-  <div class="box-head">
-    <h2>CRIAR TORNEIO</h2>
-    <button id="close-create-tournament" class="btn secondary">
-      Fechar
-    </button>
-  </div>
-
-  <div class="panel-pad">
-    <label for="new-tournament-name">Nome do torneio</label>
-    <input id="new-tournament-name" type="text" placeholder="Ex.: PokerZone 2027">
-
-    <label for="new-tournament-description">Descrição (opcional)</label>
-    <textarea id="new-tournament-description" placeholder="Descreva o torneio..."></textarea>
-
-    <label for="new-tournament-start">Data de início</label>
-    <input id="new-tournament-start" type="date">
-
-    <label for="new-tournament-end">Data de término</label>
-    <input id="new-tournament-end" type="date">
-
-    <label for="new-tournament-visibility">Visibilidade</label>
-    <select id="new-tournament-visibility">
-      <option value="true">Público</option>
-      <option value="false">Privado</option>
-    </select>
-
-    <button id="save-new-tournament" class="btn">
-      Criar torneio
-    </button>
-    <p id="create-tournament-message"></p>
-  </div>
-</div>
 
     <button id="search-tournament-btn" class="btn secondary">
       Buscar torneio
     </button>
   </div>
 
+  <!-- FORMULÁRIO DE CRIAÇÃO -->
+  <div id="create-tournament-area" class="box hidden">
+    <div class="box-head">
+      <h2>CRIAR TORNEIO</h2>
+      <button id="close-create-tournament" class="btn secondary">
+        Fechar
+      </button>
+    </div>
+
+    <div class="panel-pad">
+      <label for="new-tournament-name">Nome do torneio</label>
+      <input id="new-tournament-name" type="text" placeholder="Ex.: PokerZone 2027">
+
+      <label for="new-tournament-description">Descrição (opcional)</label>
+      <textarea id="new-tournament-description" placeholder="Descreva o torneio..."></textarea>
+
+      <label for="new-tournament-start">Data de início</label>
+      <input id="new-tournament-start" type="date">
+
+      <label for="new-tournament-end">Data de término</label>
+      <input id="new-tournament-end" type="date">
+
+      <label for="new-tournament-visibility">Visibilidade</label>
+      <select id="new-tournament-visibility">
+        <option value="true">Público</option>
+        <option value="false">Privado</option>
+      </select>
+
+      <button id="save-new-tournament" class="btn">
+        Criar torneio
+      </button>
+      <p id="create-tournament-message"></p>
+    </div>
+  </div>
+
+  <!-- ÁREA DE BUSCA -->
+  <div id="tournament-search-area" class="box hidden">
+    <div class="box-head">
+      <h2>BUSCAR TORNEIO</h2>
+      <button id="close-tournament-search" class="btn secondary">
+        Fechar
+      </button>
+    </div>
+
+    <div class="panel-pad">
+      <input
+        type="text"
+        id="tournament-search-input"
+        placeholder="Digite o nome do torneio..."
+      >
+
+      <div id="tournament-search-results">
+        <div class="empty">Digite o nome de um torneio para pesquisar.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TORNEIOS RECENTES -->
   <div class="box">
     <div class="box-head">
       <h2>TORNEIOS RECENTES</h2>
-     <div id="tournament-search-area" class="box hidden">
-  <div class="box-head">
-    <h2>BUSCAR TORNEIO</h2>
-    <button id="close-tournament-search" class="btn secondary">
-      Fechar
-    </button>
-  </div>
-
-  <div class="panel-pad">
-    <input
-      type="text"
-      id="tournament-search-input"
-      placeholder="Digite o nome do torneio..."
-    >
-
-    <div id="tournament-search-results">
-      <div class="empty">Digite o nome de um torneio para pesquisar.</div>
     </div>
-  </div>
-</div>
-    </div>
+
     <div id="recent-tournaments-list">
       <div class="empty">Seus torneios acessados aparecerão aqui.</div>
     </div>
   </div>
+
 </section>
 <section class="season hidden" id="tournament-app">
  <div>
@@ -1102,7 +1185,7 @@ input:focus,select:focus {
   <button class="btn secondary" id="login-open">Área administrativa</button>
   <button class="btn secondary hidden" id="logout-btn">Sair</button>
  </div>
-</section>
+
 <nav class="tabs">
   <button class="tab active" data-tab="ranking-view">Ranking geral</button>
   <button class="tab" data-tab="final-ranking-view">Ranking final</button>
@@ -1172,7 +1255,6 @@ input:focus,select:focus {
   </div>
  </section>
 
-</section>
 
 </section>
 
@@ -1232,6 +1314,8 @@ input:focus,select:focus {
  </div>
 
 </div>
+</section>
+
 </section>
 <div id="login-box" class="box hidden"><div class="box-head"><h2>ACESSO ADMINISTRATIVO</h2><button class="btn secondary" id="login-close">Fechar</button></div><div class="form-grid"><label>Email<input id="email" type="email" autocomplete="username"></label><label>Senha<input id="password" type="password" autocomplete="current-password"></label><div class="actions"><button class="btn" id="login-btn">Entrar</button></div></div><div class="panel-pad" id="login-message"></div></div>
 </main>
@@ -1493,8 +1577,18 @@ async function loadRanking(){
  if(!s){
   $("season-name").textContent="Nenhuma temporada ativa";
   $("season-status").textContent="Temporada não iniciada";
+
+  players = [];
+  $("ranking-body").innerHTML =
+    '<tr><td colspan="4" class="empty">Nenhum resultado disponível.</td></tr>';
+  $("final-ranking").innerHTML =
+    '<tr><td colspan="5" class="empty">Nenhum resultado disponível.</td></tr>';
+
+  renderPodium([]);
+  renderFinalPodium([]);
+
   return;
- }
+}
 
  $("season-name").textContent=s.name;
  $("season-status").innerHTML="<span>●</span> Temporada ativa";
@@ -2323,7 +2417,9 @@ async function saveStage() {
   await refreshAll();
 }
  $("save-stage").addEventListener("click", saveStage);
+ 
 async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){console.error(e);msg("Erro: "+e.message)}}
+ 
  async function openTournament(selectedTournament){
   tournament = selectedTournament;
 
