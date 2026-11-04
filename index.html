@@ -1189,6 +1189,38 @@ input:focus,select:focus {
   </div>
 </div>
 
+ <!-- ÁREA INTERNA DO CLUBE -->
+<div id="club-details-area" class="box hidden">
+  <div class="box-head">
+    <h2 id="club-details-title">CLUBE</h2>
+
+    <button id="close-club-details" class="btn secondary">
+      Voltar
+    </button>
+  </div>
+
+  <div class="panel-pad">
+    <p id="club-details-city"></p>
+    <p id="club-details-description"></p>
+
+    <h3>GERENCIAMENTO DO CLUBE</h3>
+
+    <div class="home-actions">
+      <button class="btn" id="club-tournaments-btn">
+        Torneios
+      </button>
+
+      <button class="btn secondary" id="club-organizers-btn">
+        Organizadores
+      </button>
+
+      <button class="btn secondary" id="club-settings-btn">
+        Configurações
+      </button>
+    </div>
+  </div>
+</div>
+
   <!-- ÁREA DE BUSCA -->
   <div id="tournament-search-area" class="box hidden">
     <div class="box-head">
@@ -2496,6 +2528,10 @@ $("new-club-btn").addEventListener("click", () => {
   $("new-club-form").classList.toggle("hidden");
 });
  $("save-new-club").addEventListener("click", createClub);
+ $("close-club-details").addEventListener("click", () => {
+  $("club-details-area").classList.add("hidden");
+  $("manage-clubs-area").classList.remove("hidden");
+});
 
 $("close-create-tournament").addEventListener("click", () => {
   $("create-tournament-area").classList.add("hidden");
@@ -2597,7 +2633,28 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
     message.textContent = "Erro ao cadastrar clube: " + error.message;
   }
 }
+async function openClub(clubId) {
+  const { data: club, error } = await db
+    .from("clubs")
+    .select("id, name, city, state, description")
+    .eq("id", clubId)
+    .single();
 
+  if (error) {
+    alert("Erro ao abrir clube: " + error.message);
+    return;
+  }
+
+  $("manage-clubs-area").classList.add("hidden");
+  $("club-details-area").classList.remove("hidden");
+
+  $("club-details-title").textContent = club.name;
+  $("club-details-city").textContent =
+    (club.city || "") + " - " + (club.state || "");
+
+  $("club-details-description").textContent =
+    club.description || "Nenhuma descrição cadastrada.";
+}
  async function loadClubs() {
   const list = $("clubs-list");
 
@@ -2621,11 +2678,20 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
 
   list.innerHTML = clubs.map(club => `
     <div class="box" style="margin-top:12px;">
-      <h3>${escapeHtml(club.name)}</h3>
-      <p>${escapeHtml(club.city || "")} - ${escapeHtml(club.state || "")}</p>
-      <p>${escapeHtml(club.description || "")}</p>
-    </div>
+  <h3>${escapeHtml(club.name)}</h3>
+  <p>${escapeHtml(club.city || "")} - ${escapeHtml(club.state || "")}</p>
+  <p>${escapeHtml(club.description || "")}</p>
+
+  <button class="btn open-club-btn" data-club-id="${club.id}">
+    Abrir clube
+  </button>
+</div>
   `).join("");
+    list.querySelectorAll(".open-club-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      openClub(button.dataset.clubId);
+    });
+  });
 }
 
  async function createTournament() {
