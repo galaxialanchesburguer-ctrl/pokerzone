@@ -1069,19 +1069,20 @@ function renderRanking(list){
   </tr>
  `).join("");
 }
- $("ranking").addEventListener("click", event => {
-  const button = event.target.closest(".player-profile-link");
-
-  if (!button) return;
-
-  openPlayerProfile(button.dataset.playerId);
-  $("final-ranking").addEventListener("click", event => {
+$("ranking").addEventListener("click", event => {
   const button = event.target.closest(".player-profile-link");
 
   if (!button) return;
 
   openPlayerProfile(button.dataset.playerId);
 });
+
+$("final-ranking").addEventListener("click", event => {
+  const button = event.target.closest(".player-profile-link");
+
+  if (!button) return;
+
+  openPlayerProfile(button.dataset.playerId);
 });
 
 $("back-to-ranking").addEventListener("click", () => {
