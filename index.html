@@ -788,6 +788,109 @@ input:focus,select:focus {
     font-size: 16px;
   }
 }
+ /* ===== QUADRO ÚNICO DE DESCARTES ===== */
+
+.profile-discard-card {
+  background: #1c1c1c;
+  border: 1px solid #383838;
+  border-radius: 12px;
+  padding: 18px;
+  margin: 15px 0 25px;
+}
+
+.profile-discard-card h3 {
+  color: #bbb;
+  font-size: 12px;
+  text-align: center;
+  margin: 0 0 18px;
+  letter-spacing: 1px;
+}
+
+.profile-discard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.profile-discard-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.profile-discard-item strong {
+  color: #f5443b;
+  font-size: 22px;
+}
+
+.profile-discard-item span {
+  color: #eee;
+  font-size: 12px;
+}
+
+.profile-discard-item small {
+  color: #999;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.profile-discard-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid #383838;
+  margin-top: 18px;
+  padding-top: 14px;
+}
+
+.profile-discard-total span {
+  color: #bbb;
+  font-size: 12px;
+}
+
+.profile-discard-total strong {
+  color: #f5443b;
+  font-size: 16px;
+}
+
+@media(max-width:600px) {
+  .profile-discard-card {
+    padding: 14px 10px;
+  }
+
+  .profile-discard-item strong {
+    font-size: 19px;
+  }
+
+  .profile-discard-item span,
+  .profile-discard-item small {
+    font-size: 10px;
+  }
+
+  .profile-discard-total strong {
+    font-size: 14px;
+  }
+}
+ .player-profile-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: normal;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.player-profile-link:hover {
+  color: #f5443b;
+}
 </style>
 </head>
 <body>
@@ -1091,30 +1194,26 @@ $("back-to-ranking").addEventListener("click", () => {
         </div>
       </div>
 
-      <h3>Os 3 resultados descartados</h3>
+     <div class="profile-discard-card">
+  <h3>TRÊS RESULTADOS DESCARTADOS</h3>
 
-      <div class="profile-discard-list">
-        ${discarded.map(item=>`
-          <div class="profile-discard-item">
-            <span>
-              ${esc(item.stage.name||"Etapa "+item.stage.stage_number)}
-              ${!item.played?'<small>Não participou</small>':""}
-            </span>
-            <strong>${item.points.toLocaleString("pt-BR")} pts</strong>
-          </div>
-        `).join("")||'<div class="empty">Ainda não há etapas para descarte.</div>'}
+  <div class="profile-discard-grid">
+    ${discarded.map((item,i)=>`
+      <div class="profile-discard-item">
+        <strong>${item.points.toLocaleString("pt-BR")}</strong>
+        <span>Descarte ${i+1}</span>
+        <small>
+          ${esc(item.stage.name||"Etapa "+item.stage.stage_number)}
+        </small>
       </div>
+    `).join("")||'<div class="empty">Sem descartes disponíveis.</div>'}
+  </div>
 
-      <div class="profile-final-total">
-        <span>Conta da pontuação final</span>
-        <strong>
-          ${totalPoints.toLocaleString("pt-BR")}
-          − ${discardedPoints.toLocaleString("pt-BR")}
-          ${adjustment!==0?(adjustment>0?"+ ":"− ")+Math.abs(adjustment).toLocaleString("pt-BR"):""}
-          = ${finalPoints.toLocaleString("pt-BR")} pontos
-        </strong>
-        <small>Os três piores resultados são descontados.</small>
-      </div>
+  <div class="profile-discard-total">
+    <span>Total descartado</span>
+    <strong>${discardedPoints.toLocaleString("pt-BR")} pontos</strong>
+  </div>
+</div>
 
       <h3>Histórico de etapas</h3>
 
