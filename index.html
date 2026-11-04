@@ -631,6 +631,83 @@ input:focus,select:focus {
     width: 31%;
   }
 }
+ /* ===== PERFIL DO JOGADOR ===== */
+
+.profile-header {
+  text-align: center;
+  padding: 25px 15px;
+}
+
+.profile-photo {
+  width: 105px;
+  height: 105px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #f5443b;
+  margin: 0 auto 12px;
+  display: block;
+}
+
+.profile-photo-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #252525;
+  color: #f5443b;
+  font-size: 42px;
+}
+
+.profile-header h2 {
+  margin: 8px 0 4px;
+  color: #fff;
+}
+
+.profile-header p {
+  color: #aaa;
+  margin: 0;
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 15px 0 25px;
+}
+
+.profile-stat {
+  background: #1c1c1c;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 16px 8px;
+  text-align: center;
+}
+
+.profile-stat strong {
+  display: block;
+  color: #f5443b;
+  font-size: 22px;
+  margin-bottom: 5px;
+}
+
+.profile-stat span {
+  color: #bbb;
+  font-size: 12px;
+}
+
+#profile-content h3 {
+  color: #fff;
+  margin: 20px 0 12px;
+}
+
+@media(max-width:600px) {
+  .profile-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .profile-stat strong {
+    font-size: 19px;
+  }
+}
 </style>
 </head>
 <body>
@@ -711,6 +788,27 @@ input:focus,select:focus {
 
 </section>
 
+</section>
+
+<!-- PERFIL DO JOGADOR -->
+<section id="player-profile-view" class="hidden">
+
+  <div class="box">
+    <div class="box-head">
+      <button class="btn secondary" id="back-to-ranking">
+        ← Voltar ao ranking
+      </button>
+    </div>
+
+    <div class="panel-pad">
+      <div id="profile-content">
+        <div class="empty">Carregando perfil...</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
 <section id="stages-view" class="hidden">
  <div class="box"><div class="box-head"><h2>ETAPAS DA TEMPORADA</h2><button class="btn admin-only" id="new-stage">+ Criar etapa</button></div>
  <div id="stage-list"><div class="empty">Carregando etapas...</div></div></div>
@@ -763,12 +861,145 @@ function showTab(id){
 
   $("ranking-view").classList.toggle("hidden",id!=="ranking-view");
   $("final-ranking-view").classList.toggle("hidden",id!=="final-ranking-view");
+  $("player-profile-view").classList.toggle("hidden",id!=="player-profile-view");
   $("stages-view").classList.toggle("hidden",id!=="stages-view");
 }
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
 function renderRanking(list){
- const tb=$("ranking");if(!list.length){tb.innerHTML='<tr><td colspan="4" class="empty">Nenhum jogador encontrado.</td></tr>';return}
- tb.innerHTML=list.map((p,i)=>`<tr><td class="rank-number">${i+1}º</td><td class="player-cell">${esc(p.name)}</td><td class="points-cell">${p.points.toLocaleString("pt-BR")}</td><td>${p.stagesPlayed}</td></tr>`).join("");
+ const tb=$("ranking");
+
+ if(!list.length){
+  tb.innerHTML='<tr><td colspan="4" class="empty">Nenhum jogador encontrado.</td></tr>';
+  return;
+ }
+
+ tb.innerHTML=list.map((p,i)=>`
+  <tr>
+   <td class="rank-number">${i+1}º</td>
+   <td class="player-cell">
+    <button class="player-profile-link" data-player-id="${p.id}">
+     ${esc(p.name)}
+    </button>
+   </td>
+   <td class="points-cell">${p.points.toLocaleString("pt-BR")}</td>
+   <td>${p.stagesPlayed}</td>
+  </tr>
+ `).join("");
+}
+ $("ranking").addEventListener("click", event => {
+  const button = event.target.closest(".player-profile-link");
+
+  if (!button) return;
+
+  openPlayerProfile(button.dataset.playerId);
+});
+
+$("back-to-ranking").addEventListener("click", () => {
+  showTab("ranking-view");
+});
+ async function openPlayerProfile(playerId){
+  showTab("player-profile-view");
+
+  $("profile-content").innerHTML =
+    '<div class="empty">Carregando perfil...</div>';
+
+  try {
+    const {data:player,error:playerError}=await db
+      .from("players")
+      .select("id,full_name,display_name,photo_url")
+      .eq("id",playerId)
+      .single();
+
+    if(playerError)throw playerError;
+
+    const {data:results,error:resultsError}=await db
+      .from("results")
+      .select("points,position,stage:stages!inner(stage_number,name,played_at,season_id,status)")
+      .eq("player_id",playerId)
+      .eq("stage.season_id",season.id)
+      .eq("stage.status","published")
+      .order("played_at",{foreignTable:"stage",ascending:true});
+
+    if(resultsError)throw resultsError;
+
+    const totalPoints=results.reduce((sum,r)=>sum+(Number(r.points)||0),0);
+    const victories=results.filter(r=>Number(r.position)===1).length;
+    const bestPosition=results.length
+      ?Math.min(...results.map(r=>Number(r.position)))
+      :"-";
+
+    const rankingPosition=players.findIndex(p=>p.id===playerId)+1;
+
+    $("profile-content").innerHTML=`
+      <div class="profile-header">
+        ${player.photo_url
+          ?`<img src="${esc(player.photo_url)}" class="profile-photo">`
+          :`<div class="profile-photo profile-photo-empty">♠</div>`}
+
+        <h2>${esc(player.display_name||player.full_name)}</h2>
+        <p>Perfil do jogador</p>
+      </div>
+
+      <div class="profile-stats">
+        <div class="profile-stat">
+          <strong>${rankingPosition>0?rankingPosition+"º":"-"}</strong>
+          <span>Ranking geral</span>
+        </div>
+
+        <div class="profile-stat">
+          <strong>${totalPoints.toLocaleString("pt-BR")}</strong>
+          <span>Pontos</span>
+        </div>
+
+        <div class="profile-stat">
+          <strong>${results.length}</strong>
+          <span>Etapas jogadas</span>
+        </div>
+
+        <div class="profile-stat">
+          <strong>${victories}</strong>
+          <span>Vitórias</span>
+        </div>
+
+        <div class="profile-stat">
+          <strong>${bestPosition}º</strong>
+          <span>Melhor posição</span>
+        </div>
+      </div>
+
+      <h3>Histórico de etapas</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Etapa</th>
+              <th>Data</th>
+              <th>Posição</th>
+              <th>Pontos</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${results.map(r=>`
+              <tr>
+                <td>${esc(r.stage.name||"Etapa "+r.stage.stage_number)}</td>
+                <td>${r.stage.played_at
+                  ?new Date(r.stage.played_at+"T12:00:00").toLocaleDateString("pt-BR")
+                  :"-"}</td>
+                <td>${r.position}º</td>
+                <td>${Number(r.points).toLocaleString("pt-BR")}</td>
+              </tr>
+            `).join("")||'<tr><td colspan="4" class="empty">Nenhuma etapa encontrada.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+  } catch(error) {
+    console.error(error);
+    $("profile-content").innerHTML =
+      '<div class="empty">Não foi possível carregar o perfil.</div>';
+  }
 }
 function renderPodium(list){const positions=[{p:list[1],n:2},{p:list[0],n:1},{p:list[2],n:3}],medals=["🥇","🥈","🥉"];
  $("podium").innerHTML=positions.map(x=>`<div class="podium-card ${x.n===1?"first":""}"><div class="medal">${medals[x.n-1]}</div><div class="player-name">${esc(x.p?.name||"—")}</div><div class="points">${x.p?x.p.points.toLocaleString("pt-BR"):"0"} <small>PTS</small></div><div class="position-label">${x.n}º LUGAR</div></div>`).join("")}
