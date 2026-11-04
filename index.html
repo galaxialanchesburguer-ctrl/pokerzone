@@ -1636,6 +1636,10 @@ function updatePlayerSuggestions() {
 
 const resultsBox = $("stage-results-" + id);
 const resultsContent = $("stage-results-content-" + id);
+  if (!resultsBox.classList.contains("hidden")) {
+  resultsBox.classList.add("hidden");
+  return;
+}
 
 document.querySelectorAll('[id^="stage-results-"]').forEach(element => {
   if (element.classList.contains("box")) {
@@ -1648,9 +1652,6 @@ resultsBox.classList.remove("hidden");
   behavior: "smooth",
   block: "nearest"
 });
-
-$("stage-results-title-" + id).textContent =
-  stage.name || "ETAPA " + stage.stage_number;
 
 resultsContent.innerHTML =
   '<div class="empty">Carregando resultados...</div>';
