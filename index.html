@@ -34,6 +34,20 @@ h1{font-size:clamp(28px,5vw,43px);margin:10px 0;font-weight:900;font-style:itali
 .box{background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-bottom:20px}
 .box-head{display:flex;justify-content:space-between;align-items:center;padding:18px;gap:12px;flex-wrap:wrap}
 .box-head h2{font-size:16px}
+ #stage-list-box > .box-head {
+  flex-wrap: nowrap;
+}
+
+#stage-list-box > .box-head h2 {
+  flex: 1;
+  width: auto;
+  margin: 0;
+}
+
+#stage-list-box > .box-head button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 input,select,textarea{background:#101010;color:#fff;border:1px solid #383838;border-radius:5px;padding:11px 12px;outline:none;max-width:100%}
 input:focus,select:focus,textarea:focus{border-color:var(--red)}
 .search{width:min(100%,270px)}
