@@ -708,6 +708,86 @@ input:focus,select:focus {
     font-size: 19px;
   }
 }
+ /* ===== DESCARTES E PONTUAÇÃO FINAL ===== */
+
+.profile-discard-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.profile-discard-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: #1c1c1c;
+  border: 1px solid #383838;
+  border-left: 3px solid #f5443b;
+  border-radius: 10px;
+  padding: 13px;
+  color: #eee;
+}
+
+.profile-discard-item strong {
+  color: #f5443b;
+  white-space: nowrap;
+}
+
+.profile-discard-item small {
+  display: block;
+  color: #999;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.profile-final-total {
+  background: #251817;
+  border: 1px solid #71332f;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 15px 0 25px;
+}
+
+.profile-final-total span,
+.profile-final-total small {
+  display: block;
+  color: #bbb;
+  font-size: 12px;
+}
+
+.profile-final-total strong {
+  display: block;
+  color: #fff;
+  font-size: 19px;
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-final-total small {
+  color: #aaa;
+}
+
+.discard-tag {
+  display: inline-block;
+  background: #44201e;
+  color: #ff7770;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+@media(max-width:600px) {
+  .profile-discard-item {
+    padding: 11px 9px;
+    font-size: 13px;
+  }
+
+  .profile-final-total strong {
+    font-size: 16px;
+  }
+}
 </style>
 </head>
 <body>
@@ -912,17 +992,56 @@ $("back-to-ranking").addEventListener("click", () => {
 
     if(playerError)throw playerError;
 
-    const {data:results,error:resultsError}=await db
-      .from("results")
-      .select("points,position,stage:stages!inner(stage_number,name,played_at,season_id,status)")
-      .eq("player_id",playerId)
-      .eq("stage.season_id",season.id)
-      .eq("stage.status","published")
-      .order("played_at",{foreignTable:"stage",ascending:true});
+    const [
+      {data:results,error:resultsError},
+      {data:stages,error:stagesError},
+      {data:adjustments,error:adjustmentsError}
+    ]=await Promise.all([
+      db.from("results")
+        .select("points,position,stage:stages!inner(id,stage_number,name,played_at,season_id,status)")
+        .eq("player_id",playerId)
+        .eq("stage.season_id",season.id)
+        .eq("stage.status","published"),
+
+      db.from("stages")
+        .select("id,stage_number,name,played_at")
+        .eq("season_id",season.id)
+        .eq("status","published")
+        .order("stage_number"),
+
+      db.from("season_player_adjustments")
+        .select("points_adjustment")
+        .eq("season_id",season.id)
+        .eq("player_id",playerId)
+        .maybeSingle()
+    ]);
 
     if(resultsError)throw resultsError;
+    if(stagesError)throw stagesError;
+    if(adjustmentsError)throw adjustmentsError;
 
-    const totalPoints=results.reduce((sum,r)=>sum+(Number(r.points)||0),0);
+    const history=stages.map(stage=>{
+      const result=results.find(r=>r.stage.id===stage.id);
+
+      return {
+        stage,
+        points:result?Number(result.points)||0:0,
+        position:result?Number(result.position):null,
+        played:!!result
+      };
+    });
+
+    const discarded=[...history]
+      .sort((a,b)=>a.points-b.points||a.stage.stage_number-b.stage.stage_number)
+      .slice(0,3);
+
+    const discardedIds=new Set(discarded.map(item=>item.stage.id));
+
+    const totalPoints=history.reduce((sum,item)=>sum+item.points,0);
+    const discardedPoints=discarded.reduce((sum,item)=>sum+item.points,0);
+    const adjustment=Number(adjustments?.points_adjustment)||0;
+    const finalPoints=totalPoints-discardedPoints+adjustment;
+
     const victories=results.filter(r=>Number(r.position)===1).length;
     const bestPosition=results.length
       ?Math.min(...results.map(r=>Number(r.position)))
@@ -948,7 +1067,12 @@ $("back-to-ranking").addEventListener("click", () => {
 
         <div class="profile-stat">
           <strong>${totalPoints.toLocaleString("pt-BR")}</strong>
-          <span>Pontos</span>
+          <span>Pontos acumulados</span>
+        </div>
+
+        <div class="profile-stat">
+          <strong>${finalPoints.toLocaleString("pt-BR")}</strong>
+          <span>Pontuação final</span>
         </div>
 
         <div class="profile-stat">
@@ -967,6 +1091,31 @@ $("back-to-ranking").addEventListener("click", () => {
         </div>
       </div>
 
+      <h3>Os 3 resultados descartados</h3>
+
+      <div class="profile-discard-list">
+        ${discarded.map(item=>`
+          <div class="profile-discard-item">
+            <span>
+              ${esc(item.stage.name||"Etapa "+item.stage.stage_number)}
+              ${!item.played?'<small>Não participou</small>':""}
+            </span>
+            <strong>${item.points.toLocaleString("pt-BR")} pts</strong>
+          </div>
+        `).join("")||'<div class="empty">Ainda não há etapas para descarte.</div>'}
+      </div>
+
+      <div class="profile-final-total">
+        <span>Conta da pontuação final</span>
+        <strong>
+          ${totalPoints.toLocaleString("pt-BR")}
+          − ${discardedPoints.toLocaleString("pt-BR")}
+          ${adjustment!==0?(adjustment>0?"+ ":"− ")+Math.abs(adjustment).toLocaleString("pt-BR"):""}
+          = ${finalPoints.toLocaleString("pt-BR")} pontos
+        </strong>
+        <small>Os três piores resultados são descontados.</small>
+      </div>
+
       <h3>Histórico de etapas</h3>
 
       <div class="table-wrap">
@@ -977,19 +1126,21 @@ $("back-to-ranking").addEventListener("click", () => {
               <th>Data</th>
               <th>Posição</th>
               <th>Pontos</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            ${results.map(r=>`
+            ${history.map(item=>`
               <tr>
-                <td>${esc(r.stage.name||"Etapa "+r.stage.stage_number)}</td>
-                <td>${r.stage.played_at
-                  ?new Date(r.stage.played_at+"T12:00:00").toLocaleDateString("pt-BR")
+                <td>${esc(item.stage.name||"Etapa "+item.stage.stage_number)}</td>
+                <td>${item.stage.played_at
+                  ?new Date(item.stage.played_at+"T12:00:00").toLocaleDateString("pt-BR")
                   :"-"}</td>
-                <td>${r.position}º</td>
-                <td>${Number(r.points).toLocaleString("pt-BR")}</td>
+                <td>${item.played?item.position+"º":"-"}</td>
+                <td>${item.points.toLocaleString("pt-BR")}</td>
+                <td>${discardedIds.has(item.stage.id)?'<span class="discard-tag">Descartado</span>':""}</td>
               </tr>
-            `).join("")||'<tr><td colspan="4" class="empty">Nenhuma etapa encontrada.</td></tr>'}
+            `).join("")}
           </tbody>
         </table>
       </div>
