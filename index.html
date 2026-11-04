@@ -891,6 +891,107 @@ input:focus,select:focus {
 .player-profile-link:hover {
   color: #f5443b;
 }
+ .stage-results-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 18px;
+  margin: 18px 0;
+  background: #171717;
+  border: 1px solid #333;
+  border-radius: 10px;
+}
+
+.stage-results-summary span {
+  color: #999;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.stage-results-summary strong {
+  color: #fff;
+  margin-right: 18px;
+}
+
+.stage-results-heading {
+  margin: 24px 0 14px;
+  color: #fff;
+  font-size: 15px;
+}
+
+.stage-podium {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.stage-podium-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 22px 10px;
+  text-align: center;
+  background: #191919;
+  border: 1px solid #383838;
+  border-radius: 10px;
+}
+
+.stage-podium-item:first-child {
+  border-color: #f5443b;
+}
+
+.stage-podium-item span {
+  color: #f5443b;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.stage-podium-item strong {
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.stage-podium-item small {
+  color: #bbb;
+}
+
+.stage-results-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-weight: bold;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stage-results-link:hover {
+  color: #f5443b;
+}
+
+@media (max-width: 600px) {
+  .stage-podium {
+    gap: 6px;
+  }
+
+  .stage-podium-item {
+    padding: 16px 5px;
+    gap: 8px;
+  }
+
+  .stage-podium-item strong {
+    font-size: 12px;
+  }
+
+  .stage-podium-item small {
+    font-size: 10px;
+  }
+}
 </style>
 </head>
 <body>
@@ -993,7 +1094,7 @@ input:focus,select:focus {
 </section>
 
 <section id="stages-view" class="hidden">
- <div class="box"><div class="box-head"><h2>ETAPAS DA TEMPORADA</h2><button class="btn admin-only" id="new-stage">+ Criar etapa</button></div>
+ <div class="box"><div class="box" id="stage-list-box"><h2>ETAPAS DA TEMPORADA</h2><button class="btn admin-only" id="new-stage">+ Criar etapa</button></div>
  <div id="stage-list"><div class="empty">Carregando etapas...</div></div></div>
  <div id="stage-editor" class="box hidden">
   <div class="box-head"><h2 id="editor-title">Editar etapa</h2><div class="actions"><button class="btn secondary" id="close-editor">Fechar</button><button class="btn admin-only" id="save-stage">Salvar etapa e resultados</button></div></div>
@@ -1023,6 +1124,22 @@ input:focus,select:focus {
   </div>
   <div class="table-wrap"><table class="editor-table"><thead><tr><th>JOGADOR</th><th>POSIÇÃO</th><th>PONTOS</th><th class="admin-only">AÇÃO</th></tr></thead><tbody id="result-rows"><tr><td colspan="4" class="empty">Selecione uma etapa.</td></tr></tbody></table></div>
  </div>
+ <!-- VISUALIZAÇÃO DOS RESULTADOS DA ETAPA -->
+<div id="stage-results-view" class="box hidden">
+
+  <div class="box-head">
+    <h2 id="stage-results-title">RESULTADO DA ETAPA</h2>
+
+    <button class="btn secondary" id="back-to-stages">
+      ← Voltar às etapas
+    </button>
+  </div>
+
+  <div id="stage-results-content">
+    <div class="empty">Carregando resultados...</div>
+  </div>
+
+</div>
 </section>
 <div id="login-box" class="box hidden"><div class="box-head"><h2>ACESSO ADMINISTRATIVO</h2><button class="btn secondary" id="login-close">Fechar</button></div><div class="form-grid"><label>Email<input id="email" type="email" autocomplete="username"></label><label>Senha<input id="password" type="password" autocomplete="current-password"></label><div class="actions"><button class="btn" id="login-btn">Entrar</button></div></div><div class="panel-pad" id="login-message"></div></div>
 </main>
@@ -1087,6 +1204,11 @@ $("final-ranking").addEventListener("click", event => {
 
 $("back-to-ranking").addEventListener("click", () => {
   showTab("ranking-view");
+});
+ $("back-to-stages").addEventListener("click", () => {
+  $("stage-results-view").classList.add("hidden");
+  $("stage-list-box").classList.remove("hidden");
+  showTab("stages-view");
 });
  async function openPlayerProfile(playerId){
   showTab("player-profile-view");
@@ -1469,7 +1591,9 @@ async function loadStages() {
       ? stages.map(s => `
           <div class="stage-item">
             <div>
-              <strong>${esc(s.name || "ETAPA " + s.stage_number)}</strong>
+              <button class="stage-results-link" data-stage-results="${s.id}">
+  ${esc(s.name || "ETAPA " + s.stage_number)}
+</button>
               <small>${new Date(s.played_at + "T12:00:00").toLocaleDateString("pt-BR")} • ${s.status === "published" ? "Publicada" : "Rascunho"}</small>
             </div>
             <div class="actions">
@@ -1485,6 +1609,11 @@ async function loadStages() {
     document.querySelectorAll("[data-edit-stage]").forEach(b => {
       b.addEventListener("click", () => openStage(b.dataset.editStage));
     });
+   document.querySelectorAll("[data-stage-results]").forEach(b => {
+  b.addEventListener("click", () => {
+    openStageResults(b.dataset.stageResults);
+  });
+});
 
   } catch (error) {
     console.error("Erro ao carregar etapas:", error);
@@ -1496,6 +1625,93 @@ function updatePlayerSuggestions() {
   $("player-suggestions").innerHTML = players
     .map(p => `<option value="${esc(p.name)}"></option>`)
     .join("");
+}
+ async function openStageResults(id) {
+  const stage = stages.find(s => s.id === id);
+  if (!stage) return;
+
+  $("stage-list-box").classList.add("hidden");
+  $("stage-editor").classList.add("hidden");
+  $("stage-results-view").classList.remove("hidden");
+
+  $("stage-results-title").textContent =
+    stage.name || "ETAPA " + stage.stage_number;
+
+  $("stage-results-content").innerHTML =
+    '<div class="empty">Carregando resultados...</div>';
+
+  const { data, error } = await db
+    .from("results")
+    .select("position,points,player:players(display_name)")
+    .eq("stage_id", id)
+    .order("position");
+
+  if (error) {
+    $("stage-results-content").innerHTML =
+      '<div class="empty">Erro ao carregar os resultados.</div>';
+    console.error(error);
+    return;
+  }
+
+  const results = data || [];
+
+  const date = new Date(
+    stage.played_at + "T12:00:00"
+  ).toLocaleDateString("pt-BR");
+
+  const podium = [1, 2, 3].map(position =>
+    results.find(r => r.position === position)
+  );
+
+  const podiumHtml = podium.map((player, index) => `
+    <div class="stage-podium-item">
+      <span>${index + 1}º LUGAR</span>
+      <strong>${esc(player?.player?.display_name || "—")}</strong>
+      <small>${player ? player.points.toLocaleString("pt-BR") + " pontos" : "—"}</small>
+    </div>
+  `).join("");
+
+  const tableHtml = results.length
+    ? results.map(player => `
+        <tr>
+          <td>${player.position}º</td>
+          <td>${esc(player.player?.display_name || "Jogador")}</td>
+          <td>${player.points.toLocaleString("pt-BR")}</td>
+        </tr>
+      `).join("")
+    : '<tr><td colspan="3" class="empty">Nenhum resultado cadastrado.</td></tr>';
+
+  $("stage-results-content").innerHTML = `
+    <div class="stage-results-summary">
+      <span>DATA</span>
+      <strong>${date}</strong>
+      <span>PARTICIPANTES</span>
+      <strong>${results.length}</strong>
+    </div>
+
+    <h3 class="stage-results-heading">PÓDIO</h3>
+
+    <div class="stage-podium">
+      ${podiumHtml}
+    </div>
+
+    <h3 class="stage-results-heading">CLASSIFICAÇÃO COMPLETA</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>POSIÇÃO</th>
+            <th>JOGADOR</th>
+            <th>PONTOS</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableHtml}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
  async function openStage(id) {
   currentStage = stages.find(s => s.id === id);
