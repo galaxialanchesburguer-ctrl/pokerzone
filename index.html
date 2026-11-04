@@ -1011,9 +1011,97 @@ input:focus,select:focus {
 <body>
 <header><div class="logo">POKER<span>ZONE</span></div><div class="header-tag">RANKING OFICIAL</div></header>
 <main>
-<section class="season">
- <div><div class="eyebrow">RANKING • ATUALIZADO</div><h1>IPC<span>POKER</span></h1><div class="season-info" id="season-name">Carregando temporada...</div></div>
- <div class="row"><div class="status" id="season-status"><span>●</span> Verificando</div><button class="btn secondary" id="login-open">Área administrativa</button><button class="btn secondary hidden" id="logout-btn">Sair</button></div>
+ <!-- TELA INICIAL DOS TORNEIOS -->
+<section id="home-tournaments">
+  <div class="home-header">
+    <h1>POKERZONE</h1>
+    <p>Escolha um torneio para continuar</p>
+  </div>
+
+  <div class="home-actions">
+    <button id="create-tournament-btn" class="btn">
+      + Criar torneio
+    </button>
+   <div id="create-tournament-area" class="box hidden">
+  <div class="box-head">
+    <h2>CRIAR TORNEIO</h2>
+    <button id="close-create-tournament" class="btn secondary">
+      Fechar
+    </button>
+  </div>
+
+  <div class="panel-pad">
+    <label for="new-tournament-name">Nome do torneio</label>
+    <input id="new-tournament-name" type="text" placeholder="Ex.: PokerZone 2027">
+
+    <label for="new-tournament-description">Descrição (opcional)</label>
+    <textarea id="new-tournament-description" placeholder="Descreva o torneio..."></textarea>
+
+    <label for="new-tournament-start">Data de início</label>
+    <input id="new-tournament-start" type="date">
+
+    <label for="new-tournament-end">Data de término</label>
+    <input id="new-tournament-end" type="date">
+
+    <label for="new-tournament-visibility">Visibilidade</label>
+    <select id="new-tournament-visibility">
+      <option value="true">Público</option>
+      <option value="false">Privado</option>
+    </select>
+
+    <button id="save-new-tournament" class="btn">
+      Criar torneio
+    </button>
+    <p id="create-tournament-message"></p>
+  </div>
+</div>
+
+    <button id="search-tournament-btn" class="btn secondary">
+      Buscar torneio
+    </button>
+  </div>
+
+  <div class="box">
+    <div class="box-head">
+      <h2>TORNEIOS RECENTES</h2>
+     <div id="tournament-search-area" class="box hidden">
+  <div class="box-head">
+    <h2>BUSCAR TORNEIO</h2>
+    <button id="close-tournament-search" class="btn secondary">
+      Fechar
+    </button>
+  </div>
+
+  <div class="panel-pad">
+    <input
+      type="text"
+      id="tournament-search-input"
+      placeholder="Digite o nome do torneio..."
+    >
+
+    <div id="tournament-search-results">
+      <div class="empty">Digite o nome de um torneio para pesquisar.</div>
+    </div>
+  </div>
+</div>
+    </div>
+    <div id="recent-tournaments-list">
+      <div class="empty">Seus torneios acessados aparecerão aqui.</div>
+    </div>
+  </div>
+</section>
+<section class="season hidden" id="tournament-app">
+ <div>
+  <button class="btn secondary" id="back-to-tournaments">← Voltar aos torneios</button>
+  <div class="eyebrow">RANKING • ATUALIZADO</div>
+  <h1>IPC<span>POKER</span></h1>
+  <div class="season-info" id="season-name">Carregando temporada...</div>
+ </div>
+ <div class="row">
+  <div class="status" id="season-status"><span>●</span> Verificando</div>
+  <button class="btn secondary" id="login-open">Área administrativa</button>
+  <button class="btn secondary hidden" id="logout-btn">Sair</button>
+ </div>
 </section>
 <nav class="tabs">
   <button class="tab active" data-tab="ranking-view">Ranking geral</button>
@@ -1154,11 +1242,14 @@ input:focus,select:focus {
 const SUPABASE_URL="https://fwwkmpnwsyppctxgetkj.supabase.co";
 const SUPABASE_KEY="sb_publishable_SlbpXf6oi5Bw70ABeYp0Eg_nrZ9bQqm";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let season=null, players=[], stages=[], currentStage=null, editorResults=[], isStaff=false;
+let tournament=null, season=null, players=[], stages=[], currentStage=null, editorResults=[], isStaff=false, isAdmin=false;
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function msg(text){$("connection-status").textContent=text}
 function showTab(id){
+  $("home-tournaments").classList.add("hidden");
+  $("tournament-app").classList.remove("hidden");
+
   document.querySelectorAll(".tab").forEach(b=>{
     b.classList.toggle("active",b.dataset.tab===id);
   });
@@ -1384,9 +1475,19 @@ $("back-to-ranking").addEventListener("click", () => {
 function renderPodium(list){const positions=[{p:list[1],n:2},{p:list[0],n:1},{p:list[2],n:3}],medals=["🥇","🥈","🥉"];
  $("podium").innerHTML=positions.map(x=>`<div class="podium-card ${x.n===1?"first":""}"><div class="medal">${medals[x.n-1]}</div><div class="player-name">${esc(x.p?.name||"—")}</div><div class="points">${x.p?x.p.points.toLocaleString("pt-BR"):"0"} <small>PTS</small></div><div class="position-label">${x.n}º LUGAR</div></div>`).join("")}
 async function loadRanking(){
- const {data:s,error:se}=await db.from("seasons").select("id,name").eq("status","active").limit(1).maybeSingle();
- if(se)throw se;
+ if(!tournament){
+  console.warn("Nenhum torneio selecionado.");
+  return;
+ }
 
+ const {data:s,error:se}=await db
+  .from("seasons")
+  .select("id,name")
+  .eq("tournament_id",tournament.id)
+  .eq("status","active")
+  .maybeSingle();
+
+ if(se)throw se;
  season=s;
 
  if(!s){
@@ -1399,7 +1500,7 @@ async function loadRanking(){
  $("season-status").innerHTML="<span>●</span> Temporada ativa";
 
  const [{data:ps,error:pe},{data:rs,error:re},{data:adj,error:ae},{data:st,error:ste}]=await Promise.all([
-  db.from("players").select("id,display_name").eq("is_active",true),
+ db.from("players").select("id,display_name").eq("is_active",true).eq("tournament_id",tournament.id),
   db.from("results").select("points,position,player:players(id,display_name),stage:stages!inner(id,season_id,status)").eq("stage.season_id",s.id).eq("stage.status","published"),
   db.from("season_player_adjustments").select("player_id,points_adjustment").eq("season_id",s.id),
   db.from("stages").select("id").eq("season_id",s.id).eq("status","published")
@@ -1543,22 +1644,42 @@ $("search").addEventListener("input",filterRanking);
   row.style.display=name.includes(term)?"":"none";
  });
 });
-async function checkSession(){
- const {data:{session}}=await db.auth.getSession();isStaff=false;
- if(session){const {data:profile}=await db.from("profiles").select("role").eq("id",session.user.id).maybeSingle();isStaff=!!profile&&["admin","organizer"].includes(profile.role)}
-document.querySelectorAll(".admin-only").forEach(el => {
-  if (!isStaff) {
-    el.style.display = "none";
-  } else if (el.tagName === "TD" || el.tagName === "TH") {
-    el.style.display = "table-cell";
-  } else if (el.tagName === "DIV") {
-    el.style.display = "block";
-  } else {
-    el.style.display = "inline-block";
+async function checkSession() {
+  const { data: { session } } = await db.auth.getSession();
+
+  isStaff = false;
+  isAdmin = false;
+
+  if (session) {
+    const { data: profile } = await db
+      .from("profiles")
+      .select("role")
+      .eq("id", session.user.id)
+      .maybeSingle();
+
+    isStaff = !!profile && ["admin", "organizer"].includes(profile.role);
+    isAdmin = !!profile && profile.role === "admin";
   }
-});
- $("login-open").classList.toggle("hidden",isStaff);$("logout-btn").classList.toggle("hidden",!isStaff);
- if(isStaff)msg("● Acesso administrativo");else msg("● Consulta pública");
+
+  $("create-tournament-btn").style.display =
+    isAdmin ? "inline-block" : "none";
+
+  document.querySelectorAll(".admin-only").forEach(el => {
+    if (!isStaff) {
+      el.style.display = "none";
+    } else {
+      el.style.removeProperty("display");
+    }
+  });
+
+  $("login-open").classList.toggle("hidden", isStaff);
+  $("logout-btn").classList.toggle("hidden", !isStaff);
+
+  if (isStaff) {
+    msg("● Acesso administrativo");
+  } else {
+    msg("● Consulta pública");
+  }
 }
 async function loadStages() {
   if (!season) {
@@ -2017,10 +2138,11 @@ $("add-player").addEventListener("click", async () => {
     const { data, error } = await db
       .from("players")
       .insert({
-        full_name: name,
-        display_name: name,
-        is_active: true
-      })
+  full_name: name,
+  display_name: name,
+  is_active: true,
+  tournament_id: tournament.id
+})
       .select("id, display_name")
       .single();
 
@@ -2202,12 +2324,246 @@ async function saveStage() {
 }
  $("save-stage").addEventListener("click", saveStage);
 async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){console.error(e);msg("Erro: "+e.message)}}
+ async function openTournament(selectedTournament){
+  tournament = selectedTournament;
+
+  localStorage.setItem(
+    "pokerzone_recent_tournaments",
+    JSON.stringify([
+      tournament,
+      ...JSON.parse(localStorage.getItem("pokerzone_recent_tournaments") || "[]")
+        .filter(t => t.id !== tournament.id)
+    ].slice(0, 10))
+  );
+
+  $("home-tournaments").classList.add("hidden");
+  $("tournament-app").classList.remove("hidden");
+
+   await refreshAll();
+  loadRecentTournaments();
+
+}
+ 
+
+$("create-tournament-btn").addEventListener("click", () => {
+  $("create-tournament-area").classList.remove("hidden");
+});
+
+$("close-create-tournament").addEventListener("click", () => {
+  $("create-tournament-area").classList.add("hidden");
+});
+ $("save-new-tournament").addEventListener("click", createTournament);
 $("login-open").addEventListener("click",()=>$("login-box").classList.remove("hidden"));
 $("login-close").addEventListener("click",()=>$("login-box").classList.add("hidden"));
 $("login-btn").addEventListener("click",async()=>{const {error}=await db.auth.signInWithPassword({email:$("email").value,password:$("password").value});if(error){$("login-message").textContent=error.message;return} $("login-box").classList.add("hidden");await checkSession();await refreshAll()});
 $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await checkSession();await refreshAll()});
-db.auth.onAuthStateChange(async()=>{await checkSession();await refreshAll()});
-async function init(){try{await checkSession();await loadRanking();await loadStages();msg(isStaff?"● Acesso administrativo":"● Supabase conectado")}catch(e){console.error(e);msg("Erro de conexão");$("season-name").textContent=e.message}}
+
+
+ $("back-to-tournaments").addEventListener("click", () => {
+  tournament = null;
+  season = null;
+
+  $("tournament-app").classList.add("hidden");
+  $("home-tournaments").classList.remove("hidden");
+
+  loadRecentTournaments();
+});
+
+ async function createTournament() {
+  if (!isAdmin) {
+    alert("Somente administradores podem criar torneios.");
+    return;
+  }
+
+  const name = $("new-tournament-name").value.trim();
+  const description = $("new-tournament-description").value.trim();
+  const startDate = $("new-tournament-start").value;
+  const endDate = $("new-tournament-end").value;
+  const isPublic = $("new-tournament-visibility").value === "true";
+  const message = $("create-tournament-message");
+
+  if (!name || !startDate || !endDate) {
+    message.textContent = "Preencha o nome e as duas datas.";
+    return;
+  }
+
+  if (endDate < startDate) {
+    message.textContent = "A data final não pode ser anterior à inicial.";
+    return;
+  }
+
+  message.textContent = "Criando torneio...";
+
+  try {
+    const { data: userData, error: userError } = await db.auth.getUser();
+
+    if (userError || !userData.user) {
+      throw new Error("Não foi possível identificar o administrador.");
+    }
+
+    const { data: newTournament, error: tournamentError } = await db
+      .from("tournaments")
+      .insert({
+        name,
+        description,
+        is_public: isPublic,
+        created_by: userData.user.id
+      })
+      .select("id,name,description")
+      .single();
+
+    if (tournamentError) throw tournamentError;
+
+    const { error: seasonError } = await db
+      .from("seasons")
+      .insert({
+        name,
+        start_date: startDate,
+        end_date: endDate,
+        status: "active",
+        tournament_id: newTournament.id
+      });
+
+    if (seasonError) {
+      const { error: cleanupError } = await db
+        .from("tournaments")
+        .delete()
+        .eq("id", newTournament.id);
+
+      if (cleanupError) {
+        console.error("Erro ao remover torneio incompleto:", cleanupError);
+      }
+
+      throw seasonError;
+    }
+
+    $("create-tournament-area").classList.add("hidden");
+    $("new-tournament-name").value = "";
+    $("new-tournament-description").value = "";
+    $("new-tournament-start").value = "";
+    $("new-tournament-end").value = "";
+    message.textContent = "";
+
+    await openTournament(newTournament);
+
+  } catch (error) {
+    console.error("Erro ao criar torneio:", error);
+    message.textContent = "Erro ao criar torneio: " + error.message;
+  }
+}
+ async function searchTournaments(){
+  const term = $("tournament-search-input").value.trim();
+  const resultsBox = $("tournament-search-results");
+
+  if (!term) {
+    resultsBox.innerHTML =
+      '<div class="empty">Digite o nome de um torneio para pesquisar.</div>';
+    return;
+  }
+
+  resultsBox.innerHTML =
+    '<div class="empty">Buscando torneios...</div>';
+
+  const { data, error } = await db
+    .from("tournaments")
+    .select("id,name,description")
+    .eq("is_public", true)
+    .ilike("name", "%" + term + "%")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    resultsBox.innerHTML =
+      '<div class="empty">Erro ao buscar torneios.</div>';
+    console.error(error);
+    return;
+  }
+
+  if (!data.length) {
+    resultsBox.innerHTML =
+      '<div class="empty">Nenhum torneio encontrado.</div>';
+    return;
+  }
+
+  resultsBox.innerHTML = data.map(t => `
+    <div class="stage-item">
+      <div>
+        <strong>${esc(t.name)}</strong>
+        <small>${esc(t.description || "Torneio PokerZone")}</small>
+      </div>
+      <button class="btn" data-open-tournament="${t.id}">
+        Entrar
+      </button>
+    </div>
+  `).join("");
+
+  resultsBox.querySelectorAll("[data-open-tournament]").forEach(button => {
+    button.addEventListener("click", () => {
+      const selected = data.find(t => t.id === button.dataset.openTournament);
+      if (selected) openTournament(selected);
+    });
+  });
+}
+
+$("search-tournament-btn").addEventListener("click", () => {
+  $("tournament-search-area").classList.remove("hidden");
+  $("tournament-search-input").focus();
+});
+
+$("close-tournament-search").addEventListener("click", () => {
+  $("tournament-search-area").classList.add("hidden");
+});
+
+$("tournament-search-input").addEventListener("input", searchTournaments);
+
+ function loadRecentTournaments(){
+  const container = $("recent-tournaments-list");
+
+  const recent = JSON.parse(
+    localStorage.getItem("pokerzone_recent_tournaments") || "[]"
+  );
+
+  if (!recent.length) {
+    container.innerHTML =
+      '<div class="empty">Seus torneios acessados aparecerão aqui.</div>';
+    return;
+  }
+
+  container.innerHTML = recent.map(t => `
+    <div class="stage-item">
+      <div>
+        <strong>${esc(t.name)}</strong>
+        <small>${esc(t.description || "Torneio PokerZone")}</small>
+      </div>
+      <button class="btn" data-recent-tournament="${t.id}">
+        Entrar
+      </button>
+    </div>
+  `).join("");
+
+  container.querySelectorAll("[data-recent-tournament]").forEach(button => {
+    button.addEventListener("click", () => {
+      const selected = recent.find(t => t.id === button.dataset.recentTournament);
+      if (selected) openTournament(selected);
+    });
+  });
+}
+
+loadRecentTournaments();
+
+async function init(){
+  try {
+    await checkSession();
+
+    $("home-tournaments").classList.remove("hidden");
+    $("tournament-app").classList.add("hidden");
+
+    msg(isStaff ? "● Acesso administrativo" : "● Supabase conectado");
+  } catch(e) {
+    console.error(e);
+    msg("Erro de conexão");
+  }
+}
+
 init();
 </script>
 </body>
