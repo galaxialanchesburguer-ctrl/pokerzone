@@ -1097,15 +1097,19 @@ input:focus,select:focus {
     <p>Escolha um torneio para continuar</p>
   </div>
 
-  <div class="home-actions">
-    <button id="create-tournament-btn" class="btn">
-      + Criar torneio
-    </button>
+ <div class="home-actions">
+  <button id="create-tournament-btn" class="btn">
+    + Criar torneio
+  </button>
 
-    <button id="search-tournament-btn" class="btn secondary">
-      Buscar torneio
-    </button>
-  </div>
+  <button id="manage-clubs-btn" class="btn secondary hidden">
+    Gerenciar clubes
+  </button>
+
+  <button id="search-tournament-btn" class="btn secondary">
+    Buscar torneio
+  </button>
+</div>
 
   <!-- FORMULÁRIO DE CRIAÇÃO -->
   <div id="create-tournament-area" class="box hidden">
@@ -1141,6 +1145,49 @@ input:focus,select:focus {
       <p id="create-tournament-message"></p>
     </div>
   </div>
+
+ <!-- ÁREA DE GERENCIAMENTO DE CLUBES -->
+<div id="manage-clubs-area" class="box hidden">
+  <div class="box-head">
+    <h2>GERENCIAR CLUBES</h2>
+    <button id="close-manage-clubs" class="btn secondary">
+      Fechar
+    </button>
+  </div>
+
+  <div class="panel-pad">
+    <button id="new-club-btn" class="btn">
+      + Novo clube
+    </button>
+
+    <div id="new-club-form" class="hidden">
+      <h3>NOVO CLUBE</h3>
+
+      <label for="new-club-name">Nome do clube</label>
+      <input id="new-club-name" type="text" placeholder="Ex.: IPC">
+
+      <label for="new-club-city">Cidade</label>
+      <input id="new-club-city" type="text" placeholder="Ex.: Içara">
+
+      <label for="new-club-state">Estado</label>
+      <input id="new-club-state" type="text" placeholder="Ex.: SC" maxlength="2">
+
+      <label for="new-club-description">Descrição (opcional)</label>
+      <textarea id="new-club-description" placeholder="Sobre o clube..."></textarea>
+
+      <button id="save-new-club" class="btn">
+        Salvar clube
+      </button>
+
+      <p id="new-club-message"></p>
+    </div>
+
+    <h3>CLUBES CADASTRADOS</h3>
+    <div id="clubs-list">
+      Carregando clubes...
+    </div>
+  </div>
+</div>
 
   <!-- ÁREA DE BUSCA -->
   <div id="tournament-search-area" class="box hidden">
@@ -1763,6 +1810,9 @@ async function checkSession() {
   }
 
   $("create-tournament-btn").style.display =
+    isAdmin ? "inline-block" : "none";
+
+   $("manage-clubs-btn").style.display =
     isAdmin ? "inline-block" : "none";
 
   document.querySelectorAll(".admin-only").forEach(el => {
@@ -2432,6 +2482,21 @@ $("create-tournament-btn").addEventListener("click", () => {
   $("create-tournament-area").classList.remove("hidden");
 });
 
+ $("manage-clubs-btn").addEventListener("click", async () => {
+  $("create-tournament-area").classList.add("hidden");
+  $("manage-clubs-area").classList.remove("hidden");
+  await loadClubs();
+});
+
+$("close-manage-clubs").addEventListener("click", () => {
+  $("manage-clubs-area").classList.add("hidden");
+});
+
+$("new-club-btn").addEventListener("click", () => {
+  $("new-club-form").classList.toggle("hidden");
+});
+ $("save-new-club").addEventListener("click", createClub);
+
 $("close-create-tournament").addEventListener("click", () => {
   $("create-tournament-area").classList.add("hidden");
 });
@@ -2456,6 +2521,112 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
 
   loadRecentTournaments();
 });
+
+ function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+ async function createClub() {
+  if (!isAdmin) {
+    alert("Somente o administrador pode cadastrar clubes.");
+    return;
+  }
+
+  const name = $("new-club-name").value.trim();
+  const city = $("new-club-city").value.trim();
+  const state = $("new-club-state").value.trim().toUpperCase();
+  const description = $("new-club-description").value.trim();
+  const message = $("new-club-message");
+
+  if (!name || !city || !state) {
+    message.textContent = "Preencha o nome, a cidade e o estado.";
+    return;
+  }
+
+  message.textContent = "Salvando clube...";
+
+  try {
+    const { data: userData, error: userError } = await db.auth.getUser();
+
+    if (userError || !userData.user) {
+      throw new Error("Não foi possível identificar o administrador.");
+    }
+
+    const { data: club, error: clubError } = await db
+      .from("clubs")
+      .insert({
+        name,
+        city,
+        state,
+        description: description || null,
+        created_by: userData.user.id
+      })
+      .select("id")
+      .single();
+
+    if (clubError) throw clubError;
+
+    const { error: membershipError } = await db
+      .from("club_memberships")
+      .insert({
+        club_id: club.id,
+        user_id: userData.user.id,
+        role: "owner"
+      });
+
+    if (membershipError) {
+      await db.from("clubs").delete().eq("id", club.id);
+      throw membershipError;
+    }
+
+    $("new-club-name").value = "";
+    $("new-club-city").value = "";
+    $("new-club-state").value = "";
+    $("new-club-description").value = "";
+
+    message.textContent = "Clube cadastrado com sucesso!";
+    await loadClubs();
+
+  } catch (error) {
+    console.error("Erro ao cadastrar clube:", error);
+    message.textContent = "Erro ao cadastrar clube: " + error.message;
+  }
+}
+
+ async function loadClubs() {
+  const list = $("clubs-list");
+
+  list.textContent = "Carregando clubes...";
+
+  const { data: clubs, error } = await db
+    .from("clubs")
+    .select("id, name, city, state, description")
+    .order("name");
+
+  if (error) {
+    console.error("Erro ao carregar clubes:", error);
+    list.textContent = "Erro ao carregar clubes: " + error.message;
+    return;
+  }
+
+  if (!clubs || clubs.length === 0) {
+    list.textContent = "Nenhum clube cadastrado.";
+    return;
+  }
+
+  list.innerHTML = clubs.map(club => `
+    <div class="box" style="margin-top:12px;">
+      <h3>${escapeHtml(club.name)}</h3>
+      <p>${escapeHtml(club.city || "")} - ${escapeHtml(club.state || "")}</p>
+      <p>${escapeHtml(club.description || "")}</p>
+    </div>
+  `).join("");
+}
 
  async function createTournament() {
   if (!isAdmin) {
