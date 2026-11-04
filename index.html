@@ -89,6 +89,9 @@ tr:hover td{background:#202020}
  vertical-align:middle;
 }
 .admin-only{display:none}
+ .admin-only.admin-visible {
+  display: revert;
+}
 .stage-item{display:flex;justify-content:space-between;gap:15px;align-items:center;padding:15px 18px;border-top:1px solid #292929}
 .stage-item strong{display:block;margin-bottom:5px}.stage-item small{color:var(--muted)}
 .editor-table input{width:95px;padding:8px}.editor-table select{min-width:150px;padding:8px}
@@ -1194,9 +1197,10 @@ input:focus,select:focus {
 <section id="ranking-view">
  <h2 class="section-title">Pódio da temporada</h2><section class="podium" id="podium"></section>
  <h2 class="section-title">Classificação completa</h2>
- <section class="box"><div class="box-head"><h2>RANKING DA TEMPORADA</h2><input class="search" id="search" type="search" placeholder="Pesquisar jogador..." autocomplete="off"></div>
+ <section class="box"><div class="box-head"><h2>RANKING DA TEMPORADA</h2>
+  <input class="search" id="search" type="search" placeholder="Pesquisar jogador..." autocomplete="off">
+ </div>
 
-</div>
   <div class="table-wrap"><table><thead><tr><th>POS.</th><th>JOGADOR</th><th>PONTOS</th><th>ETAPAS</th></tr></thead><tbody id="ranking"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table></div></section>
 </section>
 <section id="final-ranking-view" class="hidden">
@@ -1332,6 +1336,11 @@ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 function msg(text){$("connection-status").textContent=text}
 function showTab(id){
   $("home-tournaments").classList.add("hidden");
+   if (id !== "stages-view") {
+    $("stage-editor").classList.add("hidden");
+    currentStage = null;
+    editorResults = [];
+  }
   $("tournament-app").classList.remove("hidden");
 
   document.querySelectorAll(".tab").forEach(b=>{
@@ -1579,7 +1588,8 @@ async function loadRanking(){
   $("season-status").textContent="Temporada não iniciada";
 
   players = [];
-  $("ranking-body").innerHTML =
+  season = null;
+ $("ranking").innerHTML =
     '<tr><td colspan="4" class="empty">Nenhum resultado disponível.</td></tr>';
   $("final-ranking").innerHTML =
     '<tr><td colspan="5" class="empty">Nenhum resultado disponível.</td></tr>';
@@ -1679,9 +1689,6 @@ async function loadRanking(){
 };
  });
 
- finalPlayers
-  .filter(p=>p.points>0)
-  .sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,"pt-BR"));
 
 const finalSorted=finalPlayers
  .filter(p=>p.points>0)
@@ -1759,13 +1766,8 @@ async function checkSession() {
     isAdmin ? "inline-block" : "none";
 
   document.querySelectorAll(".admin-only").forEach(el => {
-    if (!isStaff) {
-      el.style.display = "none";
-    } else {
-      el.style.removeProperty("display");
-    }
-  });
-
+  el.classList.toggle("admin-visible", isStaff);
+});
   $("login-open").classList.toggle("hidden", isStaff);
   $("logout-btn").classList.toggle("hidden", !isStaff);
 
@@ -1777,10 +1779,12 @@ async function checkSession() {
 }
 async function loadStages() {
   if (!season) {
+    stages = [];
+
     $("stage-list").innerHTML =
       '<div class="empty">Nenhuma temporada carregada.</div>';
     return;
-  }
+}
 
   $("stage-list").innerHTML =
     '<div class="empty">Carregando etapas...</div>';
@@ -2330,6 +2334,7 @@ async function saveStage() {
   }
 
   const positions = editorResults.map(r => Number(r.position));
+
   if (
     positions.some(p => !Number.isInteger(p) || p < 1) ||
     new Set(positions).size !== positions.length
@@ -2354,7 +2359,6 @@ async function saveStage() {
 
   let stageId = currentStage?.id;
 
-  // Cria a etapa como rascunho, caso seja nova.
   if (!stageId) {
     const { data, error } = await db
       .from("stages")
@@ -2370,45 +2374,20 @@ async function saveStage() {
     stageId = data.id;
   }
 
-  // Remove os resultados anteriores para evitar conflito
-  // quando posições de jogadores são alteradas.
-  const { error: deleteError } = await db
-    .from("results")
-    .delete()
-    .eq("stage_id", stageId);
+  const rows = editorResults.map(r => ({
+    player_id: r.player_id,
+    position: Number(r.position),
+    points: Number(r.points)
+  }));
 
-  if (deleteError) {
-    alert("Erro ao preparar resultados: " + deleteError.message);
-    return;
-  }
+  const { error } = await db.rpc("save_stage_results", {
+    p_stage_id: stageId,
+    p_stage_data: stageData,
+    p_results: rows
+  });
 
-  // Insere novamente todos os resultados editados.
-  if (editorResults.length) {
-    const rows = editorResults.map(r => ({
-      stage_id: stageId,
-      player_id: r.player_id,
-      position: Number(r.position),
-      points: Number(r.points)
-    }));
-
-    const { error: insertError } = await db
-      .from("results")
-      .insert(rows);
-
-    if (insertError) {
-      alert("Erro ao salvar resultados: " + insertError.message);
-      return;
-    }
-  }
-
-  // Atualiza os dados e o status da etapa.
-  const { error: updateError } = await db
-    .from("stages")
-    .update(stageData)
-    .eq("id", stageId);
-
-  if (updateError) {
-    alert("Resultados salvos, mas houve erro ao atualizar a etapa: " + updateError.message);
+  if (error) {
+    alert("Erro ao salvar etapa: " + error.message);
     return;
   }
 
@@ -2417,11 +2396,19 @@ async function saveStage() {
   await refreshAll();
 }
  $("save-stage").addEventListener("click", saveStage);
+ $("close-editor").addEventListener("click", () => {
+  $("stage-editor").classList.add("hidden");
+  currentStage = null;
+  editorResults = [];
+});
  
 async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){console.error(e);msg("Erro: "+e.message)}}
  
  async function openTournament(selectedTournament){
   tournament = selectedTournament;
+    currentStage = null;
+  editorResults = [];
+  $("stage-editor").classList.add("hidden");
 
   localStorage.setItem(
     "pokerzone_recent_tournaments",
@@ -2458,6 +2445,11 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
  $("back-to-tournaments").addEventListener("click", () => {
   tournament = null;
   season = null;
+    currentStage = null;
+  editorResults = [];
+  stages = [];
+  players = [];
+  $("stage-editor").classList.add("hidden");
 
   $("tournament-app").classList.add("hidden");
   $("home-tournaments").classList.remove("hidden");
