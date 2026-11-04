@@ -1124,20 +1124,6 @@ input:focus,select:focus {
   </div>
   <div class="table-wrap"><table class="editor-table"><thead><tr><th>JOGADOR</th><th>POSIÇÃO</th><th>PONTOS</th><th class="admin-only">AÇÃO</th></tr></thead><tbody id="result-rows"><tr><td colspan="4" class="empty">Selecione uma etapa.</td></tr></tbody></table></div>
  </div>
- <!-- VISUALIZAÇÃO DOS RESULTADOS DA ETAPA -->
-<div id="stage-results-view" class="box hidden">
-
-  <div class="box-head">
-    <h2 id="stage-results-title">RESULTADO DA ETAPA</h2>
-
-    <button class="btn secondary" id="back-to-stages">
-      ← Voltar às etapas
-    </button>
-  </div>
-
-  <div id="stage-results-content">
-    <div class="empty">Carregando resultados...</div>
-  </div>
 
 </div>
 </section>
@@ -1205,11 +1191,7 @@ $("final-ranking").addEventListener("click", event => {
 $("back-to-ranking").addEventListener("click", () => {
   showTab("ranking-view");
 });
- $("back-to-stages").addEventListener("click", () => {
-  $("stage-results-view").classList.add("hidden");
-  $("stage-list-box").classList.remove("hidden");
-  showTab("stages-view");
-});
+
  async function openPlayerProfile(playerId){
   showTab("player-profile-view");
 
@@ -1587,28 +1569,50 @@ async function loadStages() {
 
     stages = data || [];
 
-    $("stage-list").innerHTML = stages.length
-      ? stages.map(s => `
-          <div class="stage-item">
-            <div>
-              <button class="stage-results-link" data-stage-results="${s.id}">
-  ${esc(s.name || "ETAPA " + s.stage_number)}
-</button>
-              <small>${new Date(s.played_at + "T12:00:00").toLocaleDateString("pt-BR")} • ${s.status === "published" ? "Publicada" : "Rascunho"}</small>
-            </div>
-            <div class="actions">
-              <span class="tag">${s.participant_count || 0} participantes</span>
-              <button class="btn secondary" data-edit-stage="${s.id}">
-                ${isStaff ? "Editar" : "Ver resultados"}
-              </button>
-            </div>
-          </div>
-        `).join("")
-      : '<div class="empty">Nenhuma etapa disponível.</div>';
+   $("stage-list").innerHTML = stages.length
+  ? stages.map(s => `
+      <div class="stage-item">
+        <div>
+          <button class="stage-results-link" data-stage-results="${s.id}">
+            ${esc(s.name || "ETAPA " + s.stage_number)}
+          </button>
+
+          <small>
+            ${new Date(s.played_at + "T12:00:00").toLocaleDateString("pt-BR")}
+            • ${s.status === "published" ? "Publicada" : "Rascunho"}
+          </small>
+        </div>
+
+        <div class="actions">
+          <span class="tag">${s.participant_count || 0} participantes</span>
+
+          <button class="btn secondary" data-edit-stage="${s.id}">
+            ${isStaff ? "Editar" : "Ver resultados"}
+          </button>
+        </div>
+      </div>
+
+      <div id="stage-results-${s.id}" class="box hidden">
+        <div class="box-head">
+          <h2 id="stage-results-title-${s.id}">RESULTADO DA ETAPA</h2>
+        </div>
+
+        <div id="stage-results-content-${s.id}">
+          <div class="empty">Carregando resultados...</div>
+        </div>
+      </div>
+    `).join("")
+  : '<div class="empty">Nenhuma etapa disponível.</div>';
 
     document.querySelectorAll("[data-edit-stage]").forEach(b => {
-      b.addEventListener("click", () => openStage(b.dataset.editStage));
-    });
+  b.addEventListener("click", () => {
+    if (isStaff) {
+      openStage(b.dataset.editStage);
+    } else {
+      openStageResults(b.dataset.editStage);
+    }
+  });
+});
    document.querySelectorAll("[data-stage-results]").forEach(b => {
   b.addEventListener("click", () => {
     openStageResults(b.dataset.stageResults);
@@ -1630,15 +1634,26 @@ function updatePlayerSuggestions() {
   const stage = stages.find(s => s.id === id);
   if (!stage) return;
 
-  $("stage-list-box").classList.add("hidden");
-  $("stage-editor").classList.add("hidden");
-  $("stage-results-view").classList.remove("hidden");
+const resultsBox = $("stage-results-" + id);
+const resultsContent = $("stage-results-content-" + id);
 
-  $("stage-results-title").textContent =
-    stage.name || "ETAPA " + stage.stage_number;
+document.querySelectorAll('[id^="stage-results-"]').forEach(element => {
+  if (element.classList.contains("box")) {
+    element.classList.add("hidden");
+  }
+});
 
-  $("stage-results-content").innerHTML =
-    '<div class="empty">Carregando resultados...</div>';
+resultsBox.classList.remove("hidden");
+  resultsBox.scrollIntoView({
+  behavior: "smooth",
+  block: "nearest"
+});
+
+$("stage-results-title-" + id).textContent =
+  stage.name || "ETAPA " + stage.stage_number;
+
+resultsContent.innerHTML =
+  '<div class="empty">Carregando resultados...</div>';
 
   const { data, error } = await db
     .from("results")
@@ -1647,7 +1662,7 @@ function updatePlayerSuggestions() {
     .order("position");
 
   if (error) {
-    $("stage-results-content").innerHTML =
+   resultsContent.innerHTML =
       '<div class="empty">Erro ao carregar os resultados.</div>';
     console.error(error);
     return;
@@ -1681,7 +1696,7 @@ function updatePlayerSuggestions() {
       `).join("")
     : '<tr><td colspan="3" class="empty">Nenhum resultado cadastrado.</td></tr>';
 
-  $("stage-results-content").innerHTML = `
+ resultsContent.innerHTML = `
     <div class="stage-results-summary">
       <span>DATA</span>
       <strong>${date}</strong>
