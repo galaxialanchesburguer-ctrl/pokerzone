@@ -1075,6 +1075,13 @@ function renderRanking(list){
   if (!button) return;
 
   openPlayerProfile(button.dataset.playerId);
+  $("final-ranking").addEventListener("click", event => {
+  const button = event.target.closest(".player-profile-link");
+
+  if (!button) return;
+
+  openPlayerProfile(button.dataset.playerId);
+});
 });
 
 $("back-to-ranking").addEventListener("click", () => {
@@ -1366,10 +1373,11 @@ $("final-ranking").innerHTML=finalSorted
  .map((p,i)=>`
   <tr class="${i<10?"qualified-row":""}">
    <td>${i+1}º</td>
-   <td>
+   <td class="player-cell">
+  <button class="player-profile-link" data-player-id="${p.id}">
     ${esc(p.name)}
-   
-   </td>
+  </button>
+</td>
    <td>${p.sumPoints.toLocaleString("pt-BR")}</td>
    <td>${p.discardedPoints.toLocaleString("pt-BR")}</td>
    <td><strong>${p.points.toLocaleString("pt-BR")}</strong></td>
