@@ -2961,6 +2961,17 @@ async function loadClubTournaments() {
   });
 }
 
+$("search-tournament-btn").addEventListener("click", () => {
+  $("tournament-search-area").classList.remove("hidden");
+  $("tournament-search-input").focus();
+});
+
+$("close-tournament-search").addEventListener("click", () => {
+  $("tournament-search-area").classList.add("hidden");
+});
+
+$("tournament-search-input").addEventListener("input", searchTournaments);
+
 $("tournament-search-input").addEventListener("input", searchTournaments);
 
  function loadRecentTournaments(){
