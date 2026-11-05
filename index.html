@@ -2727,13 +2727,14 @@ async function openClub(clubId) {
     }
 
     const { data: newTournament, error: tournamentError } = await db
-      .from("tournaments")
-      .insert({
-        name,
-        description,
-        is_public: isPublic,
-        created_by: userData.user.id
-      })
+  .from("tournaments")
+  .insert({
+    name,
+    description,
+    is_public: isPublic,
+    created_by: userData.user.id,
+    club_id: selectedClubId || null
+  })
       .select("id,name,description")
       .single();
 
