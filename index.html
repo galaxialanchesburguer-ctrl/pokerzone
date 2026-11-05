@@ -1084,6 +1084,63 @@ input:focus,select:focus {
     width: 100%;
   }
 }
+/* PAINEL DE TORNEIOS DO CLUBE */
+.club-tournaments-panel {
+  margin-top: 28px;
+  padding: 24px;
+  border-top: 1px solid #333;
+  background: #151515;
+  border-radius: 12px;
+}
+
+.club-tournaments-panel h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 18px;
+  color: #fff;
+}
+
+.club-tournaments-panel > .btn {
+  margin-bottom: 20px;
+}
+
+#club-tournaments-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+#club-tournaments-list .box {
+  margin-top: 0 !important;
+  padding: 20px;
+  background: #202020;
+  border: 1px solid #383838;
+  border-radius: 12px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+#club-tournaments-list .box:hover {
+  border-color: #ed2939;
+  transform: translateY(-2px);
+}
+
+#club-tournaments-list .box h3 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+#club-tournaments-list .box p {
+  color: #aaa;
+  margin-bottom: 16px;
+}
+
+#club-tournaments-list .box .btn {
+  width: 100%;
+}
+
+#club-tournaments-back-btn {
+  margin-top: 22px;
+}
 </style>
 </head>
 <body>
@@ -1220,7 +1277,7 @@ input:focus,select:focus {
     </div>
   </div>
 
-  <div id="club-tournaments-area" class="hidden">
+  <div id="club-tournaments-area" class="club-tournaments-panel hidden">
     <h3>TORNEIOS DO CLUBE</h3>
 
     <button class="btn" id="club-create-tournament-btn">
@@ -2850,7 +2907,8 @@ async function loadClubTournaments() {
     message.textContent = "";
 
     if (selectedClubId) {
-  $("club-tournaments-area").classList.remove("hidden");
+  $("club-tournaments-area").classList.remo3
+  ve("hidden");
   await loadClubTournaments();
 } else {
   await openTournament(newTournament);
