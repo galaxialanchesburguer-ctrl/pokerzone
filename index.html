@@ -2615,10 +2615,13 @@ $("close-manage-clubs").addEventListener("click", () => {
 $("new-club-btn").addEventListener("click", () => {
   $("new-club-form").classList.toggle("hidden");
 });
- $("save-new-club").addEventListener("click", createClub);
+$("save-new-club").addEventListener("click", createClub);
+
 $("close-club-details").addEventListener("click", () => {
   $("club-details-area").classList.add("hidden");
   $("manage-clubs-area").classList.remove("hidden");
+  $("recent-tournaments-list").parentElement.classList.remove("hidden");
+  $("tournament-search-area").classList.add("hidden");
   selectedClubId = null;
 });
 
@@ -2795,8 +2798,10 @@ async function openClub(clubId) {
   selectedClubId = club.id;
   $("club-create-tournament-btn").classList.toggle("hidden", !isStaff);
 
-  $("manage-clubs-area").classList.add("hidden");
-  $("club-details-area").classList.remove("hidden");
+$("manage-clubs-area").classList.add("hidden");
+$("club-details-area").classList.remove("hidden");
+$("tournament-search-area").classList.add("hidden");
+$("recent-tournaments-list").parentElement.classList.add("hidden");
 
   $("club-details-title").textContent = club.name;
   $("club-details-city").textContent =
