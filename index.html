@@ -1219,6 +1219,22 @@ input:focus,select:focus {
       </button>
     </div>
   </div>
+
+  <div id="club-tournaments-area" class="hidden">
+    <h3>TORNEIOS DO CLUBE</h3>
+
+    <button class="btn" id="club-create-tournament-btn">
+      Criar torneio
+    </button>
+
+    <div id="club-tournaments-list">
+      Carregando torneios...
+    </div>
+
+    <button class="btn secondary" id="club-tournaments-back-btn">
+      Voltar ao clube
+    </button>
+  </div>
 </div>
 
   <!-- ÁREA DE BUSCA -->
@@ -1409,7 +1425,7 @@ input:focus,select:focus {
 const SUPABASE_URL="https://fwwkmpnwsyppctxgetkj.supabase.co";
 const SUPABASE_KEY="sb_publishable_SlbpXf6oi5Bw70ABeYp0Eg_nrZ9bQqm";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let tournament=null, season=null, players=[], stages=[], currentStage=null, editorResults=[], isStaff=false, isAdmin=false;
+let tournament=null, season=null, players=[], stages=[], currentStage=null, editorResults=[], isStaff=false, isAdmin=false, selectedClubId=null;
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function msg(text){$("connection-status").textContent=text}
@@ -2528,9 +2544,23 @@ $("new-club-btn").addEventListener("click", () => {
   $("new-club-form").classList.toggle("hidden");
 });
  $("save-new-club").addEventListener("click", createClub);
- $("close-club-details").addEventListener("click", () => {
+$("close-club-details").addEventListener("click", () => {
   $("club-details-area").classList.add("hidden");
   $("manage-clubs-area").classList.remove("hidden");
+  selectedClubId = null;
+});
+
+$("club-tournaments-btn").addEventListener("click", async () => {
+  $("club-tournaments-area").classList.remove("hidden");
+  await loadClubTournaments();
+});
+
+$("club-tournaments-back-btn").addEventListener("click", () => {
+  $("club-tournaments-area").classList.add("hidden");
+});
+
+$("club-create-tournament-btn").addEventListener("click", () => {
+  $("create-tournament-area").classList.remove("hidden");
 });
 
 $("close-create-tournament").addEventListener("click", () => {
@@ -2644,6 +2674,7 @@ async function openClub(clubId) {
     alert("Erro ao abrir clube: " + error.message);
     return;
   }
+  selectedClubId = club.id;
 
   $("manage-clubs-area").classList.add("hidden");
   $("club-details-area").classList.remove("hidden");
@@ -2654,6 +2685,54 @@ async function openClub(clubId) {
 
   $("club-details-description").textContent =
     club.description || "Nenhuma descrição cadastrada.";
+}
+async function loadClubTournaments() {
+  const list = $("club-tournaments-list");
+
+  list.textContent = "Carregando torneios...";
+
+  const { data: tournaments, error } = await db
+    .from("tournaments")
+    .select("id, name, description")
+    .eq("club_id", selectedClubId)
+    .order("name");
+
+  if (error) {
+    list.textContent = "Erro ao carregar torneios: " + error.message;
+    return;
+  }
+
+  if (!tournaments || tournaments.length === 0) {
+    list.textContent = "Nenhum torneio cadastrado neste clube.";
+    return;
+  }
+
+  list.innerHTML = tournaments.map(t => `
+    <div class="box" style="margin-top:12px;">
+      <h3>${escapeHtml(t.name)}</h3>
+      <p>${escapeHtml(t.description || "")}</p>
+      <button class="btn open-club-tournament-btn" data-id="${t.id}">
+        Abrir torneio
+      </button>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".open-club-tournament-btn").forEach(button => {
+    button.addEventListener("click", async () => {
+      const { data, error } = await db
+        .from("tournaments")
+        .select("id, name, description")
+        .eq("id", button.dataset.id)
+        .single();
+
+      if (error) {
+        alert("Erro ao abrir torneio: " + error.message);
+        return;
+      }
+
+      await openTournament(data);
+    });
+  });
 }
  async function loadClubs() {
   const list = $("clubs-list");
@@ -2770,7 +2849,12 @@ async function openClub(clubId) {
     $("new-tournament-end").value = "";
     message.textContent = "";
 
-    await openTournament(newTournament);
+    if (selectedClubId) {
+  $("club-tournaments-area").classList.remove("hidden");
+  await loadClubTournaments();
+} else {
+  await openTournament(newTournament);
+}
 
   } catch (error) {
     console.error("Erro ao criar torneio:", error);
