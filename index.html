@@ -2811,7 +2811,9 @@ $("save-club-settings-btn").addEventListener("click", async () => {
 });
 
 $("club-create-tournament-btn").addEventListener("click", () => {
+  $("club-tournaments-area").classList.add("hidden");
   $("create-tournament-area").classList.remove("hidden");
+  $("club-settings-area").classList.add("hidden");
 });
 
 $("close-create-tournament").addEventListener("click", () => {
