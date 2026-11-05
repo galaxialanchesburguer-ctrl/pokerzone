@@ -1247,6 +1247,13 @@ input:focus,select:focus {
   <div class="box-head">
     <h2 id="club-details-title">CLUBE</h2>
 
+    <img
+  id="club-details-logo"
+  src=""
+  alt="Logo do clube"
+  style="display:none; width:100px; height:100px; object-fit:contain; margin-bottom:12px;"
+>
+
     <button id="close-club-details" class="btn secondary">
       Voltar
     </button>
@@ -1292,6 +1299,19 @@ input:focus,select:focus {
   </div>
 <div id="club-settings-area" class="club-tournaments-panel hidden">
   <h3>CONFIGURAÇÕES DO CLUBE</h3>
+  <label>Logo do clube</label>
+<input
+  type="file"
+  id="club-settings-logo"
+  accept="image/png, image/jpeg, image/webp"
+>
+
+<img
+  id="club-logo-preview"
+  src=""
+  alt="Pré-visualização da logo"
+  style="display:none; width:120px; height:120px; object-fit:contain; margin:10px 0;"
+>
 
   <label>Nome do clube</label>
   <input type="text" id="club-settings-name">
@@ -2647,6 +2667,26 @@ $("club-settings-back-btn").addEventListener("click", () => {
   $("club-settings-area").classList.add("hidden");
 });
 
+$("club-settings-logo").addEventListener("change", () => {
+  const file = $("club-settings-logo").files[0];
+  const preview = $("club-logo-preview");
+
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    alert("Selecione um arquivo de imagem.");
+    return;
+  }
+
+  if (file.size > 3 * 1024 * 1024) {
+    alert("A imagem deve ter no máximo 3 MB.");
+    return;
+  }
+
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = "block";
+});
+
 $("save-club-settings-btn").addEventListener("click", async () => {
   if (!selectedClubId) return;
 
@@ -2654,15 +2694,49 @@ $("save-club-settings-btn").addEventListener("click", async () => {
   const city = $("club-settings-city").value.trim();
   const state = $("club-settings-state").value.trim();
   const description = $("club-settings-description").value.trim();
+  const file = $("club-settings-logo").files[0];
 
   if (!name) {
     alert("Informe o nome do clube.");
     return;
   }
 
+  let logo_url;
+
+  if (file) {
+    const extension = file.type === "image/png" ? "png" :
+      file.type === "image/webp" ? "webp" : "jpg";
+
+    const path = `${selectedClubId}/${Date.now()}.${extension}`;
+
+    const { error: uploadError } = await db.storage
+      .from("club-logos")
+      .upload(path, file, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (uploadError) {
+      alert("Erro ao enviar logo: " + uploadError.message);
+      return;
+    }
+
+    const { data: urlData } = db.storage
+      .from("club-logos")
+      .getPublicUrl(path);
+
+    logo_url = urlData.publicUrl;
+  }
+
+  const updates = { name, city, state, description };
+
+  if (logo_url) {
+    updates.logo_url = logo_url;
+  }
+
   const { error } = await db
     .from("clubs")
-    .update({ name, city, state, description })
+    .update(updates)
     .eq("id", selectedClubId);
 
   if (error) {
@@ -2787,7 +2861,7 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
 async function openClub(clubId) {
   const { data: club, error } = await db
     .from("clubs")
-    .select("id, name, city, state, description")
+    .select("id, name, city, state, description, logo_url")
     .eq("id", clubId)
     .single();
 
@@ -2809,6 +2883,28 @@ $("recent-tournaments-list").parentElement.classList.add("hidden");
 
   $("club-details-description").textContent =
     club.description || "Nenhuma descrição cadastrada.";
+
+    const clubLogo = $("club-details-logo");
+
+if (club.logo_url) {
+  clubLogo.src = club.logo_url;
+  clubLogo.style.display = "block";
+} else {
+  clubLogo.src = "";
+  clubLogo.style.display = "none";
+}
+
+    const preview = $("club-logo-preview");
+
+if (club.logo_url) {
+  preview.src = club.logo_url;
+  preview.style.display = "block";
+} else {
+  preview.src = "";
+  preview.style.display = "none";
+}
+
+$("club-settings-logo").value = "";
 }
 async function loadClubTournaments() {
   const list = $("club-tournaments-list");
