@@ -1273,6 +1273,8 @@ input:focus,select:focus {
     </div>
   </div>
 
+  
+
   <div id="club-tournaments-area" class="club-tournaments-panel hidden">
     <h3>TORNEIOS DO CLUBE</h3>
 
@@ -1288,7 +1290,30 @@ input:focus,select:focus {
       Voltar ao clube
     </button>
   </div>
+<div id="club-settings-area" class="club-tournaments-panel hidden">
+  <h3>CONFIGURAÇÕES DO CLUBE</h3>
+
+  <label>Nome do clube</label>
+  <input type="text" id="club-settings-name">
+
+  <label>Cidade</label>
+  <input type="text" id="club-settings-city">
+
+  <label>Estado</label>
+  <input type="text" id="club-settings-state">
+
+  <label>Descrição</label>
+  <textarea id="club-settings-description"></textarea>
+
+  <button class="btn" id="save-club-settings-btn">
+    Salvar alterações
+  </button>
+
+  <button class="btn secondary" id="club-settings-back-btn">
+    Voltar ao clube
+  </button>
 </div>
+
 
   <!-- ÁREA DE BUSCA -->
   <div id="tournament-search-area" class="box hidden">
@@ -2602,8 +2627,54 @@ $("club-tournaments-btn").addEventListener("click", async () => {
   await loadClubTournaments();
 });
 
+$("club-settings-btn").addEventListener("click", () => {
+  $("club-settings-area").classList.remove("hidden");
+
+  $("club-settings-name").value = $("club-details-title").textContent;
+  $("club-settings-city").value = $("club-details-city").textContent.split(" - ")[0];
+  $("club-settings-state").value = $("club-details-city").textContent.split(" - ")[1] || "";
+  $("club-settings-description").value = $("club-details-description").textContent;
+});
+
 $("club-tournaments-back-btn").addEventListener("click", () => {
   $("club-tournaments-area").classList.add("hidden");
+});
+
+$("club-settings-back-btn").addEventListener("click", () => {
+  $("club-settings-area").classList.add("hidden");
+});
+
+$("save-club-settings-btn").addEventListener("click", async () => {
+  if (!selectedClubId) return;
+
+  const name = $("club-settings-name").value.trim();
+  const city = $("club-settings-city").value.trim();
+  const state = $("club-settings-state").value.trim();
+  const description = $("club-settings-description").value.trim();
+
+  if (!name) {
+    alert("Informe o nome do clube.");
+    return;
+  }
+
+  const { error } = await db
+    .from("clubs")
+    .update({ name, city, state, description })
+    .eq("id", selectedClubId);
+
+  if (error) {
+    alert("Erro ao salvar: " + error.message);
+    return;
+  }
+
+  $("club-details-title").textContent = name;
+  $("club-details-city").textContent = city + " - " + state;
+  $("club-details-description").textContent =
+    description || "Nenhuma descrição cadastrada.";
+
+  $("club-settings-area").classList.add("hidden");
+
+  alert("Configurações salvas com sucesso!");
 });
 
 $("club-create-tournament-btn").addEventListener("click", () => {
