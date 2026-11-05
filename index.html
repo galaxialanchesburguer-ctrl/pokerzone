@@ -1276,7 +1276,7 @@ input:focus,select:focus {
   <div id="club-tournaments-area" class="club-tournaments-panel hidden">
     <h3>TORNEIOS DO CLUBE</h3>
 
-    <button class="btn" id="club-create-tournament-btn">
+    <button class="btn hidden" id="club-create-tournament-btn">
       Criar torneio
     </button>
 
@@ -2722,6 +2722,7 @@ async function openClub(clubId) {
     return;
   }
   selectedClubId = club.id;
+  $("club-create-tournament-btn").classList.toggle("hidden", !isStaff);
 
   $("manage-clubs-area").classList.add("hidden");
   $("club-details-area").classList.remove("hidden");
