@@ -1314,9 +1314,10 @@ input:focus,select:focus {
   </div>
 
   <div class="panel-pad">
-    <p id="club-details-city"></p>
-    <p id="club-details-description"></p>
+  <p id="club-details-city"></p>
+  <p id="club-details-description"></p>
 
+  <div id="club-management-area">
     <h3>GERENCIAMENTO DO CLUBE</h3>
 
     <div class="home-actions">
@@ -1333,6 +1334,7 @@ input:focus,select:focus {
       </button>
     </div>
   </div>
+</div>
 
   
 
@@ -2812,12 +2814,14 @@ $("save-club-settings-btn").addEventListener("click", async () => {
 
 $("club-create-tournament-btn").addEventListener("click", () => {
   $("club-tournaments-area").classList.add("hidden");
-  $("create-tournament-area").classList.remove("hidden");
   $("club-settings-area").classList.add("hidden");
+  $("club-management-area").classList.add("hidden");
+  $("create-tournament-area").classList.remove("hidden");
 });
 
 $("close-create-tournament").addEventListener("click", () => {
   $("create-tournament-area").classList.add("hidden");
+  $("club-management-area").classList.remove("hidden");
 });
 $("new-tournament-mode").addEventListener("change", () => {
   const mode = $("new-tournament-mode").value;
