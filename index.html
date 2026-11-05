@@ -1155,10 +1155,6 @@ input:focus,select:focus {
   </div>
 
  <div class="home-actions">
-  <button id="create-tournament-btn" class="btn">
-    + Criar torneio
-  </button>
-
   <button id="manage-clubs-btn" class="btn secondary">
   Gerenciar clubes
 </button>
@@ -1914,8 +1910,6 @@ async function checkSession() {
     isAdmin = !!profile && profile.role === "admin";
   }
 
-  $("create-tournament-btn").style.display =
-    isAdmin ? "inline-block" : "none";
 
    $("manage-clubs-btn").style.display =
     isAdmin ? "inline-block" : "none";
@@ -2582,10 +2576,6 @@ async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){
 
 }
  
-
-$("create-tournament-btn").addEventListener("click", () => {
-  $("create-tournament-area").classList.remove("hidden");
-});
 
  $("manage-clubs-btn").addEventListener("click", async () => {
   $("create-tournament-area").classList.add("hidden");
