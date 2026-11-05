@@ -1164,40 +1164,94 @@ input:focus,select:focus {
 </button>
 </div>
 
-  <!-- FORMULÁRIO DE CRIAÇÃO -->
-  <div id="create-tournament-area" class="box hidden">
-    <div class="box-head">
-      <h2>CRIAR TORNEIO</h2>
-      <button id="close-create-tournament" class="btn secondary">
-        Fechar
-      </button>
-    </div>
-
-    <div class="panel-pad">
-      <label for="new-tournament-name">Nome do torneio</label>
-      <input id="new-tournament-name" type="text" placeholder="Ex.: PokerZone 2027">
-
-      <label for="new-tournament-description">Descrição (opcional)</label>
-      <textarea id="new-tournament-description" placeholder="Descreva o torneio..."></textarea>
-
-      <label for="new-tournament-start">Data de início</label>
-      <input id="new-tournament-start" type="date">
-
-      <label for="new-tournament-end">Data de término</label>
-      <input id="new-tournament-end" type="date">
-
-      <label for="new-tournament-visibility">Visibilidade</label>
-      <select id="new-tournament-visibility">
-        <option value="true">Público</option>
-        <option value="false">Privado</option>
-      </select>
-
-      <button id="save-new-tournament" class="btn">
-        Criar torneio
-      </button>
-      <p id="create-tournament-message"></p>
-    </div>
+  
+<!-- FORMULÁRIO DE CRIAÇÃO -->
+<div id="create-tournament-area" class="box hidden">
+  <div class="box-head">
+    <h2>CRIAR TORNEIO</h2>
+    <button id="close-create-tournament" class="btn secondary">
+      Fechar
+    </button>
   </div>
+
+  <div class="panel-pad">
+    <label for="new-tournament-name">Nome do torneio</label>
+    <input id="new-tournament-name" type="text" placeholder="Ex.: PokerZone 2027">
+
+    <label for="new-tournament-description">Descrição (opcional)</label>
+    <textarea id="new-tournament-description" placeholder="Descreva o torneio..."></textarea>
+
+    <label for="new-tournament-start">Data de início</label>
+    <input id="new-tournament-start" type="date">
+
+    <label for="new-tournament-end">Data de término</label>
+    <input id="new-tournament-end" type="date">
+
+    <label for="new-tournament-visibility">Visibilidade</label>
+    <select id="new-tournament-visibility">
+      <option value="true">Público</option>
+      <option value="false">Privado</option>
+    </select>
+
+    <hr>
+
+    <h3>CONFIGURAÇÕES DO TORNEIO</h3>
+
+    <label for="new-tournament-mode">Modo de configuração</label>
+    <select id="new-tournament-mode">
+      <option value="simple">Simples (regras padrão)</option>
+      <option value="advanced">Avançado (personalizado)</option>
+    </select>
+
+    <div id="tournament-advanced-settings" class="hidden">
+
+  <h3>RANKING GERAL</h3>
+
+  <label for="tournament-ranking-enabled">
+    O torneio terá ranking geral?
+  </label>
+
+  <select id="tournament-ranking-enabled">
+    <option value="true">Sim</option>
+    <option value="false">Não</option>
+  </select>
+
+  <div id="tournament-ranking-settings">
+
+    <label for="tournament-scoring-type">Sistema de pontuação</label>
+
+    <select id="tournament-scoring-type">
+      <option value="standard">Pontuação por colocação</option>
+      <option value="custom">Pontuação personalizada</option>
+    </select>
+
+    <label for="tournament-participation-points">
+      Pontos por participação
+    </label>
+
+    <input
+      type="number"
+      id="tournament-participation-points"
+      value="0"
+      min="0"
+    >
+
+    <h3>CRITÉRIOS DE DESEMPATE</h3>
+
+    <p>Vamos configurar os critérios na próxima etapa.</p>
+
+  </div>
+
+</div>
+
+    <button id="save-new-tournament" class="btn">
+      Criar torneio
+    </button>
+
+    <p id="create-tournament-message"></p>
+  </div>
+</div>
+
 
  <!-- ÁREA DE GERENCIAMENTO DE CLUBES -->
 <div id="manage-clubs-area" class="box hidden">
@@ -2763,6 +2817,23 @@ $("club-create-tournament-btn").addEventListener("click", () => {
 $("close-create-tournament").addEventListener("click", () => {
   $("create-tournament-area").classList.add("hidden");
 });
+$("new-tournament-mode").addEventListener("change", () => {
+  const mode = $("new-tournament-mode").value;
+
+  $("tournament-advanced-settings").classList.toggle(
+    "hidden",
+    mode !== "advanced"
+  );
+});
+$("tournament-ranking-enabled").addEventListener("change", () => {
+  const enabled = $("tournament-ranking-enabled").value === "true";
+
+  $("tournament-ranking-settings").classList.toggle(
+    "hidden",
+    !enabled
+  );
+});git add index.html
+
  $("save-new-tournament").addEventListener("click", createTournament);
 $("login-open").addEventListener("click",()=>$("login-box").classList.remove("hidden"));
 $("login-close").addEventListener("click",()=>$("login-box").classList.add("hidden"));
