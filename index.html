@@ -1160,8 +1160,8 @@ input:focus,select:focus {
 </button>
 
   <button id="search-tournament-btn" class="btn secondary">
-    Buscar torneio
-  </button>
+  Buscar clube
+</button>
 </div>
 
   <!-- FORMULÁRIO DE CRIAÇÃO -->
@@ -1292,25 +1292,25 @@ input:focus,select:focus {
 
   <!-- ÁREA DE BUSCA -->
   <div id="tournament-search-area" class="box hidden">
-    <div class="box-head">
-      <h2>BUSCAR TORNEIO</h2>
-      <button id="close-tournament-search" class="btn secondary">
-        Fechar
-      </button>
-    </div>
+  <div class="box-head">
+    <h2>BUSCAR CLUBE</h2>
+    <button id="close-tournament-search" class="btn secondary">
+      Fechar
+    </button>
+  </div>
 
-    <div class="panel-pad">
-      <input
-        type="text"
-        id="tournament-search-input"
-        placeholder="Digite o nome do torneio..."
-      >
+  <div class="panel-pad">
+    <input
+      type="text"
+      id="tournament-search-input"
+      placeholder="Digite o nome do clube..."
+    >
 
-      <div id="tournament-search-results">
-        <div class="empty">Digite o nome de um torneio para pesquisar.</div>
-      </div>
+    <div id="tournament-search-results">
+      <div class="empty">Digite o nome de um clube para pesquisar.</div>
     </div>
   </div>
+</div>
 
   <!-- TORNEIOS RECENTES -->
   <div class="box">
@@ -2909,67 +2909,57 @@ async function loadClubTournaments() {
     message.textContent = "Erro ao criar torneio: " + error.message;
   }
 }
- async function searchTournaments(){
+ async function searchTournaments() {
   const term = $("tournament-search-input").value.trim();
   const resultsBox = $("tournament-search-results");
 
   if (!term) {
     resultsBox.innerHTML =
-      '<div class="empty">Digite o nome de um torneio para pesquisar.</div>';
+      '<div class="empty">Digite o nome de um clube para pesquisar.</div>';
     return;
   }
 
   resultsBox.innerHTML =
-    '<div class="empty">Buscando torneios...</div>';
+    '<div class="empty">Buscando clubes...</div>';
 
   const { data, error } = await db
-    .from("tournaments")
-    .select("id,name,description")
-    .eq("is_public", true)
+    .from("clubs")
+    .select("id, name, city, state, description")
     .ilike("name", "%" + term + "%")
-    .order("created_at", { ascending: false });
+    .order("name");
 
   if (error) {
     resultsBox.innerHTML =
-      '<div class="empty">Erro ao buscar torneios.</div>';
+      '<div class="empty">Erro ao buscar clubes.</div>';
     console.error(error);
     return;
   }
 
-  if (!data.length) {
+  if (!data || data.length === 0) {
     resultsBox.innerHTML =
-      '<div class="empty">Nenhum torneio encontrado.</div>';
+      '<div class="empty">Nenhum clube encontrado.</div>';
     return;
   }
 
-  resultsBox.innerHTML = data.map(t => `
+  resultsBox.innerHTML = data.map(club => `
     <div class="stage-item">
       <div>
-        <strong>${esc(t.name)}</strong>
-        <small>${esc(t.description || "Torneio PokerZone")}</small>
+        <strong>${escapeHtml(club.name)}</strong>
+        <small>${escapeHtml((club.city || "") + " - " + (club.state || ""))}</small>
       </div>
-      <button class="btn" data-open-tournament="${t.id}">
-        Entrar
+      <button class="btn" data-open-club="${club.id}">
+        Abrir clube
       </button>
     </div>
   `).join("");
 
-  resultsBox.querySelectorAll("[data-open-tournament]").forEach(button => {
-    button.addEventListener("click", () => {
-      const selected = data.find(t => t.id === button.dataset.openTournament);
-      if (selected) openTournament(selected);
+  resultsBox.querySelectorAll("[data-open-club]").forEach(button => {
+    button.addEventListener("click", async () => {
+      await openClub(button.dataset.openClub);
+      $("tournament-search-area").classList.add("hidden");
     });
   });
 }
-
-$("search-tournament-btn").addEventListener("click", () => {
-  $("tournament-search-area").classList.remove("hidden");
-  $("tournament-search-input").focus();
-});
-
-$("close-tournament-search").addEventListener("click", () => {
-  $("tournament-search-area").classList.add("hidden");
-});
 
 $("tournament-search-input").addEventListener("input", searchTournaments);
 
