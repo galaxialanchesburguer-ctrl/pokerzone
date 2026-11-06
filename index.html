@@ -3293,6 +3293,17 @@ $("club-details-area").classList.remove("hidden");
 $("tournament-search-area").classList.add("hidden");
 $("recent-tournaments-list").parentElement.classList.add("hidden");
 
+$("club-management-area").classList.add("hidden");
+$("club-tournaments-area").classList.add("hidden");
+$("club-settings-area").classList.add("hidden");
+
+if (isStaff) {
+  $("club-management-area").classList.remove("hidden");
+} else {
+  $("club-tournaments-area").classList.remove("hidden");
+  loadClubTournaments();
+}
+
   $("club-details-title").textContent = club.name;
   $("club-settings-address").value = club.address || "";
   $("club-details-city").textContent =
