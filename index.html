@@ -3458,7 +3458,7 @@ async function saveTournamentInfo() {
   }
 }
 
-$("manage-clubs-btn").addEventListener("click", async () => {
+$("manage-clubs-btn")?.addEventListener("click", async () => {
   $("create-tournament-area").classList.add("hidden");
   $("recent-tournaments-list").parentElement.classList.add("hidden");
   $("tournament-search-area").classList.add("hidden");
