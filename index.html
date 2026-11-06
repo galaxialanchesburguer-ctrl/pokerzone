@@ -3776,21 +3776,63 @@ async function loadNearbyClubs() {
         data-lng="${item.club.longitude}">
         Ver no mapa
       </button>
+      <button class="btn nearby-view-tournament"
+  data-tournament-id="${item.id}">
+  Ver torneio
+</button>
     </div>
   `).join("");
 
-  list.querySelectorAll(".nearby-show-map").forEach(button => {
-    button.addEventListener("click", () => {
-      const lat = Number(button.dataset.lat);
-      const lng = Number(button.dataset.lng);
+list.querySelectorAll(".nearby-show-map").forEach(button => {
+  button.addEventListener("click", () => {
+    const lat = Number(button.dataset.lat);
+    const lng = Number(button.dataset.lng);
 
-      nearbyMap.setView([lat, lng], 15);
+    nearbyMap.invalidateSize();
+    nearbyMap.setView([lat, lng], 16, {
+      animate: true
+    });
 
-      const marker = nearbyClubMarkers.find(m => {
-        const position = m.getLatLng();
-        return position.lat === lat && position.lng === lng;
-      });
+    const marker = nearbyClubMarkers.find(m => {
+      const position = m.getLatLng();
 
+      return (
+        Math.abs(position.lat - lat) < 0.000001 &&
+        Math.abs(position.lng - lng) < 0.000001
+      );
+    });
+
+    if (marker) {
+      marker.openPopup();
+    }
+
+    $("nearby-tournaments-map").scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  });
+});
+list.querySelectorAll(".nearby-view-tournament").forEach(button => {
+  button.addEventListener("click", async () => {
+    const tournamentId = button.dataset.tournamentId;
+
+    const { data: selectedTournament, error } = await db
+      .from("tournaments")
+      .select("*")
+      .eq("id", tournamentId)
+      .single();
+
+    if (error || !selectedTournament) {
+      alert("Não foi possível abrir este torneio.");
+      return;
+    }
+
+    $("nearby-tournaments-screen").classList.add("hidden");
+
+    await openTournament(selectedTournament);
+  });
+});
+ 
       if (marker) marker.openPopup();
     });
   });
