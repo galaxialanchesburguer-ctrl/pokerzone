@@ -3771,107 +3771,69 @@ async function loadNearbyClubs() {
         ${new Date(item.season.end_date + "T12:00:00").toLocaleDateString("pt-BR")}
       </p>
       <p><strong>Distância:</strong> ${item.distance.toFixed(1)} km</p>
+
       <button class="btn secondary nearby-show-map"
         data-lat="${item.club.latitude}"
         data-lng="${item.club.longitude}">
         Ver no mapa
       </button>
+
       <button class="btn nearby-view-tournament"
-  data-tournament-id="${item.id}">
-  Ver torneio
-</button>
+        data-tournament-id="${item.id}">
+        Ver torneio
+      </button>
     </div>
   `).join("");
 
-list.querySelectorAll(".nearby-show-map").forEach(button => {
-  button.addEventListener("click", () => {
-    const lat = Number(button.dataset.lat);
-    const lng = Number(button.dataset.lng);
+  list.querySelectorAll(".nearby-show-map").forEach(button => {
+    button.addEventListener("click", () => {
+      const lat = Number(button.dataset.lat);
+      const lng = Number(button.dataset.lng);
 
-    nearbyMap.invalidateSize();
-    nearbyMap.setView([lat, lng], 16, {
-      animate: true
-    });
+      nearbyMap.invalidateSize();
+      nearbyMap.setView([lat, lng], 16, { animate: true });
 
-    const marker = nearbyClubMarkers.find(m => {
-      const position = m.getLatLng();
+      const marker = nearbyClubMarkers.find(m => {
+        const position = m.getLatLng();
 
-      return (
-        Math.abs(position.lat - lat) < 0.000001 &&
-        Math.abs(position.lng - lng) < 0.000001
-      );
-    });
+        return (
+          Math.abs(position.lat - lat) < 0.000001 &&
+          Math.abs(position.lng - lng) < 0.000001
+        );
+      });
 
-    if (marker) {
-      marker.openPopup();
-    }
+      if (marker) marker.openPopup();
 
-    $("nearby-tournaments-map").scrollIntoView({
-      behavior: "smooth",
-      block: "center"
+      $("nearby-tournaments-map").scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
     });
   });
-});
-list.querySelectorAll(".nearby-view-tournament").forEach(button => {
-  button.addEventListener("click", async () => {
-    const tournamentId = button.dataset.tournamentId;
 
-    const { data: selectedTournament, error } = await db
-      .from("tournaments")
-      .select("*")
-      .eq("id", tournamentId)
-      .single();
+  list.querySelectorAll(".nearby-view-tournament").forEach(button => {
+    button.addEventListener("click", async () => {
+      const tournamentId = button.dataset.tournamentId;
 
-   list.querySelectorAll(".nearby-show-map").forEach(button => {
-  button.addEventListener("click", () => {
-    const lat = Number(button.dataset.lat);
-    const lng = Number(button.dataset.lng);
+      const { data: selectedTournament, error } = await db
+        .from("tournaments")
+        .select("*")
+        .eq("id", tournamentId)
+        .single();
 
-    nearbyMap.invalidateSize();
-    nearbyMap.setView([lat, lng], 16, {
-      animate: true
-    });
+      if (error || !selectedTournament) {
+        alert("Não foi possível abrir este torneio.");
+        return;
+      }
 
-    const marker = nearbyClubMarkers.find(m => {
-      const position = m.getLatLng();
+      $("nearby-tournaments-screen").classList.add("hidden");
 
-      return (
-        Math.abs(position.lat - lat) < 0.000001 &&
-        Math.abs(position.lng - lng) < 0.000001
-      );
-    });
-
-    if (marker) {
-      marker.openPopup();
-    }
-
-    $("nearby-tournaments-map").scrollIntoView({
-      behavior: "smooth",
-      block: "center"
+      await openTournament(selectedTournament);
     });
   });
-});
-
-list.querySelectorAll(".nearby-view-tournament").forEach(button => {
-  button.addEventListener("click", async () => {
-    const tournamentId = button.dataset.tournamentId;
-
-    const { data: selectedTournament, error } = await db
-      .from("tournaments")
-      .select("*")
-      .eq("id", tournamentId)
-      .single();
-
-    if (error || !selectedTournament) {
-      alert("Não foi possível abrir este torneio.");
-      return;
-    }
-
-    $("nearby-tournaments-screen").classList.add("hidden");
-
-    await openTournament(selectedTournament);
-  });
-});
+}
+ $("nearby-location-btn").addEventListener("click", () => {
+  const status = $("nearby-location-status");
   status.textContent = "Localizando você...";
 
   navigator.geolocation.getCurrentPosition(
