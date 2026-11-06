@@ -2916,6 +2916,7 @@ $("club-settings-logo").addEventListener("change", () => {
   preview.style.display = "block";
 });
 
+
 $("save-club-settings-btn").addEventListener("click", async () => {
   if (!selectedClubId) return;
 
@@ -2929,6 +2930,41 @@ $("save-club-settings-btn").addEventListener("click", async () => {
   if (!name) {
     alert("Informe o nome do clube.");
     return;
+  }
+
+  let latitude = null;
+  let longitude = null;
+
+  if (address) {
+    try {
+      const query = encodeURIComponent(
+        `${address}, ${city}, ${state}, Brasil`
+      );
+
+      const response = await fetch(
+        `https://photon.komoot.io/api/?q=${query}&limit=1&lang=pt`
+      );
+
+      if (!response.ok) {
+        throw new Error("Falha na consulta do endereço.");
+      }
+
+      const geoData = await response.json();
+      const coordinates = geoData.features?.[0]?.geometry?.coordinates;
+
+      if (!coordinates) {
+        alert("Endereço não localizado. Confira o endereço informado.");
+        return;
+      }
+
+      longitude = coordinates[0];
+      latitude = coordinates[1];
+
+    } catch (error) {
+      alert("Não foi possível localizar o endereço. Tente novamente.");
+      console.error("Erro ao localizar clube:", error);
+      return;
+    }
   }
 
   let logo_url;
@@ -2958,7 +2994,15 @@ $("save-club-settings-btn").addEventListener("click", async () => {
     logo_url = urlData.publicUrl;
   }
 
-  const updates = { name, city, state, address, description };
+  const updates = {
+    name,
+    city,
+    state,
+    address,
+    latitude,
+    longitude,
+    description
+  };
 
   if (logo_url) {
     updates.logo_url = logo_url;
@@ -2976,6 +3020,9 @@ $("save-club-settings-btn").addEventListener("click", async () => {
 
   $("club-details-title").textContent = name;
   $("club-details-city").textContent = city + " - " + state;
+  $("club-details-address").textContent =
+    address || "Endereço não informado.";
+
   $("club-details-description").textContent =
     description || "Nenhuma descrição cadastrada.";
 
