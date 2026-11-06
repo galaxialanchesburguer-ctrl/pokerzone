@@ -1706,12 +1706,52 @@ input:focus,select:focus {
   <div class="table-wrap"><table><thead><tr><th>POS.</th><th>JOGADOR</th><th>PONTOS</th><th>ETAPAS</th></tr></thead><tbody id="ranking"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table></div></section>
 </section>
  
+
 <section id="tournament-info-view" class="hidden">
   <h2 class="section-title">Informações do torneio</h2>
 
   <section class="box">
-    <div class="empty">
-      As informações deste torneio serão exibidas aqui.
+    <div class="box-head">
+      <h2>INSCRIÇÃO E PREMIAÇÃO</h2>
+    </div>
+    <div class="panel-pad" id="info-registration">
+      <div class="empty">Carregando informações...</div>
+    </div>
+  </section>
+
+  <section class="box">
+    <div class="box-head">
+      <h2>ESTRUTURA DO TORNEIO</h2>
+    </div>
+    <div class="panel-pad" id="info-structure">
+      <div class="empty">Carregando informações...</div>
+    </div>
+  </section>
+
+  <section class="box">
+    <div class="box-head">
+      <h2>DATA E HORÁRIOS</h2>
+    </div>
+    <div class="panel-pad" id="info-schedule">
+      <div class="empty">Carregando informações...</div>
+    </div>
+  </section>
+
+  <section class="box">
+    <div class="box-head">
+      <h2>ESTRUTURA DE BLINDS</h2>
+    </div>
+    <div class="panel-pad" id="info-blinds">
+      <div class="empty">Carregando informações...</div>
+    </div>
+  </section>
+
+  <section class="box">
+    <div class="box-head">
+      <h2>INTERVALOS E OBSERVAÇÕES</h2>
+    </div>
+    <div class="panel-pad" id="info-notes">
+      <div class="empty">Carregando informações...</div>
     </div>
   </section>
 </section>
@@ -3008,12 +3048,13 @@ async function openTournament(selectedTournament) {
     .select("*")
     .eq("tournament_id", tournament.id)
     .maybeSingle();
+ 
+if (detailsError) {
+  console.error("Erro ao carregar informações:", detailsError);
+} else {
+  renderTournamentDetails(tournamentDetails);
+}
 
-  if (detailsError) {
-    console.error("Erro ao carregar informações:", detailsError);
-  } else {
-    console.log("Informações do torneio:", tournamentDetails);
-  }
 
   // Carregar regras de pontuação
   const { data: scoringRules, error: scoringError } = await db
@@ -3032,6 +3073,94 @@ async function openTournament(selectedTournament) {
 }
 
  
+function renderTournamentDetails(details) {
+  const empty = '<div class="empty">Não informado.</div>';
+
+  if (!details) {
+    $("info-registration").innerHTML = empty;
+    $("info-structure").innerHTML = empty;
+    $("info-schedule").innerHTML = empty;
+    $("info-blinds").innerHTML = empty;
+    $("info-notes").innerHTML = empty;
+    return;
+  }
+
+  const money = value =>
+    value != null
+      ? Number(value).toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL"
+        })
+      : "Não informado";
+
+  const number = value =>
+    value != null
+      ? Number(value).toLocaleString("pt-BR")
+      : "Não informado";
+
+  const date = value =>
+    value
+      ? new Date(value + "T12:00:00").toLocaleDateString("pt-BR")
+      : "Não informado";
+
+  const time = value =>
+    value ? value.slice(0, 5) : "Não informado";
+
+  const row = (label, value) => `
+    <p><strong>${label}:</strong> ${value}</p>
+  `;
+
+  $("info-registration").innerHTML =
+    row("Buy-in", money(details.buy_in)) +
+    row("Rebuy", money(details.rebuy_amount)) +
+    row("Limite de rebuys", details.rebuy_limit ?? "Não informado") +
+    row("Add-on", money(details.addon_amount)) +
+    row("Premiação garantida", money(details.guaranteed_prize));
+
+  $("info-structure").innerHTML =
+    row("Stack inicial", number(details.starting_stack)) +
+    row("Duração de cada nível", details.level_duration_minutes != null
+      ? details.level_duration_minutes + " minutos"
+      : "Não informado");
+
+  $("info-schedule").innerHTML =
+    row("Data", date(details.event_date)) +
+    row("Horário de início", time(details.start_time)) +
+    row("Registro tardio até o nível", details.late_registration_end_level ?? "Não informado") +
+    row("Horário limite do registro tardio", time(details.late_registration_end_time));
+
+  const blinds = Array.isArray(details.blind_structure)
+    ? details.blind_structure
+    : [];
+
+  $("info-blinds").innerHTML = blinds.length
+    ? blinds.map(level => `
+        <div class="stage-item">
+          <strong>Nível ${level.level}</strong>
+          <span>
+            ${number(level.small_blind)} / 
+            ${number(level.big_blind)} / 
+            ${number(level.ante)}
+          </span>
+        </div>
+      `).join("")
+    : empty;
+
+  const breaks = Array.isArray(details.break_structure)
+    ? details.break_structure
+    : [];
+
+  $("info-notes").innerHTML =
+    (breaks.length
+      ? "<strong>Intervalos:</strong>" +
+        breaks.map(item => `<p>${esc(item)}</p>`).join("")
+      : "") +
+    (details.notes
+      ? `<p><strong>Observações:</strong><br>${esc(details.notes)}</p>`
+      : "") ||
+    empty;
+}
+
 
 $("manage-clubs-btn").addEventListener("click", async () => {
   $("create-tournament-area").classList.add("hidden");
