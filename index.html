@@ -1349,7 +1349,28 @@ input:focus,select:focus {
   </button>
 </div>
 
-  
+<!-- BUSCA PÚBLICA DE TORNEIOS -->
+<div id="public-tournament-search" class="box hidden">
+  <div class="box-head">
+    <h2>BUSCAR TORNEIOS</h2>
+    <button id="close-public-tournament-search" class="btn secondary">
+      Fechar
+    </button>
+  </div>
+
+  <div class="panel-pad">
+    <input
+      type="text"
+      id="public-tournament-search-input"
+      placeholder="Digite o nome do torneio ou clube..."
+    >
+
+    <div id="public-tournament-search-results">
+      <div class="empty">Digite para pesquisar torneios.</div>
+    </div>
+  </div>
+</div>
+ 
 <!-- FORMULÁRIO DE CRIAÇÃO -->
 <div id="create-tournament-area" class="box hidden">
   <div class="box-head">
@@ -4296,6 +4317,92 @@ if (detailsError) throw detailsError;
     });
   });
 }
+
+ async function searchPublicTournaments() {
+  const term = $("public-tournament-search-input").value.trim();
+  const resultsBox = $("public-tournament-search-results");
+
+  if (!term) {
+    resultsBox.innerHTML =
+      '<div class="empty">Digite o nome de um torneio ou clube para pesquisar.</div>';
+    return;
+  }
+
+  resultsBox.innerHTML =
+    '<div class="empty">Buscando torneios...</div>';
+
+  const { data, error } = await db
+    .from("tournaments")
+    .select(`
+      id,
+      name,
+      description,
+      club_id,
+      clubs!tournaments_club_id_fkey (
+        name,
+        city,
+        state,
+        is_public
+      )
+    `)
+    .eq("is_public", true)
+    .eq("clubs.is_public", true)
+    .order("name");
+
+  if (error) {
+    console.error(error);
+    resultsBox.innerHTML =
+      '<div class="empty">Erro ao buscar torneios.</div>';
+    return;
+  }
+
+  const results = (data || []).filter(item => {
+    const clubName = item.clubs?.name || "";
+    return item.name.toLowerCase().includes(term.toLowerCase()) ||
+      clubName.toLowerCase().includes(term.toLowerCase());
+  });
+
+  if (!results.length) {
+    resultsBox.innerHTML =
+      '<div class="empty">Nenhum torneio encontrado.</div>';
+    return;
+  }
+
+  resultsBox.innerHTML = results.map(item => `
+    <div class="stage-item">
+      <div>
+        <strong>${escapeHtml(item.name)}</strong>
+        <small>${escapeHtml(item.clubs?.name || "")} - ${escapeHtml(item.clubs?.city || "")}</small>
+      </div>
+      <button class="btn" data-open-public-tournament="${item.id}">
+        Ver torneio
+      </button>
+    </div>
+  `).join("");
+
+  resultsBox.querySelectorAll("[data-open-public-tournament]").forEach(button => {
+    button.addEventListener("click", async () => {
+      $("public-tournament-search").classList.add("hidden");
+      await openTournament(
+        results.find(item => item.id === button.dataset.openPublicTournament)
+      );
+    });
+  });
+}
+
+$("search-tournament-btn").addEventListener("click", () => {
+  $("public-tournament-search").classList.remove("hidden");
+  $("public-tournament-search-input").focus();
+});
+
+$("close-public-tournament-search").addEventListener("click", () => {
+  $("public-tournament-search").classList.add("hidden");
+});
+
+$("public-tournament-search-input").addEventListener(
+  "input",
+  searchPublicTournaments
+);
 
 $("search-club-btn").addEventListener("click", () => {
   $("tournament-search-area").classList.remove("hidden");
