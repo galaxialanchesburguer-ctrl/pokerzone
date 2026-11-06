@@ -1225,6 +1225,22 @@ input:focus,select:focus {
       <option value="custom">Pontuação personalizada</option>
     </select>
 
+    <div id="tournament-custom-scoring-settings" class="hidden">
+
+  <h3>PONTUAÇÃO POR COLOCAÇÃO</h3>
+
+  <div id="tournament-placement-points-list"></div>
+
+  <button
+    type="button"
+    class="btn secondary"
+    id="add-tournament-placement"
+  >
+    + Adicionar colocação
+  </button>
+
+</div>
+
     <label for="tournament-participation-points">
       Pontos por participação
     </label>
@@ -2838,6 +2854,40 @@ $("tournament-ranking-enabled").addEventListener("change", () => {
     "hidden",
     !enabled
   );
+});
+
+$("tournament-scoring-type").addEventListener("change", () => {
+  const custom = $("tournament-scoring-type").value === "custom";
+
+  $("tournament-custom-scoring-settings").classList.toggle(
+    "hidden",
+    !custom
+  );
+});
+
+function addTournamentPlacement() {
+  const list = $("tournament-placement-points-list");
+  const position = list.children.length + 1;
+
+  const row = document.createElement("div");
+  row.className = "placement-point-row";
+
+  row.innerHTML = `
+    <label>${position}ª colocação</label>
+    <input
+      type="number"
+      min="0"
+      value="0"
+      class="placement-points"
+      placeholder="Pontos"
+    >
+  `;
+
+  list.appendChild(row);
+}
+
+$("add-tournament-placement").addEventListener("click", () => {
+  addTournamentPlacement();
 });
 
  $("save-new-tournament").addEventListener("click", createTournament);
