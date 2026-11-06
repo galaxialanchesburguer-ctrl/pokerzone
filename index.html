@@ -3647,8 +3647,154 @@ $("nearby-back-btn").addEventListener("click", () => {
 
  // LOCALIZAÇÃO DO USUÁRIO E MAPA
 let nearbyMap = null;
+ let nearbyUserLocation = null;
 let nearbyUserMarker = null;
+ let nearbyClubMarkers = [];
+ function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
 
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function loadNearbyClubs() {
+  const list = $("nearby-tournaments-list");
+
+  list.innerHTML = "<p>Buscando torneios próximos...</p>";
+
+  const today = new Date();
+  const todayString =
+    `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  const { data: tournaments, error } = await db
+    .from("tournaments")
+    .select(`
+      id,
+      name,
+      description,
+      clubs!tournaments_club_id_fkey (
+        id,
+        name,
+        city,
+        state,
+        latitude,
+        longitude
+      ),
+      seasons!seasons_tournament_id_fkey (
+        name,
+        start_date,
+        end_date,
+        status
+      )
+    `)
+    .eq("is_public", true)
+    .eq("clubs.is_public", true)
+    .eq("seasons.status", "active");
+
+  if (error) {
+    console.error("Erro ao buscar torneios:", error);
+    list.innerHTML = "<p>Erro ao carregar os torneios.</p>";
+    return;
+  }
+
+  const results = [];
+
+  tournaments.forEach(tournament => {
+    const club = tournament.clubs;
+
+    if (!club || !club.latitude || !club.longitude) return;
+
+    (tournament.seasons || []).forEach(season => {
+      if (season.end_date < todayString) return;
+
+      const distance = calculateDistanceKm(
+        nearbyUserLocation.latitude,
+        nearbyUserLocation.longitude,
+        Number(club.latitude),
+        Number(club.longitude)
+      );
+
+      results.push({
+        ...tournament,
+        club,
+        season,
+        distance
+      });
+    });
+  });
+
+  results.sort((a, b) => a.distance - b.distance);
+
+  nearbyClubMarkers.forEach(marker => nearbyMap.removeLayer(marker));
+  nearbyClubMarkers = [];
+
+  const clubsMarked = new Set();
+
+  results.forEach(item => {
+    if (clubsMarked.has(item.club.id)) return;
+
+    clubsMarked.add(item.club.id);
+
+    const marker = L.marker([
+      Number(item.club.latitude),
+      Number(item.club.longitude)
+    ])
+      .addTo(nearbyMap)
+      .bindPopup(
+        `<strong>${item.club.name}</strong><br>${item.club.city} - ${item.club.state}`
+      );
+
+    nearbyClubMarkers.push(marker);
+  });
+
+  if (results.length === 0) {
+    list.innerHTML = "<p>Nenhum torneio próximo encontrado.</p>";
+    return;
+  }
+
+  list.innerHTML = results.map(item => `
+    <div style="padding:12px; margin-bottom:10px; border:1px solid #ccc; border-radius:10px;">
+      <h3>${item.name}</h3>
+      <p><strong>Clube:</strong> ${item.club.name}</p>
+      <p><strong>Cidade:</strong> ${item.club.city} - ${item.club.state}</p>
+      <p><strong>Temporada:</strong> ${item.season.name}</p>
+      <p><strong>Período:</strong>
+        ${new Date(item.season.start_date + "T12:00:00").toLocaleDateString("pt-BR")}
+        até
+        ${new Date(item.season.end_date + "T12:00:00").toLocaleDateString("pt-BR")}
+      </p>
+      <p><strong>Distância:</strong> ${item.distance.toFixed(1)} km</p>
+      <button class="btn secondary nearby-show-map"
+        data-lat="${item.club.latitude}"
+        data-lng="${item.club.longitude}">
+        Ver no mapa
+      </button>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".nearby-show-map").forEach(button => {
+    button.addEventListener("click", () => {
+      const lat = Number(button.dataset.lat);
+      const lng = Number(button.dataset.lng);
+
+      nearbyMap.setView([lat, lng], 15);
+
+      const marker = nearbyClubMarkers.find(m => {
+        const position = m.getLatLng();
+        return position.lat === lat && position.lng === lng;
+      });
+
+      if (marker) marker.openPopup();
+    });
+  });
+}
 $("nearby-location-btn").addEventListener("click", () => {
   const status = $("nearby-location-status");
 
@@ -3663,6 +3809,7 @@ $("nearby-location-btn").addEventListener("click", () => {
     (position) => {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
+     nearbyUserLocation = { latitude, longitude };
 
       status.textContent = "Localização identificada com sucesso!";
 
@@ -3687,6 +3834,7 @@ $("nearby-location-btn").addEventListener("click", () => {
         .addTo(nearbyMap)
         .bindPopup("Você está aqui!")
         .openPopup();
+        loadNearbyClubs();
     },
     (error) => {
       status.textContent =
