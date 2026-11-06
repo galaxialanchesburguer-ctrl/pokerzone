@@ -2411,6 +2411,20 @@ document.querySelectorAll("[data-delete-stage]").forEach(b => {
 
       await refreshAll();
 
+     
+const { data: tournamentDetails, error: detailsError } = await db
+  .from("tournament_details")
+  .select("*")
+  .eq("tournament_id", tournament.id)
+  .maybeSingle();
+
+if (detailsError) {
+  console.error("Erro ao carregar informações:", detailsError);
+} else {
+  console.log("Informações do torneio:", tournamentDetails);
+}
+
+
     } catch (error) {
       alert("Não foi possível excluir a etapa: " + error.message);
     }
