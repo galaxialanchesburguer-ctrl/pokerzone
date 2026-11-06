@@ -3428,27 +3428,6 @@ async function saveTournamentInfo() {
   }
 }
 
-  const details = {
-    tournament_id: tournament.id,
-    buy_in: optionalNumber("edit-tournament-buy-in"),
-    rebuy_amount: optionalNumber("edit-tournament-rebuy"),
-    rebuy_limit: optionalNumber("edit-tournament-rebuy-limit"),
-    addon_amount: optionalNumber("edit-tournament-addon"),
-    starting_stack: optionalNumber("edit-tournament-stack"),
-    event_date: $("edit-tournament-date").value || null,
-    start_time: $("edit-tournament-start-time").value || null,
-    late_registration_end_level: optionalNumber("edit-tournament-late-level"),
-    late_registration_end_time: $("edit-tournament-late-time").value || null,
-    guaranteed_prize: optionalNumber("edit-tournament-guaranteed"),
-    level_duration_minutes: optionalNumber("edit-tournament-level-duration"),
-    blind_structure: blindStructure,
-    break_structure: $("edit-tournament-breaks").value
-      .split("\n")
-      .map(line => line.trim())
-      .filter(Boolean),
-    notes: $("edit-tournament-notes").value.trim() || null
-  };
-
   try {
     const { data, error } = await db
       .from("tournament_details")
