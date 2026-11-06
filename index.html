@@ -1241,6 +1241,52 @@ input:focus,select:focus {
 
     <label for="new-tournament-end">Data de término</label>
     <input id="new-tournament-end" type="date">
+   
+<hr>
+
+<h3>ESTRUTURA E PREMIAÇÃO</h3>
+
+<label for="tournament-buy-in">Buy-in (R$)</label>
+<input id="tournament-buy-in" type="number" min="0" step="0.01" placeholder="Ex.: 100">
+
+<label for="tournament-rebuy">Valor do Rebuy (R$)</label>
+<input id="tournament-rebuy" type="number" min="0" step="0.01" placeholder="Ex.: 100">
+
+<label for="tournament-rebuy-limit">Limite de Rebuys</label>
+<input id="tournament-rebuy-limit" type="number" min="0" placeholder="Ex.: 2">
+
+<label for="tournament-addon">Valor do Add-on (R$)</label>
+<input id="tournament-addon" type="number" min="0" step="0.01" placeholder="Ex.: 150">
+
+<label for="tournament-stack">Stack inicial</label>
+<input id="tournament-stack" type="number" min="0" placeholder="Ex.: 30000">
+
+<label for="tournament-start-time">Horário de início</label>
+<input id="tournament-start-time" type="time">
+
+<label for="tournament-late-level">Registro tardio até o nível</label>
+<input id="tournament-late-level" type="number" min="0" placeholder="Ex.: 8">
+
+<label for="tournament-late-time">Horário limite do registro tardio</label>
+<input id="tournament-late-time" type="time">
+
+<label for="tournament-guaranteed">Premiação garantida (R$)</label>
+<input id="tournament-guaranteed" type="number" min="0" step="0.01" placeholder="Opcional">
+
+<label for="tournament-level-duration">Duração de cada nível (minutos)</label>
+<input id="tournament-level-duration" type="number" min="1" placeholder="Ex.: 20">
+
+<label for="tournament-blinds">Estrutura de blinds</label>
+<textarea id="tournament-blinds" placeholder="Um nível por linha: SB / BB / Ante&#10;100 / 200 / 0&#10;200 / 400 / 0&#10;300 / 600 / 100"></textarea>
+
+<label for="tournament-breaks">Intervalos (breaks)</label>
+<textarea id="tournament-breaks" placeholder="Ex.: Após nível 4 - 15 minutos&#10;Após nível 8 - 20 minutos"></textarea>
+
+<label for="tournament-notes">Observações do torneio</label>
+<textarea id="tournament-notes" placeholder="Informações adicionais para os jogadores..."></textarea>
+
+<hr>
+
 
     <label for="new-tournament-visibility">Visibilidade</label>
     <select id="new-tournament-visibility">
@@ -3616,6 +3662,46 @@ async function createTournament() {
 
   const message = $("create-tournament-message");
 
+ 
+const optionalNumber = (id) => {
+  const value = $(id).value.trim();
+  return value === "" ? null : Number(value);
+};
+
+const tournamentDetails = {
+  buy_in: optionalNumber("tournament-buy-in"),
+  rebuy_amount: optionalNumber("tournament-rebuy"),
+  rebuy_limit: optionalNumber("tournament-rebuy-limit"),
+  addon_amount: optionalNumber("tournament-addon"),
+  starting_stack: optionalNumber("tournament-stack"),
+  event_date: startDate || null,
+  start_time: $("tournament-start-time").value || null,
+  late_registration_end_level: optionalNumber("tournament-late-level"),
+  late_registration_end_time: $("tournament-late-time").value || null,
+  guaranteed_prize: optionalNumber("tournament-guaranteed"),
+  level_duration_minutes: optionalNumber("tournament-level-duration"),
+  blind_structure: $("tournament-blinds").value
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      const values = line.split(/[\/,]/).map(v => Number(v.trim()));
+
+      return {
+        level: index + 1,
+        small_blind: values[0],
+        big_blind: values[1],
+        ante: values[2] || 0
+      };
+    }),
+  break_structure: $("tournament-breaks").value
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean),
+  notes: $("tournament-notes").value.trim()
+};
+
+
   if (!name || !startDate || !endDate) {
     message.textContent = "Preencha o nome e as duas datas.";
     return;
@@ -3687,6 +3773,16 @@ async function createTournament() {
       });
 
     if (scoringError) throw scoringError;
+
+const { error: detailsError } = await db
+  .from("tournament_details")
+  .insert({
+    tournament_id: newTournament.id,
+    ...tournamentDetails
+  });
+
+if (detailsError) throw detailsError;
+
 
     $("create-tournament-area").classList.add("hidden");
     $("new-tournament-name").value = "";
