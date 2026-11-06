@@ -2700,7 +2700,7 @@ async function loadStages() {
 
    $("stage-list").innerHTML = stages.length
   ? stages.map(s => `
-      <div class="stage-item">
+     <div class="stage-item" data-stage-card="${s.id}">
   <div class="stage-main">
     <div class="stage-number">
       ETAPA ${String(s.stage_number).padStart(2, "0")}
@@ -2757,12 +2757,18 @@ async function loadStages() {
     }
   });
 });
-   document.querySelectorAll("[data-stage-results]").forEach(b => {
-  b.addEventListener("click", () => {
-    openStageResults(b.dataset.stageResults);
+  document.querySelectorAll("[data-stage-card]").forEach(card => {
+  card.addEventListener("click", (event) => {
+    if (
+      event.target.closest("[data-edit-stage]") ||
+      event.target.closest("[data-delete-stage]")
+    ) {
+      return;
+    }
+
+    openStageResults(card.dataset.stageCard);
   });
 });
-
    
 document.querySelectorAll("[data-delete-stage]").forEach(b => {
   b.addEventListener("click", async () => {
@@ -4965,7 +4971,7 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
   }
 
   container.innerHTML = recent.map(t => `
-    <div class="stage-item">
+   <div class="stage-item" data-stage-card="${s.id}">
       <div>
         <strong>${esc(t.name)}</strong>
         <small>${esc(t.description || "Torneio PokerZone")}</small>
