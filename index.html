@@ -3822,6 +3822,46 @@ list.querySelectorAll(".nearby-view-tournament").forEach(button => {
       .eq("id", tournamentId)
       .single();
 
+   list.querySelectorAll(".nearby-show-map").forEach(button => {
+  button.addEventListener("click", () => {
+    const lat = Number(button.dataset.lat);
+    const lng = Number(button.dataset.lng);
+
+    nearbyMap.invalidateSize();
+    nearbyMap.setView([lat, lng], 16, {
+      animate: true
+    });
+
+    const marker = nearbyClubMarkers.find(m => {
+      const position = m.getLatLng();
+
+      return (
+        Math.abs(position.lat - lat) < 0.000001 &&
+        Math.abs(position.lng - lng) < 0.000001
+      );
+    });
+
+    if (marker) {
+      marker.openPopup();
+    }
+
+    $("nearby-tournaments-map").scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  });
+});
+
+list.querySelectorAll(".nearby-view-tournament").forEach(button => {
+  button.addEventListener("click", async () => {
+    const tournamentId = button.dataset.tournamentId;
+
+    const { data: selectedTournament, error } = await db
+      .from("tournaments")
+      .select("*")
+      .eq("id", tournamentId)
+      .single();
+
     if (error || !selectedTournament) {
       alert("Não foi possível abrir este torneio.");
       return;
@@ -3832,19 +3872,6 @@ list.querySelectorAll(".nearby-view-tournament").forEach(button => {
     await openTournament(selectedTournament);
   });
 });
- 
-      if (marker) marker.openPopup();
-    });
-  });
-}
-$("nearby-location-btn").addEventListener("click", () => {
-  const status = $("nearby-location-status");
-
-  if (!navigator.geolocation) {
-    status.textContent = "Seu navegador não suporta localização.";
-    return;
-  }
-
   status.textContent = "Localizando você...";
 
   navigator.geolocation.getCurrentPosition(
