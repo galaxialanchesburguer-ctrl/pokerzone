@@ -3428,26 +3428,6 @@ async function saveTournamentInfo() {
   }
 }
 
-  try {
-    const { data, error } = await db
-      .from("tournament_details")
-      .upsert(details, { onConflict: "tournament_id" })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    currentTournamentDetails = data;
-    renderTournamentDetails(data);
-
-    $("edit-tournament-info-form").classList.add("hidden");
-
-    alert("Informações atualizadas com sucesso!");
-  } catch (error) {
-    alert("Erro ao salvar informações: " + error.message);
-  }
-}
-
 $("manage-clubs-btn").addEventListener("click", async () => {
   $("create-tournament-area").classList.add("hidden");
   $("recent-tournaments-list").parentElement.classList.add("hidden");
