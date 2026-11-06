@@ -1589,6 +1589,43 @@ input:focus,select:focus {
   </div>
 
 </section>
+ <!-- TORNEIOS PRÓXIMOS -->
+<section id="nearby-tournaments-screen" class="hidden">
+
+  <div class="box">
+    <div class="box-head">
+      <h2>TORNEIOS PRÓXIMOS DE MIM</h2>
+      <button id="nearby-back-btn" class="btn secondary">
+        Voltar
+      </button>
+    </div>
+
+    <div class="panel-pad">
+      <p>Encontre torneios de poker próximos da sua localização.</p>
+
+      <button id="nearby-location-btn" class="btn">
+        <span>Usar minha localização</span>
+      </button>
+
+      <p id="nearby-location-status">
+        Sua localização ainda não foi identificada.
+      </p>
+
+      <div id="nearby-tournaments-list">
+        <div class="empty">
+          Os torneios próximos aparecerão aqui.
+        </div>
+      </div>
+
+      <h3>MAPA DOS CLUBES</h3>
+
+      <div id="nearby-tournaments-map"
+           style="width:100%; height:350px; border-radius:12px;">
+      </div>
+    </div>
+  </div>
+
+</section>
 <section class="season hidden" id="tournament-app">
  <div>
   <button class="btn secondary" id="back-to-tournaments">← Voltar aos torneios</button>
@@ -3594,6 +3631,16 @@ async function createTournament() {
 $("search-tournament-btn").addEventListener("click", () => {
   $("tournament-search-area").classList.remove("hidden");
   $("tournament-search-input").focus();
+});
+
+ $("nearby-tournaments-btn").addEventListener("click", () => {
+  $("home-tournaments").classList.add("hidden");
+  $("nearby-tournaments-screen").classList.remove("hidden");
+});
+
+$("nearby-back-btn").addEventListener("click", () => {
+  $("nearby-tournaments-screen").classList.add("hidden");
+  $("home-tournaments").classList.remove("hidden");
 });
 
 $("close-tournament-search").addEventListener("click", () => {
