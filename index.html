@@ -1382,6 +1382,98 @@ input:focus,select:focus {
     width: 100%;
   }
 }
+ /* IDENTIDADE VISUAL DOS CARTÕES DE ETAPAS */
+#stage-list-box .stage-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+#stage-list-box .stage-number {
+  min-width: 62px;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #f5443b, #a91620);
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(245, 68, 59, .2);
+}
+
+#stage-list-box .stage-info {
+  min-width: 0;
+}
+
+#stage-list-box .stage-results-link {
+  font-size: 18px;
+  text-decoration: none;
+}
+
+#stage-list-box .stage-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #aaa;
+  font-size: 12px;
+}
+
+#stage-list-box .stage-status {
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+#stage-list-box .stage-status.published {
+  background: rgba(46, 180, 110, .13);
+  border: 1px solid rgba(46, 180, 110, .35);
+  color: #62d99b;
+}
+
+#stage-list-box .stage-status.draft {
+  background: rgba(255, 180, 60, .12);
+  border: 1px solid rgba(255, 180, 60, .3);
+  color: #ffc36b;
+}
+
+#stage-list-box .stage-item .actions .btn {
+  padding: 10px 15px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 650px) {
+  #stage-list-box .stage-main {
+    gap: 12px;
+  }
+
+  #stage-list-box .stage-number {
+    min-width: 52px;
+    height: 52px;
+    font-size: 10px;
+  }
+
+  #stage-list-box .stage-info {
+    flex: 1;
+  }
+
+  #stage-list-box .stage-item .actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  #stage-list-box .stage-item .actions .btn {
+    flex: 1;
+  }
+}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2609,30 +2701,40 @@ async function loadStages() {
    $("stage-list").innerHTML = stages.length
   ? stages.map(s => `
       <div class="stage-item">
-        <div>
-          <button class="stage-results-link" data-stage-results="${s.id}">
-            ${esc(s.name || "ETAPA " + s.stage_number)}
-          </button>
+  <div class="stage-main">
+    <div class="stage-number">
+      ETAPA ${String(s.stage_number).padStart(2, "0")}
+    </div>
 
-          <small>
-            ${new Date(s.played_at + "T12:00:00").toLocaleDateString("pt-BR")}
-            • ${s.status === "published" ? "Publicada" : "Rascunho"}
-          </small>
-        </div>
+    <div class="stage-info">
+      <button class="stage-results-link" data-stage-results="${s.id}">
+        ${esc(s.name || "ETAPA " + s.stage_number)}
+      </button>
 
-        <div class="actions">
-          <span class="tag">${s.participant_count || 0} participantes</span>
+      <div class="stage-meta">
+        <span>📅 ${new Date(s.played_at + "T12:00:00").toLocaleDateString("pt-BR")}</span>
 
-          <button class="btn secondary" data-edit-stage="${s.id}">
-            ${isStaff ? "Editar" : "Ver resultados"}
-          </button>
-          ${isStaff ? `
-  <button class="btn secondary" data-delete-stage="${s.id}">
-    Excluir
-  </button>
-` : ""}
-        </div>
+        <span class="stage-status ${s.status === "published" ? "published" : "draft"}">
+          ${s.status === "published" ? "Publicada" : "Rascunho"}
+        </span>
       </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <span class="tag">👥 ${s.participant_count || 0} participantes</span>
+
+    <button class="btn" data-edit-stage="${s.id}">
+      ${isStaff ? "Editar etapa" : "Ver classificação →"}
+    </button>
+
+    ${isStaff ? `
+      <button class="btn secondary" data-delete-stage="${s.id}">
+        Excluir
+      </button>
+    ` : ""}
+  </div>
+</div>
 
       <div id="stage-results-${s.id}" class="box hidden">
         <div class="box-head">
