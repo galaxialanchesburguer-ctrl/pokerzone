@@ -1642,11 +1642,14 @@ input:focus,select:focus {
   <button class="btn secondary hidden" id="logout-btn">Sair</button>
  </div>
 
+
 <nav class="tabs">
+ <button class="tab" data-tab="tournament-info-view">Informações</button>
+ <button class="tab" data-tab="stages-view">Etapas</button>
   <button class="tab active" data-tab="ranking-view">Ranking geral</button>
   <button class="tab" data-tab="final-ranking-view">Ranking final</button>
-  <button class="tab" data-tab="stages-view">Etapas</button>
 </nav>
+
 <section id="ranking-view">
  <h2 class="section-title">Pódio da temporada</h2><section class="podium" id="podium"></section>
  <h2 class="section-title">Classificação completa</h2>
@@ -1656,6 +1659,17 @@ input:focus,select:focus {
 
   <div class="table-wrap"><table><thead><tr><th>POS.</th><th>JOGADOR</th><th>PONTOS</th><th>ETAPAS</th></tr></thead><tbody id="ranking"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table></div></section>
 </section>
+ 
+<section id="tournament-info-view" class="hidden">
+  <h2 class="section-title">Informações do torneio</h2>
+
+  <section class="box">
+    <div class="empty">
+      As informações deste torneio serão exibidas aqui.
+    </div>
+  </section>
+</section>
+
 <section id="final-ranking-view" class="hidden">
 
  <h2 class="section-title">Pódio da temporada</h2>
@@ -1804,6 +1818,7 @@ function showTab(id){
   $("final-ranking-view").classList.toggle("hidden",id!=="final-ranking-view");
   $("player-profile-view").classList.toggle("hidden",id!=="player-profile-view");
   $("stages-view").classList.toggle("hidden",id!=="stages-view");
+ $("tournament-info-view").classList.toggle("hidden",id!=="tournament-info-view");
 }
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
 function renderRanking(list){
