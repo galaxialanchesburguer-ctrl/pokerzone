@@ -3181,7 +3181,8 @@ $("login-btn").addEventListener("click",async()=>{const {error}=await db.auth.si
 $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await checkSession();await refreshAll()});
 
 
- async function deleteCurrentTournament() {
+ 
+async function deleteCurrentTournament() {
   if (!isStaff || !tournament) {
     alert("Você não tem permissão para excluir este torneio.");
     return;
@@ -3190,87 +3191,112 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
   const tournamentId = tournament.id;
   const tournamentName = tournament.name || "este torneio";
 
-  if (!confirm(`Tem certeza que deseja excluir "${tournamentName}"? Todas as temporadas, etapas, resultados, pontuações e jogadores vinculados também serão apagados. Essa ação não poderá ser desfeita.`)) {
+  if (!confirm(
+    `Tem certeza que deseja excluir "${tournamentName}"?\n\n` +
+    "Todas as temporadas, etapas, resultados, pontuações e jogadores vinculados também serão apagados.\n\n" +
+    "Essa ação não poderá ser desfeita."
+  )) {
     return;
   }
 
   try {
+    // Buscar temporadas do torneio
     const { data: seasonsToDelete, error: seasonsFetchError } = await db
       .from("seasons")
       .select("id")
       .eq("tournament_id", tournamentId);
+
     if (seasonsFetchError) throw seasonsFetchError;
 
     const seasonIds = (seasonsToDelete || []).map(item => item.id);
 
     if (seasonIds.length) {
+      // Buscar etapas das temporadas
       const { data: stagesToDelete, error: stagesFetchError } = await db
         .from("stages")
         .select("id")
         .in("season_id", seasonIds);
+
       if (stagesFetchError) throw stagesFetchError;
 
       const stageIds = (stagesToDelete || []).map(item => item.id);
 
+      // Excluir resultados antes dos jogadores e das etapas
       if (stageIds.length) {
-        const { error: resultsError } = await db
+        const { error } = await db
           .from("results")
           .delete()
           .in("stage_id", stageIds);
-        if (resultsError) throw resultsError;
+
+        if (error) throw error;
       }
 
-      const { error: adjustmentsError } = await db
-        .from("season_player_adjustments")
-        .delete()
-        .in("season_id", seasonIds);
-      if (adjustmentsError) throw adjustmentsError;
-
+      // Excluir etapas antes das temporadas
       const { error: stagesError } = await db
         .from("stages")
         .delete()
         .in("season_id", seasonIds);
+
       if (stagesError) throw stagesError;
+
+      // Excluir ajustes de pontuação
+      const { error: adjustmentsError } = await db
+        .from("season_player_adjustments")
+        .delete()
+        .in("season_id", seasonIds);
+
+      if (adjustmentsError) throw adjustmentsError;
     }
 
+    // Excluir jogadores
     const { error: playersError } = await db
       .from("players")
       .delete()
       .eq("tournament_id", tournamentId);
+
     if (playersError) throw playersError;
 
-    const { error: rulesError } = await db
-      .from("tournament_scoring_rules")
-      .delete()
-      .eq("tournament_id", tournamentId);
-    if (rulesError) throw rulesError;
-
+    // Excluir temporadas
     const { error: seasonsError } = await db
       .from("seasons")
       .delete()
       .eq("tournament_id", tournamentId);
+
     if (seasonsError) throw seasonsError;
 
+    // Excluir torneio
+    // Regras de pontuação são excluídas automaticamente por CASCADE
     const { error: tournamentError } = await db
       .from("tournaments")
       .delete()
       .eq("id", tournamentId);
+
     if (tournamentError) throw tournamentError;
 
-    const recent = JSON.parse(localStorage.getItem("pokerzone_recent_tournaments") || "[]")
-      .filter(item => item.id !== tournamentId);
-    localStorage.setItem("pokerzone_recent_tournaments", JSON.stringify(recent));
+    // Remover da lista de torneios recentes
+    const recent = JSON.parse(
+      localStorage.getItem("pokerzone_recent_tournaments") || "[]"
+    ).filter(item => item.id !== tournamentId);
 
-    alert("Torneio e todos os dados vinculados foram excluídos.");
+    localStorage.setItem(
+      "pokerzone_recent_tournaments",
+      JSON.stringify(recent)
+    );
+
+    alert("Torneio e dados vinculados foram excluídos.");
+
     $("tournament-app").classList.add("hidden");
     $("home-tournaments").classList.remove("hidden");
+
     tournament = null;
     season = null;
     currentStage = null;
     editorResults = [];
     stages = [];
     players = [];
+
     loadRecentTournaments();
+
   } catch (error) {
     alert("Não foi possível concluir a exclusão: " + error.message);
   }
