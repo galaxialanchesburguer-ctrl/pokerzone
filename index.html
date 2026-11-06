@@ -2798,9 +2798,9 @@ async function saveStage() {
  
 async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){console.error(e);msg("Erro: "+e.message)}}
  
- async function openTournament(selectedTournament){
+async function openTournament(selectedTournament) {
   tournament = selectedTournament;
-    currentStage = null;
+  currentStage = null;
   editorResults = [];
   $("stage-editor").classList.add("hidden");
 
@@ -2816,9 +2816,21 @@ async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){
   $("home-tournaments").classList.add("hidden");
   $("tournament-app").classList.remove("hidden");
 
-   await refreshAll();
-  loadRecentTournaments();
+    await refreshAll();
 
+  const { data: scoringRules, error: scoringError } = await db
+    .from("tournament_scoring_rules")
+    .select("*")
+    .eq("tournament_id", tournament.id)
+    .maybeSingle();
+
+  if (scoringError) {
+    console.error("Erro ao carregar regras do torneio:", scoringError);
+  } else {
+    console.log("Regras carregadas:", scoringRules);
+  }
+
+  loadRecentTournaments();
 }
  
 
