@@ -1320,24 +1320,27 @@ input:focus,select:focus {
  <!-- TELA INICIAL DOS TORNEIOS -->
 <section id="home-tournaments">
 
-  <div class="home-header">
-    <h1>POKERZONE</h1>
-    <p>Escolha um torneio para continuar</p>
-  </div>
+ <div class="home-header">
+  <h1>POKERZONE</h1>
+  <p>Encontre torneios, acompanhe jogadores e confira resultados.</p>
+</div>
 
- <div class="home-actions">
-  <button id="manage-clubs-btn" class="btn secondary">
-  Gerenciar clubes
+<div class="home-actions">
+  <button id="search-club-btn" class="btn secondary">
+  ♣ Buscar clubes
 </button>
 
-  <button id="search-tournament-btn" class="btn secondary">
-  Buscar clube
-</button>
-  
+  <button id="search-player-btn" class="btn secondary">
+    👤 Buscar jogadores
+  </button>
+
+  <button id="search-club-btn" class="btn secondary">
+    ♣ Buscar clubes
+  </button>
+
   <button id="nearby-tournaments-btn" class="btn secondary">
-  Torneios próximos de mim
-</button>
-  
+    📍 Torneios próximos de mim
+  </button>
 </div>
 
   
@@ -4288,7 +4291,7 @@ if (detailsError) throw detailsError;
   });
 }
 
-$("search-tournament-btn").addEventListener("click", () => {
+$("search-club-btn").addEventListener("click", () => {
   $("tournament-search-area").classList.remove("hidden");
   $("tournament-search-input").focus();
 });
