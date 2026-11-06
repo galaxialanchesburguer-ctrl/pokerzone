@@ -1823,7 +1823,8 @@ input:focus,select:focus {
 <section id="tournament-info-view" class="hidden">
   <h2 class="section-title">Informações do torneio</h2>
  
-<button class="btn" id="edit-tournament-info-btn">
+<button class="btn" id="edit-tournament-info-btn"
+  style="width:auto; display:inline-block; padding:10px 18px;">
   Editar informações
 </button>
 
@@ -3199,6 +3200,7 @@ async function openTournament(selectedTournament) {
   editorResults = [];
   $("stage-editor").classList.add("hidden");
   $("delete-tournament-btn").classList.toggle("hidden", !isStaff);
+ $("edit-tournament-info-btn").classList.toggle("hidden", !isStaff);
 
   localStorage.setItem(
     "pokerzone_recent_tournaments",
