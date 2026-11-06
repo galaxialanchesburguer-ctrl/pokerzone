@@ -3285,7 +3285,8 @@ async function loadClubTournaments() {
   });
 }
 
- async function createTournament() {
+ 
+async function createTournament() {
   if (!isAdmin) {
     alert("Somente administradores podem criar torneios.");
     return;
@@ -3296,15 +3297,66 @@ async function loadClubTournaments() {
   const startDate = $("new-tournament-start").value;
   const endDate = $("new-tournament-end").value;
   const isPublic = $("new-tournament-visibility").value === "true";
+
+  const rankingEnabled =
+    $("tournament-ranking-enabled").value === "true";
+
+  const placementEnabled =
+    $("tournament-placement-enabled").checked;
+
+  const participationEnabled =
+    $("tournament-participation-enabled").checked;
+
+  const multiplierEnabled =
+    $("tournament-multiplier-enabled").checked;
+
+  const discardEnabled =
+    $("tournament-discard-enabled").checked;
+
+  const tiebreakerEnabled =
+    $("tournament-tiebreaker-enabled").checked;
+
+  const goldEnabled =
+    $("tournament-gold-enabled").checked;
+
+  const repechageEnabled =
+    $("tournament-repechage-enabled").checked;
+
+  const championsEnabled =
+    $("tournament-champions-enabled").checked;
+
+  const finalEnabled =
+    $("tournament-final-enabled").checked;
+
   const scoringType = $("tournament-scoring-type").value;
 
-const placementPoints = Array.from(
-  document.querySelectorAll(".placement-points")
-).map(input => Number(input.value) || 0);
+  const placementPoints = Array.from(
+    document.querySelectorAll(".placement-points")
+  ).map(input => Number(input.value) || 0);
 
-const participationPoints = Number(
-  $("tournament-participation-points").value
-) || 0;
+  const participationPoints = Number(
+    $("tournament-participation-points").value
+  ) || 0;
+
+  const discardCount = Number(
+    $("tournament-discard-count").value
+  ) || 2;
+
+  const settings = {
+    mode: $("new-tournament-mode").value,
+    ranking_enabled: rankingEnabled,
+    placement_enabled: placementEnabled,
+    participation_enabled: participationEnabled,
+    multiplier_enabled: multiplierEnabled,
+    discard_enabled: discardEnabled,
+    discard_count: discardCount,
+    tiebreaker_enabled: tiebreakerEnabled,
+    gold_enabled: goldEnabled,
+    repechage_enabled: repechageEnabled,
+    champions_enabled: championsEnabled,
+    final_enabled: finalEnabled
+  };
+
   const message = $("create-tournament-message");
 
   if (!name || !startDate || !endDate) {
@@ -3327,14 +3379,14 @@ const participationPoints = Number(
     }
 
     const { data: newTournament, error: tournamentError } = await db
-  .from("tournaments")
-  .insert({
-    name,
-    description,
-    is_public: isPublic,
-    created_by: userData.user.id,
-    club_id: selectedClubId || null
-  })
+      .from("tournaments")
+      .insert({
+        name,
+        description,
+        is_public: isPublic,
+        created_by: userData.user.id,
+        club_id: selectedClubId || null
+      })
       .select("id,name,description")
       .single();
 
@@ -3364,15 +3416,20 @@ const participationPoints = Number(
     }
 
     const { error: scoringError } = await db
-  .from("tournament_scoring_rules")
-  .insert({
-    tournament_id: newTournament.id,
-    scoring_type: scoringType,
-    placement_points: scoringType === "custom" ? placementPoints : [],
-    participation_points: participationPoints
-  });
+      .from("tournament_scoring_rules")
+      .insert({
+        tournament_id: newTournament.id,
+        scoring_type: scoringType,
+        placement_points:
+          placementEnabled && scoringType === "custom"
+            ? placementPoints
+            : [],
+        participation_points:
+          participationEnabled ? participationPoints : 0,
+        settings
+      });
 
-if (scoringError) throw scoringError;
+    if (scoringError) throw scoringError;
 
     $("create-tournament-area").classList.add("hidden");
     $("new-tournament-name").value = "";
@@ -3382,17 +3439,18 @@ if (scoringError) throw scoringError;
     message.textContent = "";
 
     if (selectedClubId) {
- $("club-tournaments-area").classList.remove("hidden");
-  await loadClubTournaments();
-} else {
-  await openTournament(newTournament);
-}
+      $("club-tournaments-area").classList.remove("hidden");
+      await loadClubTournaments();
+    } else {
+      await openTournament(newTournament);
+    }
 
   } catch (error) {
     console.error("Erro ao criar torneio:", error);
     message.textContent = "Erro ao criar torneio: " + error.message;
   }
 }
+
  async function searchTournaments() {
   const term = $("tournament-search-input").value.trim();
   const resultsBox = $("tournament-search-results");
