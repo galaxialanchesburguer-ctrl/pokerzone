@@ -1141,6 +1141,54 @@ input:focus,select:focus {
 #club-tournaments-back-btn {
   margin-top: 22px;
 }
+/* Interruptores ON/OFF do regulamento */
+#tournament-advanced-settings input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 54px;
+  height: 30px;
+  min-width: 54px;
+  border-radius: 30px;
+  background: #cbd5e1;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.25s ease;
+  vertical-align: middle;
+}
+
+#tournament-advanced-settings input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.25s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+#tournament-advanced-settings input[type="checkbox"]:checked {
+  background: #2563eb;
+}
+
+#tournament-advanced-settings input[type="checkbox"]:checked::before {
+  transform: translateX(24px);
+}
+#tournament-advanced-settings label:has(input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  width: 100%;
+  cursor: pointer;
+}
+
+#tournament-advanced-settings label input[type="checkbox"] {
+  flex-shrink: 0;
+  margin: 0;
+}
 </style>
 </head>
 <body>
