@@ -2980,6 +2980,7 @@ async function saveStage() {
  
 async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){console.error(e);msg("Erro: "+e.message)}}
  
+
 async function openTournament(selectedTournament) {
   tournament = selectedTournament;
   currentStage = null;
@@ -2999,8 +3000,22 @@ async function openTournament(selectedTournament) {
   $("home-tournaments").classList.add("hidden");
   $("tournament-app").classList.remove("hidden");
 
-    await refreshAll();
+  await refreshAll();
 
+  // Carregar informações do torneio
+  const { data: tournamentDetails, error: detailsError } = await db
+    .from("tournament_details")
+    .select("*")
+    .eq("tournament_id", tournament.id)
+    .maybeSingle();
+
+  if (detailsError) {
+    console.error("Erro ao carregar informações:", detailsError);
+  } else {
+    console.log("Informações do torneio:", tournamentDetails);
+  }
+
+  // Carregar regras de pontuação
   const { data: scoringRules, error: scoringError } = await db
     .from("tournament_scoring_rules")
     .select("*")
@@ -3015,6 +3030,7 @@ async function openTournament(selectedTournament) {
 
   loadRecentTournaments();
 }
+
  
 
 $("manage-clubs-btn").addEventListener("click", async () => {
