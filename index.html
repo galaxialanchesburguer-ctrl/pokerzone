@@ -1631,6 +1631,7 @@ input:focus,select:focus {
 <section class="season hidden" id="tournament-app">
  <div>
   <button class="btn secondary" id="back-to-tournaments">← Voltar aos torneios</button>
+  <button class="btn secondary hidden" id="delete-tournament-btn" style="margin-top:8px;">Excluir torneio</button>
   <div class="eyebrow">RANKING • ATUALIZADO</div>
   <h1>IPC<span>POKER</span></h1>
   <div class="season-info" id="season-name">Carregando temporada...</div>
@@ -2862,6 +2863,7 @@ async function openTournament(selectedTournament) {
   currentStage = null;
   editorResults = [];
   $("stage-editor").classList.add("hidden");
+  $("delete-tournament-btn").classList.toggle("hidden", !isStaff);
 
   localStorage.setItem(
     "pokerzone_recent_tournaments",
@@ -3179,7 +3181,104 @@ $("login-btn").addEventListener("click",async()=>{const {error}=await db.auth.si
 $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await checkSession();await refreshAll()});
 
 
- $("back-to-tournaments").addEventListener("click", () => {
+ async function deleteCurrentTournament() {
+  if (!isStaff || !tournament) {
+    alert("Você não tem permissão para excluir este torneio.");
+    return;
+  }
+
+  const tournamentId = tournament.id;
+  const tournamentName = tournament.name || "este torneio";
+
+  if (!confirm(`Tem certeza que deseja excluir "${tournamentName}"? Todas as temporadas, etapas, resultados, pontuações e jogadores vinculados também serão apagados. Essa ação não poderá ser desfeita.`)) {
+    return;
+  }
+
+  try {
+    const { data: seasonsToDelete, error: seasonsFetchError } = await db
+      .from("seasons")
+      .select("id")
+      .eq("tournament_id", tournamentId);
+    if (seasonsFetchError) throw seasonsFetchError;
+
+    const seasonIds = (seasonsToDelete || []).map(item => item.id);
+
+    if (seasonIds.length) {
+      const { data: stagesToDelete, error: stagesFetchError } = await db
+        .from("stages")
+        .select("id")
+        .in("season_id", seasonIds);
+      if (stagesFetchError) throw stagesFetchError;
+
+      const stageIds = (stagesToDelete || []).map(item => item.id);
+
+      if (stageIds.length) {
+        const { error: resultsError } = await db
+          .from("results")
+          .delete()
+          .in("stage_id", stageIds);
+        if (resultsError) throw resultsError;
+      }
+
+      const { error: adjustmentsError } = await db
+        .from("season_player_adjustments")
+        .delete()
+        .in("season_id", seasonIds);
+      if (adjustmentsError) throw adjustmentsError;
+
+      const { error: stagesError } = await db
+        .from("stages")
+        .delete()
+        .in("season_id", seasonIds);
+      if (stagesError) throw stagesError;
+    }
+
+    const { error: playersError } = await db
+      .from("players")
+      .delete()
+      .eq("tournament_id", tournamentId);
+    if (playersError) throw playersError;
+
+    const { error: rulesError } = await db
+      .from("tournament_scoring_rules")
+      .delete()
+      .eq("tournament_id", tournamentId);
+    if (rulesError) throw rulesError;
+
+    const { error: seasonsError } = await db
+      .from("seasons")
+      .delete()
+      .eq("tournament_id", tournamentId);
+    if (seasonsError) throw seasonsError;
+
+    const { error: tournamentError } = await db
+      .from("tournaments")
+      .delete()
+      .eq("id", tournamentId);
+    if (tournamentError) throw tournamentError;
+
+    const recent = JSON.parse(localStorage.getItem("pokerzone_recent_tournaments") || "[]")
+      .filter(item => item.id !== tournamentId);
+    localStorage.setItem("pokerzone_recent_tournaments", JSON.stringify(recent));
+
+    alert("Torneio e todos os dados vinculados foram excluídos.");
+    $("tournament-app").classList.add("hidden");
+    $("home-tournaments").classList.remove("hidden");
+    tournament = null;
+    season = null;
+    currentStage = null;
+    editorResults = [];
+    stages = [];
+    players = [];
+    loadRecentTournaments();
+  } catch (error) {
+    alert("Não foi possível concluir a exclusão: " + error.message);
+  }
+}
+
+$("delete-tournament-btn").addEventListener("click", deleteCurrentTournament);
+
+$("back-to-tournaments").addEventListener("click", () => {
   tournament = null;
   season = null;
     currentStage = null;
