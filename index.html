@@ -3153,6 +3153,8 @@ async function openTournament(selectedTournament) {
   $("home-tournaments").classList.add("hidden");
   $("tournament-app").classList.remove("hidden");
 
+ showTab("tournament-info-view");
+
   await refreshAll();
 
   // Carregar informações do torneio
