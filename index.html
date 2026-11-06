@@ -1423,6 +1423,13 @@ input:focus,select:focus {
       <label for="new-club-state">Estado</label>
       <input id="new-club-state" type="text" placeholder="Ex.: SC" maxlength="2">
 
+      <label for="new-club-address">Endereço do clube</label>
+<input
+  id="new-club-address"
+  type="text"
+  placeholder="Ex.: Rua XV de Novembro, 250"
+>
+
       <label for="new-club-description">Descrição (opcional)</label>
       <textarea id="new-club-description" placeholder="Sobre o clube..."></textarea>
 
@@ -1459,6 +1466,7 @@ input:focus,select:focus {
 
   <div class="panel-pad">
   <p id="club-details-city"></p>
+  <p id="club-details-address"></p>
   <p id="club-details-description"></p>
 
   <div id="club-management-area">
@@ -1521,6 +1529,13 @@ input:focus,select:focus {
 
   <label>Estado</label>
   <input type="text" id="club-settings-state">
+
+  <label>Endereço do clube</label>
+<input
+  type="text"
+  id="club-settings-address"
+  placeholder="Rua, número e bairro"
+>
 
   <label>Descrição</label>
   <textarea id="club-settings-description"></textarea>
@@ -2908,6 +2923,7 @@ $("save-club-settings-btn").addEventListener("click", async () => {
   const city = $("club-settings-city").value.trim();
   const state = $("club-settings-state").value.trim();
   const description = $("club-settings-description").value.trim();
+  const address = $("club-settings-address").value.trim();
   const file = $("club-settings-logo").files[0];
 
   if (!name) {
@@ -2942,7 +2958,7 @@ $("save-club-settings-btn").addEventListener("click", async () => {
     logo_url = urlData.publicUrl;
   }
 
-  const updates = { name, city, state, description };
+  const updates = { name, city, state, address, description };
 
   if (logo_url) {
     updates.logo_url = logo_url;
@@ -3096,7 +3112,8 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
     .replace(/'/g, "&#039;");
 }
 
- async function createClub() {
+ 
+async function createClub() {
   if (!isAdmin) {
     alert("Somente o administrador pode cadastrar clubes.");
     return;
@@ -3105,6 +3122,7 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
   const name = $("new-club-name").value.trim();
   const city = $("new-club-city").value.trim();
   const state = $("new-club-state").value.trim().toUpperCase();
+  const address = $("new-club-address").value.trim();
   const description = $("new-club-description").value.trim();
   const message = $("new-club-message");
 
@@ -3128,6 +3146,7 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
         name,
         city,
         state,
+        address: address || null,
         description: description || null,
         created_by: userData.user.id
       })
@@ -3152,6 +3171,7 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
     $("new-club-name").value = "";
     $("new-club-city").value = "";
     $("new-club-state").value = "";
+    $("new-club-address").value = "";
     $("new-club-description").value = "";
 
     message.textContent = "Clube cadastrado com sucesso!";
@@ -3162,10 +3182,11 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
     message.textContent = "Erro ao cadastrar clube: " + error.message;
   }
 }
+
 async function openClub(clubId) {
   const { data: club, error } = await db
     .from("clubs")
-    .select("id, name, city, state, description, logo_url")
+    .select("id, name, city, state, address, latitude, longitude, description, logo_url")
     .eq("id", clubId)
     .single();
 
@@ -3182,8 +3203,11 @@ $("tournament-search-area").classList.add("hidden");
 $("recent-tournaments-list").parentElement.classList.add("hidden");
 
   $("club-details-title").textContent = club.name;
+  $("club-settings-address").value = club.address || "";
   $("club-details-city").textContent =
     (club.city || "") + " - " + (club.state || "");
+  $("club-details-address").textContent =
+  club.address || "Endereço não informado.";
 
   $("club-details-description").textContent =
     club.description || "Nenhuma descrição cadastrada.";
