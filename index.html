@@ -2280,6 +2280,11 @@ async function loadStages() {
           <button class="btn secondary" data-edit-stage="${s.id}">
             ${isStaff ? "Editar" : "Ver resultados"}
           </button>
+          ${isStaff ? `
+  <button class="btn secondary" data-delete-stage="${s.id}">
+    Excluir
+  </button>
+` : ""}
         </div>
       </div>
 
@@ -2309,6 +2314,48 @@ async function loadStages() {
     openStageResults(b.dataset.stageResults);
   });
 });
+
+   
+document.querySelectorAll("[data-delete-stage]").forEach(b => {
+  b.addEventListener("click", async () => {
+    if (!isStaff) {
+      alert("Você não tem permissão para excluir etapas.");
+      return;
+    }
+
+    const stageId = b.dataset.deleteStage;
+
+    const stageName = b
+      .closest(".stage-item")
+      ?.querySelector(".stage-results-link")
+      ?.textContent.trim() || "esta etapa";
+
+    if (!confirm(
+      `Tem certeza que deseja excluir "${stageName}"?\n\n` +
+      "Todos os resultados e pontuações desta etapa também serão apagados.\n\n" +
+      "Essa ação não poderá ser desfeita."
+    )) {
+      return;
+    }
+
+    try {
+      const { error } = await db
+        .from("stages")
+        .delete()
+        .eq("id", stageId);
+
+      if (error) throw error;
+
+      alert("Etapa excluída com sucesso!");
+
+      await refreshAll();
+
+    } catch (error) {
+      alert("Não foi possível excluir a etapa: " + error.message);
+    }
+  });
+});
+
 
   } catch (error) {
     console.error("Erro ao carregar etapas:", error);
@@ -3234,8 +3281,6 @@ async function deleteCurrentTournament() {
     alert("Não foi possível excluir o torneio: " + error.message);
   }
 }
-
-
 $("delete-tournament-btn").addEventListener("click", deleteCurrentTournament);
 
 $("back-to-tournaments").addEventListener("click", () => {
