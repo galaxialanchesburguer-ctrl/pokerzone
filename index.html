@@ -2938,27 +2938,27 @@ $("save-club-settings-btn").addEventListener("click", async () => {
   if (address) {
     try {
       const query = encodeURIComponent(
-        `${address}, ${city}, ${state}, Brasil`
-      );
+  `${address}, ${city}, ${state}, Brasil`
+);
 
-      const response = await fetch(
-        `https://photon.komoot.io/api/?q=${query}&limit=1&lang=pt`
-      );
+     const response = await fetch(
+  `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${query}`
+);
 
-      if (!response.ok) {
-        throw new Error("Falha na consulta do endereço.");
-      }
+if (!response.ok) {
+  throw new Error("Falha na consulta do endereço.");
+}
 
-      const geoData = await response.json();
-      const coordinates = geoData.features?.[0]?.geometry?.coordinates;
+const geoData = await response.json();
+const coordinates = geoData[0];
 
-      if (!coordinates) {
-        alert("Endereço não localizado. Confira o endereço informado.");
-        return;
-      }
+if (!coordinates) {
+  alert("Endereço não localizado. Confira o endereço informado.");
+  return;
+}
 
-      longitude = coordinates[0];
-      latitude = coordinates[1];
+longitude = parseFloat(coordinates.lon);
+latitude = parseFloat(coordinates.lat);
 
     } catch (error) {
       alert("Não foi possível localizar o endereço. Tente novamente.");
