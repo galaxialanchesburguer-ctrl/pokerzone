@@ -3645,6 +3645,60 @@ $("nearby-back-btn").addEventListener("click", () => {
   $("home-tournaments").classList.remove("hidden");
 });
 
+ // LOCALIZAÇÃO DO USUÁRIO E MAPA
+let nearbyMap = null;
+let nearbyUserMarker = null;
+
+$("nearby-location-btn").addEventListener("click", () => {
+  const status = $("nearby-location-status");
+
+  if (!navigator.geolocation) {
+    status.textContent = "Seu navegador não suporta localização.";
+    return;
+  }
+
+  status.textContent = "Localizando você...";
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
+      status.textContent = "Localização identificada com sucesso!";
+
+      if (!nearbyMap) {
+        nearbyMap = L.map("nearby-tournaments-map").setView(
+          [latitude, longitude],
+          12
+        );
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap"
+        }).addTo(nearbyMap);
+      } else {
+        nearbyMap.setView([latitude, longitude], 12);
+      }
+
+      if (nearbyUserMarker) {
+        nearbyMap.removeLayer(nearbyUserMarker);
+      }
+
+      nearbyUserMarker = L.marker([latitude, longitude])
+        .addTo(nearbyMap)
+        .bindPopup("Você está aqui!")
+        .openPopup();
+    },
+    (error) => {
+      status.textContent =
+        "Não foi possível obter sua localização. Verifique a permissão do navegador.";
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000
+    }
+  );
+});
+
 $("close-tournament-search").addEventListener("click", () => {
   $("tournament-search-area").classList.add("hidden");
 });
