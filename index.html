@@ -3133,6 +3133,15 @@ async function loadClubTournaments() {
   const startDate = $("new-tournament-start").value;
   const endDate = $("new-tournament-end").value;
   const isPublic = $("new-tournament-visibility").value === "true";
+  const scoringType = $("tournament-scoring-type").value;
+
+const placementPoints = Array.from(
+  document.querySelectorAll(".placement-points")
+).map(input => Number(input.value) || 0);
+
+const participationPoints = Number(
+  $("tournament-participation-points").value
+) || 0;
   const message = $("create-tournament-message");
 
   if (!name || !startDate || !endDate) {
@@ -3191,6 +3200,17 @@ async function loadClubTournaments() {
       throw seasonError;
     }
 
+    const { error: scoringError } = await db
+  .from("tournament_scoring_rules")
+  .insert({
+    tournament_id: newTournament.id,
+    scoring_type: scoringType,
+    placement_points: scoringType === "custom" ? placementPoints : [],
+    participation_points: participationPoints
+  });
+
+if (scoringError) throw scoringError;
+
     $("create-tournament-area").classList.add("hidden");
     $("new-tournament-name").value = "";
     $("new-tournament-description").value = "";
@@ -3199,8 +3219,7 @@ async function loadClubTournaments() {
     message.textContent = "";
 
     if (selectedClubId) {
-  $("club-tournaments-area").classList.remo3
-  ve("hidden");
+ $("club-tournaments-area").classList.remove("hidden");
   await loadClubTournaments();
 } else {
   await openTournament(newTournament);
