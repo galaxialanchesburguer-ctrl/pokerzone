@@ -1205,59 +1205,139 @@ input:focus,select:focus {
 
     <div id="tournament-advanced-settings" class="hidden">
 
-  <h3>RANKING GERAL</h3>
+  <h3>CONFIGURAÇÃO DO REGULAMENTO</h3>
+
+  <h3>1. RANKING GERAL</h3>
 
   <label for="tournament-ranking-enabled">
     O torneio terá ranking geral?
   </label>
 
   <select id="tournament-ranking-enabled">
+    <option value="false" selected>Não</option>
     <option value="true">Sim</option>
-    <option value="false">Não</option>
   </select>
 
-  <div id="tournament-ranking-settings">
+  <div id="tournament-ranking-settings" class="hidden">
 
-    <label for="tournament-scoring-type">Sistema de pontuação</label>
+    <h3>2. SISTEMA DE PONTUAÇÃO</h3>
 
-    <select id="tournament-scoring-type">
-      <option value="standard">Pontuação por colocação</option>
-      <option value="custom">Pontuação personalizada</option>
-    </select>
+    <label>
+      <input type="checkbox" id="tournament-placement-enabled">
+      Pontuação por colocação
+    </label>
 
-    <div id="tournament-custom-scoring-settings" class="hidden">
+    <div id="tournament-placement-settings" class="hidden">
 
-  <h3>PONTUAÇÃO POR COLOCAÇÃO</h3>
+      <label for="tournament-scoring-type">
+        Tipo de pontuação
+      </label>
 
-  <div id="tournament-placement-points-list"></div>
+      <select id="tournament-scoring-type">
+        <option value="standard">Pontuação padrão</option>
+        <option value="custom">Pontuação personalizada</option>
+      </select>
 
-  <button
-    type="button"
-    class="btn secondary"
-    id="add-tournament-placement"
-  >
-    + Adicionar colocação
-  </button>
+      <div id="tournament-custom-scoring-settings" class="hidden">
 
-</div>
+        <h3>PONTUAÇÃO POR COLOCAÇÃO</h3>
 
-    <label for="tournament-participation-points">
+        <div id="tournament-placement-points-list"></div>
+
+        <button
+          type="button"
+          class="btn secondary"
+          id="add-tournament-placement"
+        >
+          + Adicionar colocação
+        </button>
+
+      </div>
+    </div>
+
+    <label>
+      <input type="checkbox" id="tournament-participation-enabled">
       Pontos por participação
     </label>
 
-    <input
-      type="number"
-      id="tournament-participation-points"
-      value="0"
-      min="0"
-    >
+    <div id="tournament-participation-settings" class="hidden">
 
-    <h3>CRITÉRIOS DE DESEMPATE</h3>
+      <label for="tournament-participation-points">
+        Quantidade de pontos
+      </label>
 
-    <p>Vamos configurar os critérios na próxima etapa.</p>
+      <input
+        type="number"
+        id="tournament-participation-points"
+        value="0"
+        min="0"
+      >
+
+    </div>
+
+    <label>
+      <input type="checkbox" id="tournament-multiplier-enabled">
+      Multiplicador por número de participantes
+    </label>
+
+    <div id="tournament-multiplier-settings" class="hidden">
+      <p>Configuração dos multiplicadores será adicionada aqui.</p>
+    </div>
+
+    <label>
+      <input type="checkbox" id="tournament-discard-enabled">
+      Descartar os piores resultados
+    </label>
+
+    <div id="tournament-discard-settings" class="hidden">
+
+      <label for="tournament-discard-count">
+        Quantidade de resultados descartados
+      </label>
+
+      <input
+        type="number"
+        id="tournament-discard-count"
+        min="1"
+        value="2"
+      >
+
+    </div>
+
+    <h3>3. CRITÉRIOS DE DESEMPATE</h3>
+
+    <label>
+      <input type="checkbox" id="tournament-tiebreaker-enabled">
+      Personalizar critérios de desempate
+    </label>
+
+    <div id="tournament-tiebreaker-settings" class="hidden">
+      <p>Configuração dos critérios será adicionada aqui.</p>
+    </div>
+
+    <h3>4. RECURSOS DO CAMPEONATO</h3>
+
+    <label>
+      <input type="checkbox" id="tournament-gold-enabled">
+      Ter etapas especiais (GOLD)
+    </label>
+
+    <label>
+      <input type="checkbox" id="tournament-repechage-enabled">
+      Ter repescagem
+    </label>
+
+    <label>
+      <input type="checkbox" id="tournament-champions-enabled">
+      Ter torneio dos campeões
+    </label>
+
+    <label>
+      <input type="checkbox" id="tournament-final-enabled">
+      Ter mesa final
+    </label>
 
   </div>
-
 </div>
 
     <button id="save-new-tournament" class="btn">
@@ -2862,6 +2942,41 @@ $("tournament-scoring-type").addEventListener("change", () => {
   $("tournament-custom-scoring-settings").classList.toggle(
     "hidden",
     !custom
+  );
+});
+
+$("tournament-placement-enabled").addEventListener("change", () => {
+  $("tournament-placement-settings").classList.toggle(
+    "hidden",
+    !$("tournament-placement-enabled").checked
+  );
+});
+
+$("tournament-participation-enabled").addEventListener("change", () => {
+  $("tournament-participation-settings").classList.toggle(
+    "hidden",
+    !$("tournament-participation-enabled").checked
+  );
+});
+
+$("tournament-multiplier-enabled").addEventListener("change", () => {
+  $("tournament-multiplier-settings").classList.toggle(
+    "hidden",
+    !$("tournament-multiplier-enabled").checked
+  );
+});
+
+$("tournament-discard-enabled").addEventListener("change", () => {
+  $("tournament-discard-settings").classList.toggle(
+    "hidden",
+    !$("tournament-discard-enabled").checked
+  );
+});
+
+$("tournament-tiebreaker-enabled").addEventListener("change", () => {
+  $("tournament-tiebreaker-settings").classList.toggle(
+    "hidden",
+    !$("tournament-tiebreaker-enabled").checked
   );
 });
 
