@@ -1301,7 +1301,15 @@ input:focus,select:focus {
     grid-column: 1;
   }
 }
-
+#edit-tournament-info-btn {
+  grid-column: 1 / -1;
+  justify-self: start;
+  align-self: start;
+  width: auto !important;
+  display: inline-block;
+  padding: 10px 18px;
+  margin: 0 0 5px;
+}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1828,59 +1836,6 @@ input:focus,select:focus {
   Editar informações
 </button>
 
-<div id="edit-tournament-info-form" class="box hidden" style="margin-top:15px;">
-  <h3>EDITAR INFORMAÇÕES DO TORNEIO</h3>
-
-  <label>Buy-in (R$)</label>
-  <input id="edit-tournament-buy-in" type="number" min="0" step="0.01">
-
-  <label>Valor do Rebuy (R$)</label>
-  <input id="edit-tournament-rebuy" type="number" min="0" step="0.01">
-
-  <label>Limite de Rebuys</label>
-  <input id="edit-tournament-rebuy-limit" type="number" min="0">
-
-  <label>Valor do Add-on (R$)</label>
-  <input id="edit-tournament-addon" type="number" min="0" step="0.01">
-
-  <label>Stack inicial</label>
-  <input id="edit-tournament-stack" type="number" min="0">
-
-  <label>Data</label>
-  <input id="edit-tournament-date" type="date">
-
-  <label>Horário de início</label>
-  <input id="edit-tournament-start-time" type="time">
-
-  <label>Registro tardio até o nível</label>
-  <input id="edit-tournament-late-level" type="number" min="0">
-
-  <label>Horário limite do registro tardio</label>
-  <input id="edit-tournament-late-time" type="time">
-
-  <label>Premiação garantida (R$)</label>
-  <input id="edit-tournament-guaranteed" type="number" min="0" step="0.01">
-
-  <label>Duração de cada nível (minutos)</label>
-  <input id="edit-tournament-level-duration" type="number" min="1">
-
-  <label>Estrutura de blinds</label>
-  <textarea id="edit-tournament-blinds" placeholder="Um nível por linha: SB / BB / Ante"></textarea>
-
-  <label>Intervalos (breaks)</label>
-  <textarea id="edit-tournament-breaks"></textarea>
-
-  <label>Observações</label>
-  <textarea id="edit-tournament-notes"></textarea>
-
-  <button class="btn" id="save-tournament-info-btn">
-    Salvar alterações
-  </button>
-
-  <button class="btn secondary" id="cancel-tournament-info-btn">
-    Cancelar
-  </button>
-</div>
 
   <section class="box">
     <div class="box-head">
@@ -3193,6 +3148,7 @@ async function saveStage() {
 async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){console.error(e);msg("Erro: "+e.message)}}
  
 let currentTournamentDetails = null;
+ let isEditingTournamentInfo = false;
  
 async function openTournament(selectedTournament) {
   tournament = selectedTournament;
@@ -3251,16 +3207,7 @@ if (detailsError) {
 
  
 function renderTournamentDetails(details) {
-  const empty = '<div class="empty">Não informado.</div>';
-
-  if (!details) {
-    $("info-registration").innerHTML = empty;
-    $("info-structure").innerHTML = empty;
-    $("info-schedule").innerHTML = empty;
-    $("info-blinds").innerHTML = empty;
-    $("info-notes").innerHTML = empty;
-    return;
-  }
+  details = details || {};
 
   const money = value =>
     value != null
@@ -3271,21 +3218,70 @@ function renderTournamentDetails(details) {
       : "Não informado";
 
   const number = value =>
-    value != null
-      ? Number(value).toLocaleString("pt-BR")
-      : "Não informado";
+    value != null ? Number(value).toLocaleString("pt-BR") : "Não informado";
 
   const date = value =>
-    value
-      ? new Date(value + "T12:00:00").toLocaleDateString("pt-BR")
-      : "Não informado";
+    value ? new Date(value + "T12:00:00").toLocaleDateString("pt-BR") : "Não informado";
 
-  const time = value =>
-    value ? value.slice(0, 5) : "Não informado";
+  const time = value => value ? value.slice(0, 5) : "Não informado";
 
-  const row = (label, value) => `
-    <p><strong>${label}:</strong> ${value}</p>
+  const row = (label, value) => `<p><strong>${label}:</strong> ${value}</p>`;
+
+  const field = (id, label, value, type = "number") => `
+    <label>${label}</label>
+    <input id="${id}" type="${type}" value="${esc(value ?? "")}" ${type === "number" ? 'min="0" step="any"' : ""}>
   `;
+
+  if (isEditingTournamentInfo) {
+    $("info-registration").innerHTML =
+      field("edit-tournament-buy-in", "Buy-in (R$)", details.buy_in) +
+      field("edit-tournament-rebuy", "Rebuy (R$)", details.rebuy_amount) +
+      field("edit-tournament-rebuy-limit", "Limite de rebuys", details.rebuy_limit) +
+      field("edit-tournament-addon", "Add-on (R$)", details.addon_amount) +
+      field("edit-tournament-guaranteed", "Premiação garantida (R$)", details.guaranteed_prize);
+
+    $("info-structure").innerHTML =
+      field("edit-tournament-stack", "Stack inicial", details.starting_stack) +
+      field("edit-tournament-level-duration", "Duração dos níveis (minutos)", details.level_duration_minutes);
+
+    $("info-schedule").innerHTML =
+      field("edit-tournament-date", "Data", details.event_date, "date") +
+      field("edit-tournament-start-time", "Horário de início", details.start_time, "time") +
+      field("edit-tournament-late-level", "Registro tardio até o nível", details.late_registration_end_level) +
+      field("edit-tournament-late-time", "Horário limite do registro tardio", details.late_registration_end_time, "time");
+
+    const blindsText = (details.blind_structure || [])
+      .map(level => `${level.small_blind} / ${level.big_blind} / ${level.ante ?? 0}`)
+      .join("\n");
+
+    $("info-blinds").innerHTML = `
+      <label>Estrutura de blinds (SB / BB / Ante, um nível por linha)</label>
+      <textarea id="edit-tournament-blinds" rows="8">${esc(blindsText)}</textarea>
+    `;
+
+    $("info-notes").innerHTML = `
+      <label>Intervalos (um por linha)</label>
+      <textarea id="edit-tournament-breaks" rows="4">${esc((details.break_structure || []).join("\n"))}</textarea>
+
+      <label>Observações</label>
+      <textarea id="edit-tournament-notes" rows="4">${esc(details.notes || "")}</textarea>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:15px;">
+        <button class="btn" id="save-tournament-info-btn">Salvar alterações</button>
+        <button class="btn secondary" id="cancel-tournament-info-btn">Cancelar</button>
+      </div>
+    `;
+
+    $("save-tournament-info-btn").addEventListener("click", saveTournamentInfo);
+
+    $("cancel-tournament-info-btn").addEventListener("click", () => {
+      isEditingTournamentInfo = false;
+      renderTournamentDetails(currentTournamentDetails);
+      $("edit-tournament-info-btn").classList.remove("hidden");
+    });
+
+    return;
+  }
 
   $("info-registration").innerHTML =
     row("Buy-in", money(details.buy_in)) +
@@ -3306,26 +3302,18 @@ function renderTournamentDetails(details) {
     row("Registro tardio até o nível", details.late_registration_end_level ?? "Não informado") +
     row("Horário limite do registro tardio", time(details.late_registration_end_time));
 
-  const blinds = Array.isArray(details.blind_structure)
-    ? details.blind_structure
-    : [];
+  const blinds = Array.isArray(details.blind_structure) ? details.blind_structure : [];
 
   $("info-blinds").innerHTML = blinds.length
     ? blinds.map(level => `
         <div class="stage-item">
           <strong>Nível ${level.level}</strong>
-          <span>
-            ${number(level.small_blind)} / 
-            ${number(level.big_blind)} / 
-            ${number(level.ante)}
-          </span>
+          <span>${number(level.small_blind)} / ${number(level.big_blind)} / ${number(level.ante)}</span>
         </div>
       `).join("")
-    : empty;
+    : '<div class="empty">Não informado.</div>';
 
-  const breaks = Array.isArray(details.break_structure)
-    ? details.break_structure
-    : [];
+  const breaks = Array.isArray(details.break_structure) ? details.break_structure : [];
 
   $("info-notes").innerHTML =
     (breaks.length
@@ -3333,11 +3321,10 @@ function renderTournamentDetails(details) {
         breaks.map(item => `<p>${esc(item)}</p>`).join("")
       : "") +
     (details.notes
-      ? `<p><strong>Observações:</strong><br>${esc(details.notes)}</p>`
+      ? `<p><strong>Observações:</strong> ${esc(details.notes)}</p>`
       : "") ||
-    empty;
+    '<div class="empty">Não informado.</div>';
 }
-
  function fillTournamentEditForm(details) {
   if (!details) details = {};
 
@@ -3366,13 +3353,15 @@ function renderTournamentDetails(details) {
   $("edit-tournament-notes").value = details.notes ?? "";
 }
 
- async function saveTournamentInfo() {
+async function saveTournamentInfo() {
+  const value = id => $(id).value.trim();
+
   const optionalNumber = id => {
-    const value = $(id).value.trim();
-    return value === "" ? null : Number(value);
+    const v = value(id);
+    return v === "" ? null : Number(v);
   };
 
-  const blindStructure = $("edit-tournament-blinds").value
+  const blindStructure = value("edit-tournament-blinds")
     .split("\n")
     .map(line => line.trim())
     .filter(Boolean)
@@ -3393,9 +3382,51 @@ function renderTournamentDetails(details) {
     level.small_blind < 0 ||
     level.big_blind < 0
   )) {
-    alert("Confira a estrutura de blinds. Use o formato SB / BB / Ante.");
+    alert("Confira a estrutura de blinds. Use SB / BB / Ante.");
     return;
   }
+
+  const details = {
+    tournament_id: tournament.id,
+    buy_in: optionalNumber("edit-tournament-buy-in"),
+    rebuy_amount: optionalNumber("edit-tournament-rebuy"),
+    rebuy_limit: optionalNumber("edit-tournament-rebuy-limit"),
+    addon_amount: optionalNumber("edit-tournament-addon"),
+    starting_stack: optionalNumber("edit-tournament-stack"),
+    event_date: value("edit-tournament-date") || null,
+    start_time: value("edit-tournament-start-time") || null,
+    late_registration_end_level: optionalNumber("edit-tournament-late-level"),
+    late_registration_end_time: value("edit-tournament-late-time") || null,
+    guaranteed_prize: optionalNumber("edit-tournament-guaranteed"),
+    level_duration_minutes: optionalNumber("edit-tournament-level-duration"),
+    blind_structure: blindStructure,
+    break_structure: value("edit-tournament-breaks")
+      .split("\n")
+      .map(line => line.trim())
+      .filter(Boolean),
+    notes: value("edit-tournament-notes") || null
+  };
+
+  try {
+    const { data, error } = await db
+      .from("tournament_details")
+      .upsert(details, { onConflict: "tournament_id" })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    currentTournamentDetails = data;
+    isEditingTournamentInfo = false;
+    renderTournamentDetails(data);
+
+    $("edit-tournament-info-btn").classList.remove("hidden");
+
+    alert("Informações atualizadas com sucesso!");
+  } catch (error) {
+    alert("Erro ao salvar informações: " + error.message);
+  }
+}
 
   const details = {
     tournament_id: tournament.id,
@@ -3778,23 +3809,12 @@ async function deleteCurrentTournament() {
   }
 }
 $("delete-tournament-btn").addEventListener("click", deleteCurrentTournament);
+ 
  $("edit-tournament-info-btn").addEventListener("click", () => {
-  fillTournamentEditForm(currentTournamentDetails);
+  isEditingTournamentInfo = true;
+  renderTournamentDetails(currentTournamentDetails);
 
-  $("edit-tournament-info-form").classList.remove("hidden");
-
-  $("edit-tournament-info-form").scrollIntoView({
-    behavior: "smooth",
-    block: "start"
-  });
-});
-
- $("cancel-tournament-info-btn").addEventListener("click", () => {
-  $("edit-tournament-info-form").classList.add("hidden");
-});
-
- $("save-tournament-info-btn").addEventListener("click", () => {
-  saveTournamentInfo();
+  $("edit-tournament-info-btn").classList.add("hidden");
 });
 
 $("back-to-tournaments").addEventListener("click", () => {
