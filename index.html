@@ -4390,7 +4390,13 @@ if (detailsError) throw detailsError;
   });
 }
 
+function closeHomeSearches() {
+  $("public-tournament-search").classList.add("hidden");
+  $("tournament-search-area").classList.add("hidden");
+}
+
 $("search-tournament-btn").addEventListener("click", () => {
+  closeHomeSearches();
   $("public-tournament-search").classList.remove("hidden");
   $("public-tournament-search-input").focus();
 });
@@ -4405,13 +4411,20 @@ $("public-tournament-search-input").addEventListener(
 );
 
 $("search-club-btn").addEventListener("click", () => {
+  closeHomeSearches();
   $("tournament-search-area").classList.remove("hidden");
   $("tournament-search-input").focus();
 });
 
- $("nearby-tournaments-btn").addEventListener("click", () => {
+$("nearby-tournaments-btn").addEventListener("click", () => {
+  closeHomeSearches();
   $("home-tournaments").classList.add("hidden");
   $("nearby-tournaments-screen").classList.remove("hidden");
+});
+
+$("nearby-back-btn").addEventListener("click", () => {
+  $("nearby-tournaments-screen").classList.add("hidden");
+  $("home-tournaments").classList.remove("hidden");
 });
 
 $("nearby-back-btn").addEventListener("click", () => {
