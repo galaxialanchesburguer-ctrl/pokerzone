@@ -1370,6 +1370,28 @@ input:focus,select:focus {
     </div>
   </div>
 </div>
+
+ <!-- BUSCA PÚBLICA DE JOGADORES -->
+<div id="public-player-search" class="box hidden">
+  <div class="box-head">
+    <h2>BUSCAR JOGADORES</h2>
+    <button id="close-public-player-search" class="btn secondary">
+      Fechar
+    </button>
+  </div>
+
+  <div class="panel-pad">
+    <input
+      type="text"
+      id="public-player-search-input"
+      placeholder="Digite o nome do jogador..."
+    >
+
+    <div id="public-player-search-results">
+      <div class="empty">Digite o nome de um jogador para pesquisar.</div>
+    </div>
+  </div>
+</div>
  
 <!-- FORMULÁRIO DE CRIAÇÃO -->
 <div id="create-tournament-area" class="box hidden">
@@ -4389,11 +4411,100 @@ if (detailsError) throw detailsError;
     });
   });
 }
+async function searchPublicPlayers() {
+  const term = $("public-player-search-input").value.trim();
+  const resultsBox = $("public-player-search-results");
 
+  if (!term) {
+    resultsBox.innerHTML =
+      '<div class="empty">Digite o nome de um jogador para pesquisar.</div>';
+    return;
+  }
+
+  resultsBox.innerHTML =
+    '<div class="empty">Buscando jogadores...</div>';
+
+  const { data, error } = await db
+    .from("players")
+    .select(`
+      id,
+      display_name,
+      tournament_id,
+      tournaments!players_tournament_id_fkey (
+        id,
+        name,
+        is_public
+      )
+    `)
+    .eq("is_active", true)
+    .ilike("display_name", `%${term}%`)
+    .eq("tournaments.is_public", true)
+    .limit(30);
+
+  if (error) {
+    console.error(error);
+    resultsBox.innerHTML =
+      '<div class="empty">Erro ao buscar jogadores.</div>';
+    return;
+  }
+
+  if (!data || !data.length) {
+    resultsBox.innerHTML =
+      '<div class="empty">Nenhum jogador encontrado.</div>';
+    return;
+  }
+
+  resultsBox.innerHTML = data.map(player => `
+    <div class="stage-item">
+      <div>
+        <strong>${escapeHtml(player.display_name)}</strong>
+        <small>${escapeHtml(player.tournaments?.name || "")}</small>
+      </div>
+      <button class="btn" data-player-tournament="${player.id}">
+        Ver jogador
+      </button>
+    </div>
+  `).join("");
+
+  resultsBox.querySelectorAll("[data-player-tournament]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const player = data.find(p => p.id === button.dataset.playerTournament);
+
+      if (!player?.tournaments) return;
+
+      closeHomeSearches();
+      $("public-player-search").classList.add("hidden");
+
+      await openTournament({
+        id: player.tournaments.id,
+        name: player.tournaments.name
+      });
+
+      await openPlayerProfile(player.id);
+    });
+  });
+}
+ 
 function closeHomeSearches() {
   $("public-tournament-search").classList.add("hidden");
   $("tournament-search-area").classList.add("hidden");
+  $("public-player-search").classList.add("hidden");
 }
+
+ $("search-player-btn").addEventListener("click", () => {
+  closeHomeSearches();
+  $("public-player-search").classList.remove("hidden");
+  $("public-player-search-input").focus();
+});
+
+$("close-public-player-search").addEventListener("click", () => {
+  $("public-player-search").classList.add("hidden");
+});
+
+$("public-player-search-input").addEventListener(
+  "input",
+  searchPublicPlayers
+);
 
 $("search-tournament-btn").addEventListener("click", () => {
   closeHomeSearches();
