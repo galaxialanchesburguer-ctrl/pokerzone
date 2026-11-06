@@ -1316,6 +1316,72 @@ input:focus,select:focus {
   padding: 10px 18px;
   margin: 0 0 5px;
 }
+ /* NOVO VISUAL DA LISTA DE ETAPAS */
+#stage-list-box > #stage-list {
+  padding: 10px 18px 18px;
+}
+
+#stage-list-box .stage-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+  margin-top: 12px;
+  border: 1px solid #383030;
+  border-left: 3px solid #f5443b;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #202020, #131313);
+  transition: .2s ease;
+}
+
+#stage-list-box .stage-item:hover {
+  border-color: #f5443b;
+  background: #241719;
+}
+
+#stage-list-box .stage-results-link {
+  display: block;
+  margin-bottom: 8px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+#stage-list-box .stage-item small {
+  color: #aaa;
+  font-size: 13px;
+}
+
+#stage-list-box .stage-item .actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+#stage-list-box .stage-item .tag {
+  background: #292020;
+  border-color: #493033;
+  color: #eee;
+  border-radius: 7px;
+}
+
+@media (max-width: 650px) {
+  #stage-list-box > #stage-list {
+    padding: 8px 12px 14px;
+  }
+
+  #stage-list-box .stage-item {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  #stage-list-box .stage-item .actions {
+    width: 100%;
+  }
+}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
