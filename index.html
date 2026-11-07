@@ -6608,6 +6608,7 @@ $("club-settings-logo").value = "";
 let clubHaverPlayers = [];
 let clubHaverSelectedPlayer = null;
 let clubHaverTransactions = [];
+let clubHaverAllEntries = [];
 const clubMoney = value => Number(value || 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"});
 function clubHaverBalance(rows) {
   return rows.reduce((sum,row) => sum + (row.entry_type === "payment" ? -Number(row.amount) : Number(row.amount)), 0);
@@ -6640,9 +6641,11 @@ async function loadClubHaver() {
   $("club-haver-total-charged").textContent = clubMoney(totals.charged);
   $("club-haver-total-paid").textContent = clubMoney(totals.paid);
   $("club-haver-total-open").textContent = clubMoney(totals.charged-totals.paid);
-  renderClubHaverPlayers(entries);
+  clubHaverAllEntries = entries;
+  renderClubHaverPlayers();
 }
-function renderClubHaverPlayers(entries) {
+function renderClubHaverPlayers() {
+  const entries = clubHaverAllEntries;
   const term = ($("club-haver-search").value || "").trim().toLowerCase();
   const list = $("club-haver-player-list");
   const visible = clubHaverPlayers.filter(p=>p.name.toLowerCase().includes(term));
@@ -6749,13 +6752,17 @@ $("club-haver-back-list").addEventListener("click",()=>{
 });
 $("club-haver-new-player-toggle").addEventListener("click",()=>$("club-haver-new-player").classList.toggle("hidden"));
 $("club-haver-save-player").addEventListener("click",saveClubHaverPlayer);
-$("club-haver-search").addEventListener("input",()=>renderClubHaverPlayers([]));
+$("club-haver-search").addEventListener("input",renderClubHaverPlayers);
 $("club-haver-entry-type").addEventListener("change",()=>{
   const payment = $("club-haver-entry-type").value==="payment";
   $("club-haver-payment-method-wrap").classList.toggle("hidden",!payment);
   $("club-haver-entry-category").disabled = payment;
 });
 $("club-haver-save-entry").addEventListener("click",saveClubHaverEntry);
+
+$("close-club-details").addEventListener("click",()=>$("club-haver-area").classList.add("hidden"));
+$("close-manage-clubs").addEventListener("click",()=>$("club-haver-area").classList.add("hidden"));
+
 
 async function loadClubTournaments() {
   const list = $("club-tournaments-list");
