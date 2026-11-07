@@ -2538,7 +2538,7 @@ body.clock-only-mode .blind-clock-ante{
 .club-haver-quick-products{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:12px}
 .club-haver-quick-product{display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(255,255,255,.045);color:inherit;cursor:pointer;min-height:64px}
 .club-haver-quick-product:hover{border-color:#f5443b;background:rgba(245,68,59,.10)}
-.club-haver-quick-product:disabled{opacity:.55;cursor:wait}
+.club-haver-quick-product:disabled{opacity:.55;cursor:wait}.club-haver-quick-product.is-locked,.club-haver-quick-product:disabled.is-locked{opacity:.32;filter:grayscale(1);cursor:not-allowed;border-style:dashed}.club-haver-quick-product.is-locked .club-haver-quick-quantity{background:#555;color:#bbb}
 .club-haver-quick-product span:first-child{display:flex;flex-direction:column;gap:4px}
 .club-haver-quick-product small{opacity:.72}
 .club-haver-quick-quantity{display:grid;place-items:center;min-width:30px;height:30px;padding:0 8px;border-radius:20px;background:#f5443b;color:white;font-weight:800}
@@ -5894,14 +5894,14 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
         '<label>Buscar cliente ou jogador<input id="stage-command-customer-search" type="search" value="'+esc(searchTerm)+'" placeholder="Digite o nome..." autocomplete="off"></label>'+
         '<div class="stage-command-customer-results" id="stage-command-customer-results">'+(found.length?customerOptions:'<div class="empty">Nenhum cliente encontrado.</div>')+'</div>')+
     '</div>'+
-    (selected?'<div class="stage-command-modal-section"><h4>2. CONSUMO RÁPIDO</h4>'+
+    (selected?'<div class="stage-command-modal-section"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h4>2. CONSUMO RÁPIDO</h4><button type="button" class="btn secondary" id="stage-command-add-product-toggle">+ Cadastrar produto</button></div>'+
       '<p class="season-info">Toque em um produto para lançar diretamente na comanda.</p>'+
-      '<div id="stage-command-quick-products" class="club-haver-quick-products">'+(stageCommandQuickProducts.length?stageCommandQuickProducts.map(product=>'<button type="button" class="club-haver-quick-product" data-stage-quick-product="'+esc(product.id)+'"><span><strong>'+esc(product.name)+'</strong><small>'+esc(product.category||"Outros")+' • '+clubMoney(product.unit_price)+'</small></span><span class="club-haver-quick-quantity">+</span></button>').join(""):'<div class="empty">Nenhum produto rápido cadastrado para este clube. Cadastre na área de clientes.</div>')+'</div>'+
-      '<h4 style="margin-top:18px">Lançamento manual</h4>'+
-      '<div class="stage-command-modal-grid"><label>Descrição<input id="stage-command-description" type="text" placeholder="Ex.: Refrigerante, água, lanche"></label>'+
-      '<label>Valor (R$)<input id="stage-command-amount" type="number" min="0.01" step="0.01" placeholder="0,00"></label></div>'+
-      '<label>Categoria<select id="stage-command-category"><option>Bebidas</option><option>Alimentação</option><option>Fichas</option><option>Outros</option></select></label>'+
-      '<button type="button" class="btn command-charge" id="stage-command-save-charge">Lançar consumo</button></div>':'<div class="notice">Selecione um cliente para continuar o atendimento.</div>')+
+      '<div id="stage-command-product-form" class="club-haver-form hidden" style="margin-top:12px">'+
+      '<label>Nome do produto<input id="stage-command-product-name" maxlength="100" placeholder="Ex.: Água"></label>'+
+      '<label>Preço unitário (R$)<input id="stage-command-product-price" type="number" min="0.01" step="0.01" placeholder="10,00"></label>'+
+      '<label>Categoria<select id="stage-command-product-category"><option value="Bebidas">Bebidas</option><option value="Alimentação">Alimentação</option><option value="Fichas">Fichas</option><option value="Inscrição">Inscrição</option><option value="Rebuy">Rebuy</option><option value="Add-on">Add-on</option><option value="Outros">Outros</option></select></label>'+
+      '<div><button type="button" class="btn" id="stage-command-product-save">Salvar produto</button> <span id="stage-command-product-message" class="season-info"></span></div></div>'+
+      '<div id="stage-command-quick-products" class="club-haver-quick-products">'+(stageCommandQuickProducts.length?stageCommandQuickProducts.map(product=>{const isBuyin=(product.category||"")==="Inscrição";const alreadyBought=isBuyin&&history.some(row=>(row.category||"")==="Inscrição"&&/buy.?in/i.test(row.description||""));return '<button type="button" class="club-haver-quick-product '+(alreadyBought?'is-locked':'')+'" data-stage-quick-product="'+esc(product.id)+'" '+(alreadyBought?'disabled aria-disabled="true" title="Buy-in já registrado nesta comanda"':'')+'><span><strong>'+esc(product.name)+'</strong><small>'+esc(product.category||"Outros")+' • '+clubMoney(product.unit_price)+'</small></span><span class="club-haver-quick-quantity">'+(alreadyBought?'1':'+')+'</span></button>';}).join(""):'<div class="empty">Nenhum produto cadastrado para este clube. Use “Cadastrar produto”.</div>')+'</div></div>':'<div class="notice">Selecione um cliente para continuar o atendimento.</div>')+
     '<div class="stage-command-modal-section"><h4>HISTÓRICO DESTA COMANDA</h4><div class="stage-command-modal-history">'+historyHtml+'</div></div>';
   content.querySelector("#stage-command-delete")?.addEventListener("click",async()=>{
     if(!isStaff||!stageCommandSelectedPlayer)return;
@@ -5921,24 +5921,26 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
     search.addEventListener("input",()=>renderStagePlayerCommand(history,search.value));
     bindStageCommandCustomerOptions(history);
   }
-  content.querySelector("#stage-command-save-charge")?.addEventListener("click",async()=>{
+  content.querySelector("#stage-command-add-product-toggle")?.addEventListener("click",()=>{
+    content.querySelector("#stage-command-product-form")?.classList.toggle("hidden");
+  });
+  content.querySelector("#stage-command-product-save")?.addEventListener("click",async()=>{
     if(!isStaff||!stageCommandSelectedCustomer||!stageCommandSelectedPlayer)return;
-    const description=content.querySelector("#stage-command-description").value.trim();
-    const amount=Number(content.querySelector("#stage-command-amount").value);
-    const category=content.querySelector("#stage-command-category").value;
-    if(!description||!Number.isFinite(amount)||amount<=0){alert("Informe a descrição e um valor maior que zero.");return;}
-    const button=content.querySelector("#stage-command-save-charge");button.disabled=true;
+    const name=content.querySelector("#stage-command-product-name").value.trim();
+    const price=Number(content.querySelector("#stage-command-product-price").value);
+    const category=content.querySelector("#stage-command-product-category").value;
+    const message=content.querySelector("#stage-command-product-message");
+    if(!name||!Number.isFinite(price)||price<=0){message.textContent="Informe nome e preço válido.";return;}
+    const button=content.querySelector("#stage-command-product-save");button.disabled=true;message.textContent="Salvando...";
     const {data:userData}=await db.auth.getUser();
-    const {error}=await db.from("club_player_ledger").insert({
-      club_player_id:stageCommandSelectedCustomer.id,tournament_player_id:stageCommandSelectedPlayer.player_id||null,stage_command_id:stageCommandSelectedPlayer.id,
-      attendant_name:null,entry_type:"charge",category,description,amount,
-      tournament_id:tournament.id,stage_id:currentStage.id,created_by:userData?.user?.id||null
-    });
-    if(error){alert("Não foi possível registrar o consumo: "+error.message);button.disabled=false;return;}
-    const {data:updatedHistory,error:historyError}=await db.from("club_player_ledger").select("id,club_player_id,tournament_player_id,attendant_name,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).eq("stage_command_id",stageCommandSelectedPlayer.id).order("created_at",{ascending:false});
-    if(historyError){alert("Consumo salvo, mas não foi possível atualizar o histórico: "+historyError.message);return;}
+    const {error}=await db.from("club_quick_items").insert({club_id:stageCommandClubId||selectedClubId||tournament?.club_id||managedClubId,name,unit_price:price,category,created_by:userData?.user?.id||null});
+    if(error){message.textContent="Erro: "+error.message;button.disabled=false;return;}
+    const {data:products,error:productsError}=await db.from("club_quick_items").select("id,name,unit_price,category").eq("club_id",stageCommandClubId||selectedClubId||tournament?.club_id||managedClubId).order("name");
+    if(productsError){message.textContent="Produto salvo, mas não foi possível atualizar a lista: "+productsError.message;button.disabled=false;return;}
+    stageCommandQuickProducts=products||[];
+    const {data:updatedHistory,error:historyError}=await db.from("club_player_ledger").select("id,club_player_id,stage_command_id,attendant_name,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).eq("stage_command_id",stageCommandSelectedPlayer.id).order("created_at",{ascending:false});
+    if(historyError){alert("Produto salvo, mas não foi possível atualizar o histórico: "+historyError.message);return;}
     renderStagePlayerCommand(updatedHistory||[]);
-    await loadStageCommandCards();
   });
   content.querySelectorAll("[data-stage-quick-product]").forEach(button=>button.addEventListener("click",async()=>{
     const product=stageCommandQuickProducts.find(item=>item.id===button.dataset.stageQuickProduct);
