@@ -5423,7 +5423,7 @@ function renderBlindPayoutEditor(existingPayouts = []) {
   container.innerHTML = Array.from({length:count}, (_, index) => {
     const place = index + 1;
     const saved = existingPayouts.find(entry => Number(entry.place) === place) || {};
-    const type = ["money","seat","other"].includes(saved.type) ? saved.type : (saved.amount != null ? "money" : "seat");
+    const type = ["money","seat","other"].includes(saved.type) ? saved.type : "money";
     return `
       <div class="blind-payout-row">
         <strong>${place}º lugar</strong>
