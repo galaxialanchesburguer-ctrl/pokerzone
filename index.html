@@ -4709,7 +4709,7 @@ async function addTournamentEntry(type){
   if(amount<=0){message.textContent="Configure o valor de "+({buyin:"Buy-in",rebuy:"Rebuy",addon:"Add-on"}[type])+" nas informações do torneio.";return;}
   const rankingAmount=Math.min(amount,Number(tournamentEntryDetails.ranking_contribution)||0);
   const feeValue=Number(tournamentEntryDetails.tournament_fee)||0;
-  const fee=type==="buyin"?(tournamentEntryDetails.club_fee_type==="percent"?amount*feeValue/100:feeValue):0;
+  const fee=tournamentEntryDetails.club_fee_type==="percent"?amount*feeValue/100:(type==="buyin"?feeValue:0);
   const {data:userData}=await db.auth.getUser();
   const {error}=await db.from("tournament_entries").insert({
     tournament_id:tournament.id,player_id:playerId,entry_type:type,
