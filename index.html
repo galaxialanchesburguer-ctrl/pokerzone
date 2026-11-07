@@ -7114,7 +7114,7 @@ async function addClubHaverQuickProduct(product) {
   await loadClubHaverLedger();
   await loadClubHaver();
   renderClubHaverQuickProducts();
-  if(tournamentType && tournament && activeStage?.tournament_id===tournament.id) await loadTournamentEntries();
+  if(tournamentType && tournament && activeStage?.tournament_id===tournament.id){await refreshAll();await loadTournamentEntries();}
 }
 $("club-haver-add-product-toggle").addEventListener("click",()=>$("club-haver-quick-product-form").classList.toggle("hidden"));
 $("club-haver-quick-product-save").addEventListener("click",saveClubHaverQuickProduct);
