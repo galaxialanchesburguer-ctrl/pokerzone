@@ -5418,8 +5418,22 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
     return;
   }
 
+  const { data: tournamentDetails, error: detailsError } = await db
+    .from("tournament_details")
+    .select("tournament_id, event_date, start_time, buy_in, rebuy_amount")
+    .in("tournament_id", ids);
+
+  if (detailsError) {
+    console.error("Erro ao carregar detalhes dos torneios recentes:", detailsError);
+  }
+
   const updatedRecent = ids
-    .map(id => updatedTournaments.find(t => t.id === id))
+    .map(id => {
+      const item = updatedTournaments.find(t => t.id === id);
+      if (!item) return null;
+      const details = (tournamentDetails || []).find(d => d.tournament_id === id) || {};
+      return { ...item, ...details };
+    })
     .filter(Boolean);
 
   localStorage.setItem(
@@ -5433,11 +5447,23 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
     return;
   }
 
+  const formatDate = value => value
+    ? new Date(value + "T12:00:00").toLocaleDateString("pt-BR")
+    : "Data não informada";
+  const formatTime = value => value
+    ? value.slice(0, 5)
+    : "Horário não informado";
+  const formatMoney = value => value != null
+    ? Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    : "Não informado";
+
   container.innerHTML = updatedRecent.map(t => `
     <div class="stage-item">
       <div>
         <strong>${esc(t.name)}</strong>
         <small>${esc(t.description || "Torneio PokerZone")}</small>
+        <small>📅 ${formatDate(t.event_date)} &nbsp; • &nbsp; 🕒 ${formatTime(t.start_time)}</small>
+        <small>Buy-in: ${formatMoney(t.buy_in)} &nbsp; • &nbsp; Rebuy: ${formatMoney(t.rebuy_amount)}</small>
       </div>
       <button class="btn" data-recent-tournament="${t.id}">
         Entrar
