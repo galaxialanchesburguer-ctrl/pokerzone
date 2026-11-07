@@ -1921,9 +1921,12 @@ body.clock-only-mode .blind-clock-controls .btn{min-height:44px;padding:10px 20p
 .blind-prize-editor-heading{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
 .blind-prize-editor-heading strong{font-size:13px;letter-spacing:1.2px;color:var(--accent,#f5443b)}
 .blind-prize-editor-heading span{font-size:12px;line-height:1.5;color:var(--muted,#888)}
-.blind-payout-editor{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:12px}
-.blind-payout-editor label{font-size:11px}
-@media(max-width:650px){.blind-payout-editor{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.blind-payout-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.blind-payout-row{display:grid;gap:9px;padding:13px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);border-radius:9px}
+.blind-payout-row>strong{color:#fff;font-size:13px}
+.blind-payout-row label{display:grid;gap:5px;font-size:11px;color:var(--muted,#aaa)}
+.blind-payout-row input,.blind-payout-row select{width:100%;min-width:0}
+@media(max-width:650px){.blind-payout-editor{grid-template-columns:1fr}}
 body.clock-only-mode .blind-clock-hero{display:grid;grid-template-columns:minmax(0,1fr) 190px;grid-template-areas:"title prize" "level prize" "timer prize" "progress prize" "blinds prize" "ante prize" "next prize" "state prize" "controls controls";align-items:center}
 body.clock-only-mode .blind-clock-tournament-name{grid-area:title}
 body.clock-only-mode .blind-clock-step{grid-area:level}
@@ -2469,7 +2472,7 @@ body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{width:100%
       </div>
       <div class="blind-clock-ante" id="blind-clock-ante">ANTE 0</div>
       <div class="blind-clock-prize hidden" id="blind-clock-prize">
-        <div class="blind-clock-prize-total"><span>PREMIAÇÃO TOTAL</span><strong id="blind-clock-prize-value">R$ 0,00</strong><small>GTD</small></div>
+        <div class="blind-clock-prize-total"><span>PREMIAÇÃO TOTAL EM DINHEIRO</span><strong id="blind-clock-prize-value">R$ 0,00</strong><small>GTD</small></div>
         <div class="blind-clock-payout-list" id="blind-clock-payout-list"></div>
       </div>
       <div class="blind-clock-state" id="blind-clock-status">RELÓGIO PARADO</div>
@@ -2531,17 +2534,15 @@ body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{width:100%
     <div class="blind-prize-editor">
       <div class="blind-prize-editor-heading">
         <strong>PREMIAÇÃO DO TORNEIO</strong>
-        <span>Informe o valor total e, se desejar, a divisão por colocação. Essa informação poderá ser exibida no relógio.</span>
+        <span>Escolha quantas colocações serão premiadas e defina o prêmio de cada uma. Pode ser dinheiro, vaga em outro torneio ou outro prêmio.</span>
       </div>
-      <label for="blind-structure-prize">Premiação total (R$)</label>
+      <label for="blind-structure-prize">Premiação total em dinheiro (opcional)</label>
       <input id="blind-structure-prize" type="number" min="0" step="0.01" placeholder="Ex.: 1500,00">
-      <div class="blind-payout-editor">
-        <div><label for="blind-payout-1">1º lugar (R$)</label><input id="blind-payout-1" type="number" min="0" step="0.01" placeholder="Valor"></div>
-        <div><label for="blind-payout-2">2º lugar (R$)</label><input id="blind-payout-2" type="number" min="0" step="0.01" placeholder="Valor"></div>
-        <div><label for="blind-payout-3">3º lugar (R$)</label><input id="blind-payout-3" type="number" min="0" step="0.01" placeholder="Valor"></div>
-        <div><label for="blind-payout-4">4º lugar (R$)</label><input id="blind-payout-4" type="number" min="0" step="0.01" placeholder="Valor"></div>
-        <div><label for="blind-payout-5">5º lugar (R$)</label><input id="blind-payout-5" type="number" min="0" step="0.01" placeholder="Valor"></div>
-      </div>
+      <label for="blind-paid-places" style="margin-top:14px">Quantidade de colocações premiadas</label>
+      <select id="blind-paid-places">
+        <option value="1">1 jogador premiado</option><option value="2">2 jogadores premiados</option><option value="3" selected>3 jogadores premiados</option><option value="4">4 jogadores premiados</option><option value="5">5 jogadores premiados</option><option value="6">6 jogadores premiados</option><option value="7">7 jogadores premiados</option><option value="8">8 jogadores premiados</option><option value="9">9 jogadores premiados</option><option value="10">10 jogadores premiados</option>
+      </select>
+      <div class="blind-payout-editor" id="blind-payout-editor"></div>
     </div>
     <div class="blind-step-header">
       <strong>Níveis e intervalos</strong>
@@ -3006,13 +3007,25 @@ function renderBlindClock() {
   const hasStructure = !!blindClockState?.structure_snapshot?.length;
   const canControl = isStaff && hasStructure;
   const prizePool = Number(blindClockState?.prize_pool || 0);
-  $("blind-clock-prize-value").textContent = prizePool.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const payouts = Array.isArray(blindClockState?.payouts) ? blindClockState.payouts : [];
+  $("blind-clock-prize-value").textContent = prizePool.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  $("blind-clock-prize").querySelector(".blind-clock-prize-total").classList.toggle("hidden", prizePool <= 0);
   $("blind-clock-payout-list").innerHTML = payouts.length
-    ? payouts.map(entry => `<div><span>${Number(entry.place)}º</span><strong>${Number(entry.amount || 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong></div>`).join("")
+    ? payouts.map(entry => {
+        const type = entry.type || (entry.amount != null ? "money" : "seat");
+        const description = entry.description ? escapeHtml(entry.description) : "";
+        const amount = entry.amount != null && Number(entry.amount) > 0
+          ? " (" + Number(entry.amount).toLocaleString("pt-BR", {style:"currency",currency:"BRL"}) + ")"
+          : "";
+        const prizeText = type === "money"
+          ? Number(entry.amount || 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})
+          : (type === "seat" ? "Vaga: " : "") + (description || "Prêmio") + amount;
+        return `<div><span>${Number(entry.place)}º</span><strong>${prizeText}</strong></div>`;
+      }).join("")
     : '<p class="blind-clock-payout-empty">Premiação por colocação não informada</p>';
-  $("blind-clock-prize").classList.toggle("hidden", !blindClockState?.show_prize_pool || prizePool <= 0);
-  $("blind-clock-prize-toggle").classList.toggle("hidden", !canControl || prizePool <= 0);
+  const hasPrizeInfo = prizePool > 0 || payouts.length > 0;
+  $("blind-clock-prize").classList.toggle("hidden", !blindClockState?.show_prize_pool || !hasPrizeInfo);
+  $("blind-clock-prize-toggle").classList.toggle("hidden", !canControl || !hasPrizeInfo);
   $("blind-clock-prize-toggle").textContent = blindClockState?.show_prize_pool ? "Ocultar premiação" : "Exibir premiação";
   // Antes de carregar uma estrutura, manter a tela limpa e mostrar apenas os seletores.
   $("blind-clock-container").querySelector(".blind-clock-hero").classList.toggle("hidden", !hasStructure);
@@ -5071,13 +5084,50 @@ function renderBlindPresets() {
   });
 }
 
+function renderBlindPayoutEditor(existingPayouts = []) {
+  const count = Math.max(1, Math.min(10, Number($("blind-paid-places").value) || 3));
+  const container = $("blind-payout-editor");
+  container.innerHTML = Array.from({length:count}, (_, index) => {
+    const place = index + 1;
+    const saved = existingPayouts.find(entry => Number(entry.place) === place) || {};
+    const type = ["money","seat","other"].includes(saved.type) ? saved.type : (saved.amount != null ? "money" : "seat");
+    return `
+      <div class="blind-payout-row">
+        <strong>${place}º lugar</strong>
+        <label>Tipo de prêmio
+          <select data-payout-place="${place}" data-payout-field="type">
+            <option value="money" ${type==="money"?"selected":""}>Dinheiro</option>
+            <option value="seat" ${type==="seat"?"selected":""}>Vaga em torneio</option>
+            <option value="other" ${type==="other"?"selected":""}>Outro prêmio</option>
+          </select>
+        </label>
+        <label>Descrição do prêmio
+          <input type="text" data-payout-place="${place}" data-payout-field="description" value="${escapeHtml(saved.description || "")}" placeholder="${type==="seat"?"Ex.: Torneio 10K":type==="other"?"Ex.: Troféu, brinde...":"Opcional"}">
+        </label>
+        <label>Valor (opcional)
+          <input type="number" min="0" step="0.01" data-payout-place="${place}" data-payout-field="amount" value="${saved.amount ?? ""}" placeholder="R$">
+        </label>
+      </div>
+    `;
+  }).join("");
+  container.querySelectorAll('[data-payout-field="type"]').forEach(select => {
+    select.addEventListener("change", () => {
+      const row = select.closest(".blind-payout-row");
+      const description = row.querySelector('[data-payout-field="description"]');
+      description.placeholder = select.value === "seat" ? "Ex.: Torneio 10K" : select.value === "other" ? "Ex.: Troféu, brinde..." : "Opcional";
+    });
+  });
+}
+$("blind-paid-places").addEventListener("change", () => renderBlindPayoutEditor());
+
 function resetBlindEditor() {
   blindStructureEditingId = null;
   blindStructureSteps = [];
   $("blind-structure-name").value = "";
   $("blind-structure-description").value = "";
   $("blind-structure-prize").value = "";
-  [1,2,3,4,5].forEach(place => $("blind-payout-" + place).value = "");
+  $("blind-paid-places").value = "3";
+  renderBlindPayoutEditor();
   $("blind-editor-title").textContent = "Nova estrutura";
   $("blind-editor-message").textContent = "";
   $("blind-save-btn").textContent = "Salvar estrutura";
@@ -5169,7 +5219,7 @@ function renderSavedBlindStructures() {
   }
   list.innerHTML = clubBlindStructures.map(item => `
     <div class="blind-saved-card">
-      <div><strong>${escapeHtml(item.name)}</strong><p>${escapeHtml(item.description || "Estrutura personalizada")} • ${(item.levels || []).filter(s => s.type === "level").length} níveis${item.prize_pool != null ? " • Premiação: " + Number(item.prize_pool).toLocaleString("pt-BR", {style:"currency",currency:"BRL"}) : ""}</p></div>
+      <div><strong>${escapeHtml(item.name)}</strong><p>${escapeHtml(item.description || "Estrutura personalizada")} • ${(item.levels || []).filter(s => s.type === "level").length} níveis${item.prize_pool != null ? " • Dinheiro: " + Number(item.prize_pool).toLocaleString("pt-BR", {style:"currency",currency:"BRL"}) : ""}${Array.isArray(item.payouts) && item.payouts.length ? " • " + item.payouts.length + " colocações premiadas" : ""}</p></div>
       <div class="blind-saved-actions">
         <button class="btn secondary edit-blind-structure" data-id="${item.id}">Editar</button>
         <button class="btn secondary delete-blind-structure" data-id="${item.id}">Excluir</button>
@@ -5186,10 +5236,9 @@ function renderSavedBlindStructures() {
       $("blind-structure-name").value = item.name;
       $("blind-structure-description").value = item.description || "";
       $("blind-structure-prize").value = item.prize_pool ?? "";
-      [1,2,3,4,5].forEach(place => {
-        const payout = (item.payouts || []).find(entry => Number(entry.place) === place);
-        $("blind-payout-" + place).value = payout?.amount ?? "";
-      });
+      const savedPayouts = Array.isArray(item.payouts) ? item.payouts : [];
+      $("blind-paid-places").value = String(Math.max(1, Math.min(10, savedPayouts.length || 3)));
+      renderBlindPayoutEditor(savedPayouts);
       $("blind-editor-title").textContent = "Editar estrutura: " + item.name;
       $("blind-editor-message").textContent = "Altere o nome ou os níveis e clique em Atualizar estrutura para salvar as mudanças.";
       $("blind-save-btn").textContent = "Atualizar estrutura";
@@ -5220,12 +5269,25 @@ async function saveClubBlindStructure() {
   const description = $("blind-structure-description").value.trim();
   const prizePoolRaw = $("blind-structure-prize").value.trim();
   const prizePool = prizePoolRaw === "" ? null : Number(prizePoolRaw);
-  const payouts = [1,2,3,4,5].map(place => ({
-    place,
-    amount: $("blind-payout-" + place).value.trim() === "" ? null : Number($("blind-payout-" + place).value)
-  })).filter(entry => entry.amount !== null);
-  if (payouts.some(entry => !Number.isFinite(entry.amount) || entry.amount < 0)) {
-    $("blind-editor-message").textContent = "Confira os valores da premiação por colocação.";
+  const paidPlaces = Number($("blind-paid-places").value) || 3;
+  const payouts = Array.from({length:paidPlaces}, (_, index) => {
+    const place = index + 1;
+    const getValue = field => document.querySelector(`[data-payout-place="${place}"][data-payout-field="${field}"]`)?.value.trim() || "";
+    const type = getValue("type") || "money";
+    const description = getValue("description");
+    const amountRaw = getValue("amount");
+    return { place, type, description: description || null, amount: amountRaw === "" ? null : Number(amountRaw) };
+  });
+  if (payouts.some(entry => entry.amount !== null && (!Number.isFinite(entry.amount) || entry.amount < 0))) {
+    $("blind-editor-message").textContent = "Confira os valores informados para cada prêmio.";
+    return;
+  }
+  if (payouts.some(entry => entry.type === "money" && entry.amount === null)) {
+    $("blind-editor-message").textContent = "Informe o valor em dinheiro de cada colocação premiada.";
+    return;
+  }
+  if (payouts.some(entry => entry.type !== "money" && !entry.description)) {
+    $("blind-editor-message").textContent = "Descreva a vaga ou o outro prêmio de cada colocação.";
     return;
   }
   if (prizePool !== null && (!Number.isFinite(prizePool) || prizePool < 0)) {
