@@ -5986,18 +5986,45 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
       '<div id="stage-command-quick-products" class="club-haver-quick-products">'+(stageCommandQuickProducts.length?stageCommandQuickProducts.filter(product=>/heineken/i.test(product.name||"")).map(product=>'<button type="button" class="club-haver-quick-product" data-stage-quick-product="'+esc(product.id)+'"><span><strong>'+esc(product.name)+'</strong><small>'+esc(product.category||"Outros")+' • '+clubMoney(product.unit_price)+'</small></span><span class="club-haver-quick-quantity">+</span></button>').join(""):'<div class="empty">Heineken ainda não está cadastrada no bar.</div>')+'</div></div></div>':'<div class="notice">Selecione um cliente para continuar o atendimento.</div>')+    '<div class="stage-command-modal-section"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h4>HISTÓRICO DESTA COMANDA</h4><div style="text-align:right"><strong style="display:block;font-size:20px;color:#fff">Total: '+clubMoney(commandTotal)+'</strong><small class="command-meta">Pagamentos: '+clubMoney(commandPaid)+'</small></div></div><div class="stage-command-modal-history">'+historyHtml+'</div></div>'+
     (selected&&commandTotal-commandPaid>0.009?'<div class="stage-command-modal-section"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h4 style="margin-bottom:4px">FECHAMENTO</h4><small class="command-meta">Saldo pendente: '+clubMoney(commandTotal-commandPaid)+'</small></div><button type="button" class="btn" id="stage-command-close-account">Fechar conta</button></div></div>':'');
   content.querySelector("#stage-command-close-account")?.addEventListener("click",()=>openStageCommandPayment(history));
-  content.querySelector("#stage-command-delete")?.addEventListener("click",async()=>{
+  content.querySelector("#stage-command-delete")?.addEventListener("click",()=>{
     if(!isStaff||!stageCommandSelectedPlayer)return;
-    const confirmed=confirm("Excluir esta comanda? Todos os lançamentos e o histórico vinculados a ela também serão excluídos. Esta ação não pode ser desfeita.");
-    if(!confirmed)return;
-    const button=content.querySelector("#stage-command-delete");
-    button.disabled=true;
-    const {error}=await db.from("stage_commands").delete().eq("id",stageCommandSelectedPlayer.id).eq("stage_id",currentStage.id);
-    if(error){alert("Não foi possível excluir a comanda: "+error.message);button.disabled=false;return;}
-    $("stage-command-modal").classList.add("hidden");
-    stageCommandSelectedPlayer=null;
-    stageCommandSelectedCustomer=null;
-    await loadStageCommandCards();
+    if(content.querySelector("#stage-command-delete-form"))return;
+    const form=document.createElement("div");
+    form.id="stage-command-delete-form";
+    form.className="stage-command-modal-section";
+    form.style.cssText="border:1px solid #713036;background:#211516;border-radius:10px;margin-top:12px";
+    form.innerHTML='<h4 style="color:#ff777d;margin-bottom:12px">MOTIVO DA EXCLUSÃO</h4>'+
+      '<label style="display:grid;gap:7px;color:#bbb;font-size:12px">Selecione o motivo'+
+      '<select id="stage-command-delete-reason" style="width:100%;margin-top:4px">'+
+      '<option value="">Selecione uma opção</option>'+
+      '<option>Comanda aberta por engano</option>'+
+      '<option>Cliente desistiu do consumo</option>'+
+      '<option>Jogador saiu / deixou o torneio</option>'+
+      '<option>Lançamento realizado incorretamente</option>'+
+      '<option>Comanda duplicada</option>'+
+      '<option>Outro motivo</option></select></label>'+
+      '<label style="display:grid;gap:7px;color:#bbb;font-size:12px;margin-top:12px">Observação (opcional)'+
+      '<textarea id="stage-command-delete-observation" rows="3" maxlength="500" placeholder="Descreva algum detalhe..." style="width:100%;resize:vertical"></textarea></label>'+
+      '<div class="actions" style="justify-content:flex-end;margin-top:12px">'+
+      '<button type="button" class="btn secondary" id="stage-command-delete-cancel">Cancelar</button>'+
+      '<button type="button" class="btn danger" id="stage-command-delete-confirm">Continuar exclusão</button></div>';
+    content.querySelector("#stage-command-delete").closest(".stage-command-modal-section").appendChild(form);
+    form.querySelector("#stage-command-delete-cancel").addEventListener("click",()=>form.remove());
+    form.querySelector("#stage-command-delete-confirm").addEventListener("click",async()=>{
+      const reason=form.querySelector("#stage-command-delete-reason").value;
+      const observation=form.querySelector("#stage-command-delete-observation").value.trim();
+      if(!reason){alert("Selecione o motivo da exclusão.");return;}
+      const details="Motivo: "+reason+(observation?"\nObservação: "+observation:"");
+      if(!confirm("Confirma excluir esta comanda e todos os lançamentos vinculados?\n\n"+details+"\n\nEsta ação não pode ser desfeita."))return;
+      const confirmButton=form.querySelector("#stage-command-delete-confirm");
+      confirmButton.disabled=true;
+      const {error}=await db.from("stage_commands").delete().eq("id",stageCommandSelectedPlayer.id).eq("stage_id",currentStage.id);
+      if(error){alert("Não foi possível excluir a comanda: "+error.message);confirmButton.disabled=false;return;}
+      $("stage-command-modal").classList.add("hidden");
+      stageCommandSelectedPlayer=null;
+      stageCommandSelectedCustomer=null;
+      await loadStageCommandCards();
+    });
   });
   content.querySelectorAll("[data-remove-ledger]").forEach(removeButton=>removeButton.addEventListener("click",async()=>{
     if(!isStaff||!stageCommandSelectedPlayer)return;
