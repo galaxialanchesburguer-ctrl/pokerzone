@@ -4932,7 +4932,9 @@ if (manageClubsButton) {
   document.body.classList.toggle("admin-sidebar-active", isStaff);
   $("admin-sidebar-tournament-group").classList.toggle("hidden", !tournament || !season);
 
-  if (isStaff) {
+  if (isClubManager && managedClubId) {
+    msg("● Gestão do clube vinculado");
+  } else if (isStaff) {
     msg("● Acesso administrativo");
   } else {
     msg("● Consulta pública");
@@ -7650,8 +7652,12 @@ async function loadClubTournaments() {
 
  
 async function createTournament() {
-  if (!isAdmin) {
-    alert("Somente administradores podem criar torneios.");
+  const canCreateTournament =
+    isAdmin ||
+    (isClubManager && managedClubId && selectedClubId === managedClubId);
+
+  if (!canCreateTournament) {
+    alert("Você não tem permissão para criar torneios neste clube.");
     return;
   }
 
