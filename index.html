@@ -1474,6 +1474,86 @@ input:focus,select:focus {
     flex: 1;
   }
 }
+ .nearby-tournament-card {
+  padding: 20px;
+  margin-bottom: 14px;
+  border: 1px solid #383030;
+  border-top: 2px solid #f5443b;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #1b1b1b, #101010);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, .25);
+  color: #fff;
+}
+
+.nearby-tournament-card h3 {
+  margin: 0 0 16px;
+  color: #f5443b;
+  font-size: 19px;
+}
+
+.nearby-tournament-card p {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  margin: 0;
+  border-bottom: 1px solid #302929;
+  color: #ddd;
+  font-size: 14px;
+}
+
+.nearby-tournament-card p:last-of-type {
+  border-bottom: none;
+}
+
+.nearby-tournament-card p strong {
+  color: #999;
+  font-weight: 500;
+}
+
+.nearby-tournament-card .btn {
+  margin-top: 16px;
+}
+
+.nearby-tournament-card .nearby-show-map {
+  background: #292323;
+  border: 1px solid #514040;
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .nearby-tournament-card {
+    padding: 15px;
+  }
+
+  .nearby-tournament-card p {
+    font-size: 13px;
+  }
+}
+ .nearby-description {
+  color: #aaa;
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+
+.nearby-location-button {
+  width: 100%;
+  max-width: 340px;
+  padding: 15px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #f5443b, #bd101c);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  box-shadow: 0 5px 18px rgba(245, 68, 59, .2);
+}
+
+#nearby-location-status {
+  color: #aaa;
+  font-size: 13px;
+  margin: 12px 0 22px;
+}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1980,11 +2060,13 @@ input:focus,select:focus {
     </div>
 
     <div class="panel-pad">
-      <p>Encontre torneios de poker próximos da sua localização.</p>
+     <p class="nearby-description">
+  Descubra clubes e torneios de poker perto de você.
+</p>
 
-      <button id="nearby-location-btn" class="btn">
-        <span>Usar minha localização</span>
-      </button>
+      <button id="nearby-location-btn" class="btn nearby-location-button">
+  📍 Usar minha localização
+</button>
 
       <p id="nearby-location-status">
         Sua localização ainda não foi identificada.
@@ -4870,31 +4952,51 @@ async function loadNearbyClubs() {
     return;
   }
 
-  list.innerHTML = results.map(item => `
-    <div style="padding:12px; margin-bottom:10px; border:1px solid #ccc; border-radius:10px;">
-      <h3>${item.name}</h3>
-      <p><strong>Clube:</strong> ${item.club.name}</p>
-      <p><strong>Cidade:</strong> ${item.club.city} - ${item.club.state}</p>
-      <p><strong>Temporada:</strong> ${item.season.name}</p>
-      <p><strong>Período:</strong>
+ list.innerHTML = results.map(item => `
+  <div class="nearby-tournament-card">
+    <h3>${esc(item.name)}</h3>
+
+    <p>
+      <strong>Clube:</strong>
+      <span>${esc(item.club.name)}</span>
+    </p>
+
+    <p>
+      <strong>Cidade:</strong>
+      <span>${esc(item.club.city)} - ${esc(item.club.state)}</span>
+    </p>
+
+    <p>
+      <strong>Temporada:</strong>
+      <span>${esc(item.season.name)}</span>
+    </p>
+
+    <p>
+      <strong>Período:</strong>
+      <span>
         ${new Date(item.season.start_date + "T12:00:00").toLocaleDateString("pt-BR")}
         até
         ${new Date(item.season.end_date + "T12:00:00").toLocaleDateString("pt-BR")}
-      </p>
-      <p><strong>Distância:</strong> ${item.distance.toFixed(1)} km</p>
+      </span>
+    </p>
 
-      <button class="btn secondary nearby-show-map"
-        data-lat="${item.club.latitude}"
-        data-lng="${item.club.longitude}">
-        Ver no mapa
-      </button>
+    <p>
+      <strong>Distância:</strong>
+      <span>${item.distance.toFixed(1)} km</span>
+    </p>
 
-      <button class="btn nearby-view-tournament"
-        data-tournament-id="${item.id}">
-        Ver torneio
-      </button>
-    </div>
-  `).join("");
+    <button class="btn secondary nearby-show-map"
+      data-lat="${item.club.latitude}"
+      data-lng="${item.club.longitude}">
+      Ver no mapa
+    </button>
+
+    <button class="btn nearby-view-tournament"
+      data-tournament-id="${item.id}">
+      Ver torneio
+    </button>
+  </div>
+`).join("");
 
   list.querySelectorAll(".nearby-show-map").forEach(button => {
     button.addEventListener("click", () => {
