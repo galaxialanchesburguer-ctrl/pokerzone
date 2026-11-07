@@ -3094,9 +3094,11 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       </div>
       <div class="club-haver-toolbar">
         <input id="club-haver-search" type="search" placeholder="Buscar jogador...">
+        <button class="btn secondary" id="club-haver-import-ranking" type="button">Importar ranking geral</button>
         <button class="btn secondary" id="club-haver-report-toggle">📊 Relatórios</button>
         <button class="btn" id="club-haver-new-player-toggle">+ Cadastrar jogador</button>
       </div>
+      <div id="club-haver-import-ranking-message" class="season-info" style="margin:0 0 12px"></div>
       <div id="club-haver-report" class="club-haver-form hidden">
         <h4>Relatório geral de movimentações</h4>
         <div class="club-haver-form">
@@ -7554,6 +7556,82 @@ const clubMoney = value => Number(value || 0).toLocaleString("pt-BR", {style:"cu
 function clubHaverBalance(rows) {
   return rows.reduce((sum,row) => sum + (row.entry_type === "payment" ? -Number(row.amount) : Number(row.amount)), 0);
 }
+async function importGeneralRankingPlayersToClients(){
+  const button=$("club-haver-import-ranking");
+  const message=$("club-haver-import-ranking-message");
+  if(!isStaff||!selectedClubId)return;
+  if(!tournament?.id||!season?.id){
+    alert("Abra primeiro o torneio e a temporada cujo Ranking Geral deseja importar. Depois volte em Clientes.");
+    return;
+  }
+  const rankingClubId=tournament.club_id||selectedClubId;
+  if(rankingClubId!==selectedClubId){
+    alert("O torneio aberto pertence a outro clube. Abra um torneio deste clube para importar os jogadores.");
+    return;
+  }
+  button.disabled=true;
+  message.textContent="Buscando os jogadores do Ranking Geral...";
+  try{
+    const [
+      {data:activePlayers,error:playersError},
+      {data:results,error:resultsError},
+      {data:adjustments,error:adjustmentsError}
+    ]=await Promise.all([
+      db.from("players").select("id,display_name").eq("is_active",true).eq("tournament_id",tournament.id),
+      db.from("results").select("points,position,player:players(id,display_name),stage:stages!inner(id,season_id,status)").eq("stage.season_id",season.id).eq("stage.status","published"),
+      db.from("season_player_adjustments").select("player_id,points_adjustment").eq("season_id",season.id)
+    ]);
+    if(playersError)throw playersError;
+    if(resultsError)throw resultsError;
+    if(adjustmentsError)throw adjustmentsError;
+    const totals={};
+    (activePlayers||[]).forEach(player=>{
+      totals[player.id]={id:player.id,name:player.display_name,points:0,stagesPlayed:0};
+    });
+    (results||[]).forEach(row=>{
+      if(!row.player)return;
+      const total=totals[row.player.id]||(totals[row.player.id]={id:row.player.id,name:row.player.display_name,points:0,stagesPlayed:0});
+      total.points+=Number(row.points)||0;
+      total.stagesPlayed++;
+    });
+    (adjustments||[]).forEach(row=>{
+      if(totals[row.player_id])totals[row.player_id].points+=Number(row.points_adjustment)||0;
+    });
+    const ranked=Object.values(totals).filter(player=>player.points>0&&player.stagesPlayed>0);
+    if(!ranked.length){
+      message.textContent="Não há jogadores no Ranking Geral desta temporada.";
+      return;
+    }
+    const normalizeName=value=>(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/\\s+/g," ").trim();
+    const {data:existing,error:existingError}=await db.from("club_players").select("id,name").eq("club_id",selectedClubId);
+    if(existingError)throw existingError;
+    const known=new Set((existing||[]).map(player=>normalizeName(player.name)));
+    const pending=[];
+    ranked.sort((a,b)=>a.name.localeCompare(b.name,"pt-BR")).forEach(player=>{
+      const key=normalizeName(player.name);
+      if(key&&!known.has(key)){known.add(key);pending.push({club_id:selectedClubId,name:player.name});}
+    });
+    if(!pending.length){
+      message.textContent="Todos os "+ranked.length+" jogadores do Ranking Geral já estão cadastrados.";
+      await loadClubHaver();
+      return;
+    }
+    const {data:userData,error:userError}=await db.auth.getUser();
+    if(userError)throw userError;
+    const userId=userData?.user?.id||null;
+    for(let i=0;i<pending.length;i+=100){
+      const batch=pending.slice(i,i+100).map(player=>({...player,created_by:userId}));
+      const {error:insertError}=await db.from("club_players").insert(batch);
+      if(insertError)throw insertError;
+    }
+    message.textContent=pending.length+" jogador(es) importado(s) do Ranking Geral. "+(ranked.length-pending.length)+" já estavam cadastrados.";
+    await loadClubHaver();
+  }catch(error){
+    message.textContent="Não foi possível importar os jogadores: "+(error?.message||"erro desconhecido");
+  }finally{
+    button.disabled=false;
+  }
+}
 async function loadClubHaver() {
   if (!selectedClubId || !isStaff) return;
   $("club-haver-player-list").innerHTML = '<div class="empty">Carregando jogadores...</div>';
@@ -7697,6 +7775,7 @@ $("club-haver-back-list").addEventListener("click",()=>{
   $("club-haver-player-detail").classList.add("hidden");
   $("club-haver-overview").classList.remove("hidden");
 });
+$("club-haver-import-ranking").addEventListener("click",importGeneralRankingPlayersToClients);
 $("club-haver-new-player-toggle").addEventListener("click",()=>$("club-haver-new-player").classList.toggle("hidden"));
 $("club-haver-save-player").addEventListener("click",saveClubHaverPlayer);
 $("club-haver-search").addEventListener("input",renderClubHaverPlayers);
