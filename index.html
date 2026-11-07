@@ -3736,12 +3736,18 @@ let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function msg(text){$("connection-status").textContent=text}
+let stageEditorReturnVisible = false;
 function showTab(id){
   $("home-tournaments").classList.add("hidden");
-   if (id !== "stages-view") {
+  if (id !== "stages-view") {
+    if (!$("stage-editor").classList.contains("hidden")) {
+      stageEditorReturnVisible = true;
+    }
     $("stage-editor").classList.add("hidden");
-    currentStage = null;
-    editorResults = [];
+  } else if (stageEditorReturnVisible) {
+    $("stage-editor").classList.remove("hidden");
+    $("stage-list-box").classList.add("hidden");
+    stageEditorReturnVisible = false;
   }
   $("tournament-app").classList.remove("hidden");
 
@@ -6210,6 +6216,7 @@ async function saveStage() {
  $("save-stage").addEventListener("click", saveStage);
  $("close-editor").addEventListener("click", () => {
   $("stage-editor").classList.add("hidden");
+  stageEditorReturnVisible = false;
   $("stage-list-box").classList.toggle("hidden", isStaff);
   currentStage = null;
   editorResults = [];
@@ -6236,6 +6243,7 @@ async function openTournament(selectedTournament) {
   tournament = selectedTournament;
   currentStage = null;
   editorResults = [];
+  stageEditorReturnVisible = false;
   $("stage-editor").classList.add("hidden");
   updateDeleteActionButton();
   $("delete-tournament-btn").classList.toggle("hidden", !isStaff);
