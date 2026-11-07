@@ -5055,7 +5055,7 @@ async function openSidebarTournamentStages(selected, tournamentList) {
   if(seasonError){$("tournament-tree-list").innerHTML='<div class="empty">Erro ao carregar etapas.</div>';return;}
   season=activeSeason;
   if(!season){$("tournament-tree-list").innerHTML='<div class="empty">Nenhuma temporada ativa.</div>';return;}
-  const {data:rows,error:stageError}=await db.from("stages").select("id,stage_number,name").eq("season_id",season.id).order("stage_number");
+  const {data:rows,error:stageError}=await db.from("stages").select("id,season_id,stage_number,name,played_at,participant_count,status,is_open,tournament_id,club_id").eq("season_id",season.id).order("stage_number");
   if(stageError){$("tournament-tree-list").innerHTML='<div class="empty">Erro ao carregar etapas.</div>';return;}
   stages=rows||[];
   const list=$("tournament-tree-list");
@@ -5527,8 +5527,19 @@ document.querySelectorAll("[data-stage-editor-tab]").forEach(button => {
 
 async function openStage(id) {
   if (!isStaff) return;
-  currentStage = stages.find(s => s.id === id);
-  if (!currentStage) return;
+  // Sempre resolve a etapa com os dados completos, inclusive quando o clique
+  // veio da árvore lateral que pode ter sido carregada antes da temporada.
+  let selectedStage = stages.find(s => s.id === id);
+  if (!selectedStage || !selectedStage.played_at || !selectedStage.status || !selectedStage.club_id) {
+    const {data:stageData,error:stageError}=await db.from("stages")
+      .select("id,season_id,stage_number,name,played_at,participant_count,status,is_open,tournament_id,club_id")
+      .eq("id",id).maybeSingle();
+    if(stageError){alert("Não foi possível carregar os dados da etapa: "+stageError.message);return;}
+    if(!stageData){alert("Etapa não encontrada.");return;}
+    selectedStage=stageData;
+    stages=[...stages.filter(item=>item.id!==id),selectedStage].sort((a,b)=>Number(a.stage_number)-Number(b.stage_number));
+  }
+  currentStage = selectedStage;
   updateDeleteActionButton();
 
   $("stage-list-box").classList.add("hidden");
