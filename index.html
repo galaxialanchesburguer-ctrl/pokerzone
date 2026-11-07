@@ -3063,9 +3063,9 @@ async function saveBlindClock(nextState) {
     prize_pool: nextState.prize_pool ?? blindClockState?.prize_pool ?? null,
     show_prize_pool: nextState.show_prize_pool ?? blindClockState?.show_prize_pool ?? false,
     current_step_index: Number(nextState.current_step_index ?? blindClockState?.current_step_index ?? 0),
-    status: nextState.status || "stopped",
-    remaining_seconds: nextState.remaining_seconds ?? null,
-    ends_at: nextState.ends_at ?? null,
+    status: nextState.status ?? blindClockState?.status ?? "stopped",
+    remaining_seconds: Object.prototype.hasOwnProperty.call(nextState, "remaining_seconds") ? nextState.remaining_seconds : (blindClockState?.remaining_seconds ?? null),
+    ends_at: Object.prototype.hasOwnProperty.call(nextState, "ends_at") ? nextState.ends_at : (blindClockState?.ends_at ?? null),
     updated_at: new Date().toISOString()
   };
   if (blindClockClubId) {
