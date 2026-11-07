@@ -4700,13 +4700,21 @@ $("new-club-btn").addEventListener("click", () => {
 });
 $("save-new-club").addEventListener("click", createClub);
 
-$("close-club-details").addEventListener("click", async () => {
+$("close-club-details").addEventListener("click", () => {
+  // O botão Voltar do perfil retorna diretamente ao menu inicial.
   $("club-details-area").classList.add("hidden");
-  $("manage-clubs-area").classList.remove("hidden");
-  $("recent-tournaments-list").parentElement.classList.remove("hidden");
+  $("manage-clubs-area").classList.add("hidden");
+  $("club-tournaments-area").classList.add("hidden");
+  $("club-settings-area").classList.add("hidden");
+  $("club-clock-area").classList.add("hidden");
+  $("club-blinds-area").classList.add("hidden");
+  $("create-tournament-area").classList.add("hidden");
   $("tournament-search-area").classList.add("hidden");
+  $("recent-tournaments-list").parentElement.classList.remove("hidden");
+  $("home-tournaments").classList.remove("hidden");
+  $("nearby-tournaments-screen").classList.add("hidden");
+  $("clubs-list").innerHTML = "";
   selectedClubId = null;
-  await loadClubs();
 });
 
 $("club-tournaments-btn").addEventListener("click", async () => {
