@@ -2400,6 +2400,111 @@ body.clock-only-mode .blind-clock-ante{
     margin:8px auto 0;
   }
 }
+
+/* PREMIAÇÃO EM FAIXA HORIZONTAL ABAIXO DO RELÓGIO */
+@media (min-width:701px){
+  body.clock-only-mode #blind-clock-view{
+    align-items:center;
+    justify-content:center;
+    overflow-y:auto;
+  }
+  body.clock-only-mode #blind-clock-container{
+    max-width:1180px;
+    min-height:100vh;
+    height:auto;
+    justify-content:center;
+    align-items:stretch;
+    padding:20px 26px;
+    gap:10px;
+  }
+  body.clock-only-mode .blind-clock-hero{
+    flex:0 0 auto;
+    min-height:0;
+    width:100%;
+    max-width:none;
+    margin:0 auto;
+    padding:clamp(16px,2.2vh,28px) 24px;
+  }
+  body.clock-only-mode .blind-clock-prize:not(.hidden){
+    position:static!important;
+    order:8;
+    transform:none!important;
+    width:100%!important;
+    max-width:none!important;
+    margin:14px 0 0!important;
+    padding:12px 18px!important;
+    border:1px solid rgba(255,211,79,.24)!important;
+    border-radius:10px!important;
+    background:rgba(18,15,15,.9)!important;
+    text-align:left!important;
+    box-shadow:none!important;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    overflow:hidden;
+  }
+  body.clock-only-mode .blind-clock-prize-total{
+    flex:0 0 auto;
+    padding:0 18px 0 0!important;
+    margin:0!important;
+    border:0!important;
+    border-right:1px solid rgba(255,255,255,.16);
+  }
+  body.clock-only-mode .blind-clock-prize-total span{font-size:9px!important;letter-spacing:1px!important}
+  body.clock-only-mode .blind-clock-prize-total strong{font-size:19px!important}
+  body.clock-only-mode .blind-clock-payout-list{
+    display:block!important;
+    min-width:0;
+    flex:1 1 auto;
+    overflow:hidden;
+    white-space:nowrap;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 3%,#000 97%,transparent 100%);
+    mask-image:linear-gradient(90deg,transparent 0,#000 3%,#000 97%,transparent 100%);
+  }
+  body.clock-only-mode .blind-clock-payout-track{
+    display:flex;
+    align-items:center;
+    width:max-content;
+    gap:34px;
+    animation:blindClockPrizeMarquee 28s linear infinite;
+  }
+  body.clock-only-mode .blind-clock-payout-list:hover .blind-clock-payout-track{animation-play-state:paused}
+  body.clock-only-mode .blind-clock-payout-item{
+    display:flex!important;
+    flex:0 0 auto;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:3px!important;
+    min-width:110px;
+    font-size:11px!important;
+    color:#bbb!important;
+  }
+  body.clock-only-mode .blind-clock-payout-item span{font-size:9px!important;letter-spacing:1px!important;color:#aaa!important;margin:0!important}
+  body.clock-only-mode .blind-clock-payout-item strong{font-size:15px!important;color:#fff!important}
+  body.clock-only-mode .blind-clock-payout-total strong{color:#ffd34f!important}
+}
+@keyframes blindClockPrizeMarquee{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+@media(max-width:700px){
+  body.clock-only-mode .blind-clock-prize:not(.hidden){
+    width:100%!important;max-width:none!important;margin:12px 0 0!important;
+    padding:10px!important;position:static!important;transform:none!important;
+    display:block!important;overflow:hidden!important;
+  }
+  body.clock-only-mode .blind-clock-prize-total{display:none!important}
+  body.clock-only-mode .blind-clock-payout-list{display:block!important;overflow:hidden!important;white-space:nowrap}
+  body.clock-only-mode .blind-clock-payout-track{
+    display:flex;width:max-content;gap:24px;
+    animation:blindClockPrizeMarquee 24s linear infinite;
+  }
+  body.clock-only-mode .blind-clock-payout-item{display:flex!important;flex:0 0 auto;flex-direction:column;align-items:center;gap:3px!important}
+  body.clock-only-mode .blind-clock-payout-item span{font-size:9px!important;color:#aaa!important}
+  body.clock-only-mode .blind-clock-payout-item strong{font-size:13px!important;color:#fff!important}
+  body.clock-only-mode .blind-clock-payout-total strong{color:#ffd34f!important}
+}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3534,19 +3639,25 @@ function renderBlindClock() {
   const payouts = Array.isArray(blindClockState?.payouts) ? blindClockState.payouts : [];
   $("blind-clock-prize-value").textContent = prizePool.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   $("blind-clock-prize").querySelector(".blind-clock-prize-total").classList.toggle("hidden", prizePool <= 0);
-  $("blind-clock-payout-list").innerHTML = payouts.length
-    ? payouts.map(entry => {
-        const type = entry.type || (entry.amount != null ? "money" : "seat");
-        const description = entry.description ? escapeHtml(entry.description) : "";
-        const amount = entry.amount != null && Number(entry.amount) > 0
-          ? " (" + Number(entry.amount).toLocaleString("pt-BR", {style:"currency",currency:"BRL"}) + ")"
-          : "";
-        const prizeText = type === "money"
-          ? Number(entry.amount || 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})
-          : (type === "seat" ? "Vaga: " : "") + (description || "Prêmio") + amount;
-        return `<div><span>${Number(entry.place)}º</span><strong>${prizeText}</strong></div>`;
-      }).join("")
-    : '<p class="blind-clock-payout-empty">Premiação por colocação não informada</p>';
+  const payoutItems = payouts.map(entry => {
+    const type = entry.type || (entry.amount != null ? "money" : "seat");
+    const description = entry.description ? escapeHtml(entry.description) : "";
+    const amount = entry.amount != null && Number(entry.amount) > 0
+      ? " (" + Number(entry.amount).toLocaleString("pt-BR", {style:"currency",currency:"BRL"}) + ")"
+      : "";
+    const prizeText = type === "money"
+      ? Number(entry.amount || 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})
+      : (type === "seat" ? "Vaga: " : "") + (description || "Prêmio") + amount;
+    return `<div class="blind-clock-payout-item"><span>${Number(entry.place)}º LUGAR</span><strong>${prizeText}</strong></div>`;
+  });
+  const prizeTickerItems = [
+    ...(prizePool > 0 ? [`<div class="blind-clock-payout-item blind-clock-payout-total"><span>PREMIAÇÃO TOTAL</span><strong>${prizePool.toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong></div>`] : []),
+    ...payoutItems
+  ];
+  const tickerContent = prizeTickerItems.length
+    ? prizeTickerItems.join("")
+    : '<div class="blind-clock-payout-item"><span>PREMIAÇÃO</span><strong>Não informada</strong></div>';
+  $("blind-clock-payout-list").innerHTML = `<div class="blind-clock-payout-track">${tickerContent}${tickerContent}</div>`;
   $("blind-clock-prize").classList.toggle("hidden", !blindClockState?.show_prize_pool);
   $("blind-clock-prize-toggle").classList.toggle("hidden", !canControl);
   $("blind-clock-prize-toggle").textContent = blindClockState?.show_prize_pool ? "Ocultar premiação do relógio" : "Exibir premiação no relógio";
