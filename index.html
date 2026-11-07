@@ -15,6 +15,16 @@ header{min-height:76px;border-bottom:1px solid #292929;display:flex;align-items:
 .header-tag{color:#aaa;font-size:12px;letter-spacing:2px}
 main{max-width:1150px;margin:auto;padding:38px 22px}
 .season{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+.tournament-heading{flex:1 1 100%;min-width:0;margin-bottom:8px}
+.tournament-header-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:22px}
+.tournament-header-actions .btn{margin:0!important;padding:11px 16px;min-height:42px}
+#tournament-app .eyebrow{margin-bottom:7px}
+#tournament-app h1{margin-top:8px;margin-bottom:12px}
+@media(max-width:600px){
+ .tournament-header-actions{gap:10px;margin-bottom:18px}
+ .tournament-header-actions .btn{padding:10px 12px;font-size:12px}
+ .tournament-heading{margin-bottom:5px}
+}
 .eyebrow{color:var(--red);font-size:11px;font-weight:bold;letter-spacing:3px}
 h1{font-size:clamp(28px,5vw,43px);margin:10px 0;font-weight:900;font-style:italic}
 .season-info{color:var(--muted);font-size:13px}
@@ -2109,9 +2119,11 @@ input:focus,select:focus {
 
 </section>
 <section class="season hidden" id="tournament-app">
- <div>
-  <button class="btn secondary" id="back-to-tournaments">← Voltar aos torneios</button>
-  <button class="btn secondary hidden" id="delete-tournament-btn" style="margin-top:8px;">Excluir torneio</button>
+ <div class="tournament-heading">
+  <div class="tournament-header-actions">
+   <button class="btn secondary" id="back-to-tournaments">← Voltar aos torneios</button>
+   <button class="btn secondary hidden" id="delete-tournament-btn">Excluir torneio</button>
+  </div>
   <div class="eyebrow">RANKING • ATUALIZADO</div>
   <h1>IPC<span>POKER</span></h1>
   <div class="season-info" id="season-name">Carregando temporada...</div>
