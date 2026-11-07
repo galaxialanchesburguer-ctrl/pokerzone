@@ -1744,6 +1744,10 @@ input:focus,select:focus {
 @media(max-width:650px){.blind-editor-panel{padding:12px}.blind-step-card{grid-template-columns:24px minmax(0,1fr)}.blind-step-tools{grid-column:2}.blind-step-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.blind-step-header{align-items:flex-start}}
 
 /* ===== RELÓGIO DE BLINDS AO VIVO ===== */
+.blind-clock-next-step{display:inline-block;margin:10px auto 0;padding:10px 18px;border:1px solid #633037;border-radius:10px;background:rgba(237,48,56,.10);color:#ffb1b5;font-size:13px;font-weight:800;letter-spacing:.5px}
+#club-live-clock-btn{margin:12px 0}
+#club-clock-area{margin-top:14px}
+
 .blind-clock-wrap{max-width:1000px;margin:0 auto}
 .blind-clock-hero{background:radial-gradient(circle at 50% 0%,#4a151a 0%,#171111 58%,#101010 100%);border:1px solid #54252a;border-radius:18px;padding:clamp(22px,5vw,48px);text-align:center;margin:18px 0}
 .blind-clock-kicker{color:#ff737b;font-size:11px;font-weight:900;letter-spacing:3px}
@@ -2157,6 +2161,8 @@ input:focus,select:focus {
   <p id="club-details-city"></p>
   <p id="club-details-address"></p>
   <p id="club-details-description"></p>
+  <button class="btn secondary" id="club-live-clock-btn" type="button">♠ Relógio ao vivo</button>
+
 
   <div id="club-management-area">
     <h3>GERENCIAMENTO DO CLUBE</h3>
@@ -2239,6 +2245,78 @@ input:focus,select:focus {
   <button class="btn secondary" id="club-settings-back-btn">
     Voltar ao clube
   </button>
+</div>
+
+
+<div id="club-clock-area" class="club-tournaments-panel hidden">
+  <div class="box-head">
+    <h3>RELÓGIO AO VIVO DO CLUBE</h3>
+    <button class="btn secondary" id="club-clock-back-btn" type="button">Voltar ao clube</button>
+  </div>
+  <div class="blind-clock-admin">
+    <label>Selecione o torneio
+      <select id="club-clock-tournament-select">
+        <option value="">Carregando torneios...</option>
+      </select>
+    </label>
+  </div>
+  <section id="blind-clock-view">
+  <div class="blind-clock-wrap" id="blind-clock-container">
+    <h2 class="section-title">RELÓGIO DE BLINDS</h2>
+    <div class="blind-clock-admin hidden" id="blind-clock-admin">
+      <div class="blind-clock-admin-grid">
+        <label>Estrutura do clube
+          <select id="blind-clock-structure-select">
+            <option value="">Carregando estruturas...</option>
+          </select>
+        </label>
+        <button class="btn" id="blind-clock-load-structure" type="button">Carregar estrutura</button>
+      </div>
+      <p id="blind-clock-admin-message" class="season-info" style="margin-top:10px">Selecione uma estrutura salva pelo clube para iniciar o relógio.</p>
+    </div>
+    <div class="blind-clock-hero">
+      <div class="blind-clock-kicker" id="blind-clock-tournament-name">POKERZONE • TORNEIO</div>
+      <div class="blind-clock-time" id="blind-clock-countdown">00:00</div>
+      <div class="blind-clock-step" id="blind-clock-step-name">Aguardando início</div>
+      <div class="blind-clock-next-step" id="blind-clock-next-step">PRÓXIMO BLIND: —</div>
+
+      <div class="blind-clock-blinds">
+        <div class="blind-clock-blind"><span>SMALL BLIND</span><strong id="blind-clock-sb">—</strong></div>
+        <div class="blind-clock-blind"><span>BIG BLIND</span><strong id="blind-clock-bb">—</strong></div>
+        <div class="blind-clock-blind"><span>ANTE</span><strong id="blind-clock-ante">—</strong></div>
+      </div>
+      <div class="blind-clock-state" id="blind-clock-status">RELÓGIO PARADO</div>
+      <div class="blind-clock-controls">
+        <button class="btn hidden" id="blind-clock-start" type="button">▶ Iniciar</button>
+        <button class="btn secondary hidden" id="blind-clock-pause" type="button">Ⅱ Pausar</button>
+        <button class="btn secondary hidden" id="blind-clock-prev" type="button">‹ Voltar nível</button>
+        <button class="btn secondary hidden" id="blind-clock-next" type="button">Avançar nível ›</button>
+        <button class="btn secondary hidden blind-clock-fullscreen-toggle" id="blind-clock-fullscreen" type="button">⛶ Tela cheia</button>
+        <button class="btn secondary blind-clock-exit" id="blind-clock-exit" type="button">Sair da tela cheia</button>
+      </div>
+    </div>
+    <div class="blind-clock-admin hidden" id="blind-clock-time-admin">
+      <strong>AJUSTAR TEMPO</strong>
+      <div class="blind-clock-add-time">
+        <input type="number" id="blind-clock-add-minutes" min="1" max="180" value="5">
+        <button class="btn secondary" id="blind-clock-add-time" type="button">+ Adicionar minutos</button>
+        <button class="btn danger" id="blind-clock-end" type="button">Encerrar torneio</button>
+      </div>
+    </div>
+    <div class="box blind-clock-structure-list">
+      <div class="box-head"><h2>ESTRUTURA DO TORNEIO</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ETAPA</th><th>SB</th><th>BB</th><th>ANTE</th><th>DURAÇÃO</th></tr></thead>
+          <tbody id="blind-clock-structure-body"><tr><td colspan="5" class="empty">Aguardando estrutura de blinds.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ranking-view">
+ <h2 class="section-title">Pódio da temporada</h2><section class="podium" id="podium"></section>
 </div>
 
 <div id="club-blinds-area" class="club-tournaments-panel hidden">
@@ -2376,68 +2454,13 @@ input:focus,select:focus {
 
 <nav class="tabs">
  <button class="tab" data-tab="tournament-info-view">Informações</button>
- <button class="tab" data-tab="blind-clock-view">Relógio</button>
  <button class="tab" data-tab="stages-view">Etapas</button>
   <button class="tab active" data-tab="ranking-view">Ranking geral</button>
   <button class="tab" data-tab="final-ranking-view">Ranking final</button>
 </nav>
 
 
-<section id="blind-clock-view" class="hidden">
-  <div class="blind-clock-wrap" id="blind-clock-container">
-    <h2 class="section-title">RELÓGIO DE BLINDS</h2>
-    <div class="blind-clock-admin hidden" id="blind-clock-admin">
-      <div class="blind-clock-admin-grid">
-        <label>Estrutura do clube
-          <select id="blind-clock-structure-select">
-            <option value="">Carregando estruturas...</option>
-          </select>
-        </label>
-        <button class="btn" id="blind-clock-load-structure" type="button">Carregar estrutura</button>
-      </div>
-      <p id="blind-clock-admin-message" class="season-info" style="margin-top:10px">Selecione uma estrutura salva pelo clube para iniciar o relógio.</p>
-    </div>
-    <div class="blind-clock-hero">
-      <div class="blind-clock-kicker" id="blind-clock-tournament-name">POKERZONE • TORNEIO</div>
-      <div class="blind-clock-time" id="blind-clock-countdown">00:00</div>
-      <div class="blind-clock-step" id="blind-clock-step-name">Aguardando início</div>
-      <div class="blind-clock-blinds">
-        <div class="blind-clock-blind"><span>SMALL BLIND</span><strong id="blind-clock-sb">—</strong></div>
-        <div class="blind-clock-blind"><span>BIG BLIND</span><strong id="blind-clock-bb">—</strong></div>
-        <div class="blind-clock-blind"><span>ANTE</span><strong id="blind-clock-ante">—</strong></div>
-      </div>
-      <div class="blind-clock-state" id="blind-clock-status">RELÓGIO PARADO</div>
-      <div class="blind-clock-controls">
-        <button class="btn hidden" id="blind-clock-start" type="button">▶ Iniciar</button>
-        <button class="btn secondary hidden" id="blind-clock-pause" type="button">Ⅱ Pausar</button>
-        <button class="btn secondary hidden" id="blind-clock-prev" type="button">‹ Voltar nível</button>
-        <button class="btn secondary hidden" id="blind-clock-next" type="button">Avançar nível ›</button>
-        <button class="btn secondary hidden blind-clock-fullscreen-toggle" id="blind-clock-fullscreen" type="button">⛶ Tela cheia</button>
-        <button class="btn secondary blind-clock-exit" id="blind-clock-exit" type="button">Sair da tela cheia</button>
-      </div>
-    </div>
-    <div class="blind-clock-admin hidden" id="blind-clock-time-admin">
-      <strong>AJUSTAR TEMPO</strong>
-      <div class="blind-clock-add-time">
-        <input type="number" id="blind-clock-add-minutes" min="1" max="180" value="5">
-        <button class="btn secondary" id="blind-clock-add-time" type="button">+ Adicionar minutos</button>
-        <button class="btn danger" id="blind-clock-end" type="button">Encerrar torneio</button>
-      </div>
-    </div>
-    <div class="box blind-clock-structure-list">
-      <div class="box-head"><h2>ESTRUTURA DO TORNEIO</h2></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>ETAPA</th><th>SB</th><th>BB</th><th>ANTE</th><th>DURAÇÃO</th></tr></thead>
-          <tbody id="blind-clock-structure-body"><tr><td colspan="5" class="empty">Aguardando estrutura de blinds.</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</section>
 
-<section id="ranking-view">
- <h2 class="section-title">Pódio da temporada</h2><section class="podium" id="podium"></section>
  <h2 class="section-title">Classificação completa</h2>
  <section class="box"><div class="box-head"><h2>RANKING DA TEMPORADA</h2>
   <input class="search" id="search" type="search" placeholder="Pesquisar jogador..." autocomplete="off">
@@ -2666,7 +2689,6 @@ function showTab(id){
   $("player-profile-view").classList.toggle("hidden",id!=="player-profile-view");
   $("stages-view").classList.toggle("hidden",id!=="stages-view");
  $("tournament-info-view").classList.toggle("hidden",id!=="tournament-info-view");
- $("blind-clock-view").classList.toggle("hidden",id!=="blind-clock-view");
 }
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
 
@@ -2676,6 +2698,7 @@ let blindClockStructures = [];
 let blindClockChannel = null;
 let blindClockTick = null;
 let blindClockSelectedStructure = null;
+let blindClockTournament = null;
 
 function clockDurationSeconds(step) {
   return Math.max(1, Number(step?.duration) || 1) * 60;
@@ -2722,7 +2745,7 @@ function clockFormat(seconds) {
 
 function renderBlindClock() {
   if (!$("blind-clock-view")) return;
-  $("blind-clock-tournament-name").textContent = tournament?.name || "POKERZONE • TORNEIO";
+  $("blind-clock-tournament-name").textContent = blindClockTournament?.name || "POKERZONE • TORNEIO";
   const pos = getBlindClockPosition(blindClockState);
   const step = pos.step;
   $("blind-clock-countdown").textContent = clockFormat(pos.remaining);
@@ -2750,6 +2773,18 @@ function renderBlindClock() {
     finished: "TORNEIO ENCERRADO"
   };
   $("blind-clock-status").textContent = statusLabels[pos.status] || "RELÓGIO PARADO";
+  const nextStep = blindClockState?.structure_snapshot?.[pos.index + 1];
+  if (!nextStep || pos.status === "finished") {
+    $("blind-clock-next-step").textContent = "PRÓXIMO BLIND: —";
+  } else if (nextStep.type === "break") {
+    $("blind-clock-next-step").textContent = "PRÓXIMO: INTERVALO • " + (Number(nextStep.duration) || 0) + " MIN";
+  } else {
+    const nextLevelNumber = blindClockState.structure_snapshot.slice(0, pos.index + 2).filter(item => item.type === "level").length;
+    const nextSb = Number(nextStep.small_blind || 0).toLocaleString("pt-BR");
+    const nextBb = Number(nextStep.big_blind || 0).toLocaleString("pt-BR");
+    const nextAnte = Number(nextStep.ante || 0).toLocaleString("pt-BR");
+    $("blind-clock-next-step").textContent = "PRÓXIMO BLIND • NÍVEL " + nextLevelNumber + "  |  " + nextSb + " / " + nextBb + "  |  ANTE " + nextAnte;
+  }
 
   const hasStructure = !!blindClockState?.structure_snapshot?.length;
   const canControl = isStaff && hasStructure;
@@ -2759,6 +2794,15 @@ function renderBlindClock() {
   $("blind-clock-next").classList.toggle("hidden", !canControl || pos.status === "finished");
   $("blind-clock-time-admin").classList.toggle("hidden", !canControl || pos.status === "finished");
   $("blind-clock-admin").classList.toggle("hidden", !isStaff);
+  if (!blindClockTournament) {
+    $("blind-clock-start").classList.add("hidden");
+    $("blind-clock-pause").classList.add("hidden");
+    $("blind-clock-prev").classList.add("hidden");
+    $("blind-clock-next").classList.add("hidden");
+    $("blind-clock-time-admin").classList.add("hidden");
+    $("blind-clock-fullscreen").classList.add("hidden");
+    $("blind-clock-tournament-name").textContent = "SELECIONE UM TORNEIO";
+  }
   $("blind-clock-fullscreen").classList.toggle("hidden", !hasStructure);
   $("blind-clock-structure-body").innerHTML = hasStructure
     ? blindClockState.structure_snapshot.map((item, index) => {
@@ -2778,15 +2822,15 @@ function renderBlindClock() {
 }
 
 async function loadBlindClockStructures() {
-  if (!tournament?.club_id) {
-    const { data: tournamentData, error } = await db.from("tournaments").select("club_id").eq("id", tournament.id).maybeSingle();
+  if (!blindClockTournament?.club_id) {
+    const { data: tournamentData, error } = await db.from("tournaments").select("club_id").eq("id", blindClockTournament.id).maybeSingle();
     if (error) console.error("Erro ao localizar clube do torneio:", error);
-    if (tournamentData?.club_id) tournament.club_id = tournamentData.club_id;
+    if (tournamentData?.club_id) blindClockTournament.club_id = tournamentData.club_id;
   }
-  if (isStaff && tournament?.club_id) {
+  if (isStaff && blindClockTournament?.club_id) {
     const { data, error } = await db.from("club_blind_structures")
       .select("id, name, description, levels")
-      .eq("club_id", tournament.club_id)
+      .eq("club_id", blindClockTournament.club_id)
       .order("name");
     if (error) {
       $("blind-clock-admin-message").textContent = "Erro ao carregar estruturas: " + error.message;
@@ -2805,9 +2849,9 @@ async function loadBlindClockStructures() {
 }
 
 async function fetchBlindClock() {
-  if (!tournament?.id) return;
+  if (!blindClockTournament?.id) return;
   const { data, error } = await db.from("tournament_blind_clock")
-    .select("*").eq("tournament_id", tournament.id).maybeSingle();
+    .select("*").eq("tournament_id", blindClockTournament.id).maybeSingle();
   if (error) {
     console.error("Erro ao carregar relógio:", error);
     $("blind-clock-status").textContent = "ERRO AO CARREGAR RELÓGIO";
@@ -2819,12 +2863,12 @@ async function fetchBlindClock() {
 }
 
 async function saveBlindClock(nextState) {
-  if (!isStaff || !tournament?.id) {
+  if (!isStaff || !blindClockTournament?.id) {
     alert("Somente a equipe do torneio pode controlar o relógio.");
     return;
   }
   const payload = {
-    tournament_id: tournament.id,
+    tournament_id: blindClockTournament.id,
     structure_snapshot: nextState.structure_snapshot || blindClockState?.structure_snapshot || [],
     current_step_index: Number(nextState.current_step_index ?? blindClockState?.current_step_index ?? 0),
     status: nextState.status || "stopped",
@@ -2943,18 +2987,63 @@ async function endBlindClock() {
   });
 }
 
+
+async function loadClubClockTournamentOptions() {
+  const select = $("club-clock-tournament-select");
+  select.innerHTML = '<option value="">Carregando torneios...</option>';
+  const { data, error } = await db.from("tournaments")
+    .select("id, name, description, club_id")
+    .eq("club_id", selectedClubId)
+    .order("name");
+  if (error) {
+    select.innerHTML = '<option value="">Erro ao carregar torneios</option>';
+    $("blind-clock-admin-message").textContent = "Erro ao carregar torneios: " + error.message;
+    return;
+  }
+  const list = data || [];
+  select.innerHTML = list.length
+    ? '<option value="">Selecione um torneio</option>' + list.map(item => '<option value="' + esc(item.id) + '">' + esc(item.name) + '</option>').join("")
+    : '<option value="">Nenhum torneio cadastrado neste clube</option>';
+  if (blindClockTournament && list.some(item => item.id === blindClockTournament.id)) {
+    select.value = blindClockTournament.id;
+  }
+  if (!isStaff) $("blind-clock-admin").classList.add("hidden");
+}
+
+async function selectClubClockTournament(tournamentId) {
+  if (blindClockTick) { clearInterval(blindClockTick); blindClockTick = null; }
+  if (blindClockChannel) { db.removeChannel(blindClockChannel); blindClockChannel = null; }
+  blindClockState = null;
+  blindClockTournament = null;
+  renderBlindClock();
+  if (!tournamentId) return;
+  const { data, error } = await db.from("tournaments")
+    .select("id, name, description, club_id")
+    .eq("id", tournamentId)
+    .eq("club_id", selectedClubId)
+    .single();
+  if (error) {
+    alert("Não foi possível abrir o torneio: " + error.message);
+    return;
+  }
+  blindClockTournament = data;
+  await Promise.all([fetchBlindClock(), loadBlindClockStructures()]);
+  setupBlindClockRealtime();
+  blindClockTick = setInterval(renderBlindClock, 250);
+}
+
 function setupBlindClockRealtime() {
   if (blindClockChannel) {
     db.removeChannel(blindClockChannel);
     blindClockChannel = null;
   }
-  if (!tournament?.id) return;
-  blindClockChannel = db.channel("blind-clock-" + tournament.id)
+  if (!blindClockTournament?.id) return;
+  blindClockChannel = db.channel("blind-clock-" + blindClockTournament.id)
     .on("postgres_changes", {
       event: "*",
       schema: "public",
       table: "tournament_blind_clock",
-      filter: "tournament_id=eq." + tournament.id
+      filter: "tournament_id=eq." + blindClockTournament.id
     }, payload => {
       blindClockState = payload.new || null;
       renderBlindClock();
@@ -2987,11 +3076,21 @@ $("blind-clock-exit").addEventListener("click", exitBlindClockFullscreen);
 document.addEventListener("fullscreenchange", () => {
   $("blind-clock-container")?.classList.toggle("blind-clock-fullscreen", !!document.fullscreenElement);
 });
-document.querySelector('[data-tab="blind-clock-view"]').addEventListener("click", async () => {
-  if (blindClockTick) clearInterval(blindClockTick);
-  await Promise.all([fetchBlindClock(), loadBlindClockStructures()]);
-  setupBlindClockRealtime();
-  blindClockTick = setInterval(renderBlindClock, 250);
+$("club-live-clock-btn").addEventListener("click", async () => {
+  $("club-management-area").classList.add("hidden");
+  $("club-tournaments-area").classList.add("hidden");
+  $("club-settings-area").classList.add("hidden");
+  $("club-blinds-area").classList.add("hidden");
+  $("club-clock-area").classList.remove("hidden");
+  await loadClubClockTournamentOptions();
+});
+$("club-clock-back-btn").addEventListener("click", () => {
+  $("club-clock-area").classList.add("hidden");
+  $("club-management-area").classList.toggle("hidden", !isStaff);
+  if (!isStaff) $("club-tournaments-area").classList.remove("hidden");
+});
+$("club-clock-tournament-select").addEventListener("change", event => {
+  selectClubClockTournament(event.target.value);
 });
 
 function renderRanking(list){
@@ -5298,6 +5397,7 @@ $("recent-tournaments-list").parentElement.classList.add("hidden");
 $("club-management-area").classList.add("hidden");
 $("club-tournaments-area").classList.add("hidden");
 $("club-settings-area").classList.add("hidden");
+$("club-clock-area").classList.add("hidden");
 
 if (isStaff) {
   $("club-management-area").classList.remove("hidden");
