@@ -2556,7 +2556,7 @@ body.clock-only-mode .blind-clock-ante{
 .stage-command-heading p{color:#999;font-size:12px;margin-top:5px}
 .stage-command-heading>span{font-size:11px;color:#ff858b;background:#35191c;border:1px solid #713036;padding:7px 10px;border-radius:20px}
 .stage-command-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-.stage-command-card{background:linear-gradient(145deg,#222,#121212);border:1px solid #3a3030;border-radius:12px;padding:15px;min-width:0}
+.stage-command-add{min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1px dashed #704047;border-radius:12px;background:transparent;color:#f08b90;cursor:pointer}.stage-command-add span{font-size:42px;line-height:1}.stage-command-add small{font-size:12px;font-weight:800}.stage-command-card{background:linear-gradient(145deg,#222,#121212);border:1px solid #3a3030;border-radius:12px;padding:15px;min-width:0}
 .stage-command-card h4{font-size:15px;overflow-wrap:anywhere;margin-bottom:8px}
 .stage-command-card .command-total{font-size:23px;font-weight:900;color:#fff;margin:8px 0}
 .stage-command-card .command-meta{font-size:11px;color:#aaa;display:flex;gap:8px;flex-wrap:wrap}
@@ -5572,158 +5572,55 @@ $("stage-command-modal")?.addEventListener("click",event=>{
   if(event.target.id==="stage-command-modal") closeStageCommandModal();
 });
 async function loadStageCommandCards() {
-  const grid = $("stage-command-grid");
-  const count = $("stage-command-count");
+  const grid = $("stage-command-grid"), count = $("stage-command-count");
   if (!grid) return;
-  count.textContent = editorResults.length + (editorResults.length === 1 ? " jogador" : " jogadores");
-  if (!editorResults.length) {
-    grid.innerHTML = '<div class="empty">Adicione jogadores à etapa para criar as comandas.</div>';
-    return;
-  }
-  if (!currentStage?.id) {
-    grid.innerHTML = '<div class="notice">Salve a etapa para liberar os lançamentos nas comandas.</div>';
-    return;
-  }
-  if (!isStaff) {
-    grid.innerHTML = '<div class="empty">As comandas são restritas à equipe do clube.</div>';
-    return;
-  }
-  grid.innerHTML = '<div class="empty">Carregando comandas...</div>';
-  const clubId = tournament.club_id || selectedClubId;
-  if (!clubId) {
-    grid.innerHTML = '<div class="notice">Não foi possível identificar o clube desta etapa.</div>';
-    return;
-  }
-  const [{data:entryRows,error:entryError},{data:clubPlayers,error:clubPlayersError},{data:ledgerRows,error:ledgerError}] = await Promise.all([
-    db.from("tournament_entries").select("id,player_id,entry_type,amount,created_at").eq("tournament_id",tournament.id).eq("stage_id",currentStage.id).order("created_at"),
-    db.from("club_players").select("id,name").eq("club_id",clubId).order("name"),
-    db.from("club_player_ledger").select("id,club_player_id,tournament_player_id,attendant_name,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).order("created_at",{ascending:false})
+  if (!currentStage?.id) { count.textContent="10 comandas"; grid.innerHTML='<div class="notice">Salve a etapa para carregar as 10 comandas.</div>'; return; }
+  if (!isStaff) { grid.innerHTML='<div class="empty">As comandas são restritas à equipe do clube.</div>'; return; }
+  grid.innerHTML='<div class="empty">Carregando comandas...</div>';
+  const [{data:commands,error:commandsError},{data:ledgerRows,error:ledgerError}] = await Promise.all([
+    db.from("stage_commands").select("id,command_number,club_player_id,club_id").eq("stage_id",currentStage.id).order("command_number"),
+    db.from("club_player_ledger").select("id,stage_command_id,club_player_id,attendant_name,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).not("stage_command_id","is",null).order("created_at",{ascending:false})
   ]);
-  const failed = entryError || clubPlayersError || ledgerError;
-  if (failed) {
-    grid.innerHTML = '<div class="notice">Não foi possível carregar as comandas. Confira a migração das comandas individuais no Supabase. Detalhe: ' + esc(failed.message) + '</div>';
-    return;
-  }
-  const ledger = ledgerRows || [];
-  grid.innerHTML = editorResults.map(player => {
-    const accountRows = ledger.filter(row => row.tournament_player_id === player.player_id);
-    const charges = accountRows.filter(row => row.entry_type === "charge");
-    const paid = accountRows.filter(row => row.entry_type === "payment").reduce((sum,row) => sum + Number(row.amount || 0),0);
-    const consumption = charges.reduce((sum,row) => sum + Number(row.amount || 0),0);
-    const customer = (clubPlayers || []).find(item => accountRows.some(row => row.club_player_id === item.id));
-    const playerEntries = (entryRows || []).filter(row => row.player_id === player.player_id);
-    const buyins = playerEntries.filter(row => row.entry_type === "buyin").length;
-    const rebuys = playerEntries.filter(row => row.entry_type === "rebuy").length;
-    const addons = playerEntries.filter(row => row.entry_type === "addon").length;
-    return '<article class="stage-command-card"><h4>' + esc(player.name) + '</h4>' +
-      '<div class="command-meta"><span>Cliente: ' + esc(customer?.name || "Não selecionado") + '</span></div>' +
-      '<div class="command-meta"><span>Buy-in: ' + buyins + '</span><span>Rebuy: ' + rebuys + '</span><span>Add-on: ' + addons + '</span></div>' +
-      '<div class="command-total">' + clubMoney(consumption) + '</div>' +
-      '<div class="command-meta"><span>Consumos: ' + charges.length + '</span><span>Pagamentos: ' + clubMoney(paid) + '</span></div>' +
-      '<button type="button" class="btn secondary command-open" data-command-open="' + esc(player.player_id) + '">Abrir comanda</button></article>';
-  }).join("");
+  if(commandsError||ledgerError){grid.innerHTML='<div class="notice">Não foi possível carregar as comandas. Execute a atualização do Supabase. '+esc((commandsError||ledgerError).message)+'</div>';return;}
+  const rows=commands||[]; count.textContent=rows.length+" comandas";
+  grid.innerHTML=rows.map(command=>{
+    const history=(ledgerRows||[]).filter(row=>row.stage_command_id===command.id);
+    const charges=history.filter(row=>row.entry_type==="charge");
+    const paid=history.filter(row=>row.entry_type==="payment").reduce((sum,row)=>sum+Number(row.amount||0),0);
+    const total=charges.reduce((sum,row)=>sum+Number(row.amount||0),0);
+    const customer=history.find(row=>row.club_player_id)?.club_player_id;
+    return '<article class="stage-command-card"><h4>Comanda '+command.command_number+'</h4><div class="command-meta"><span>'+(customer?'Cliente vinculado':'Aguardando cliente')+'</span></div><div class="command-total">'+clubMoney(total)+'</div><div class="command-meta"><span>Consumos: '+charges.length+'</span><span>Pagamentos: '+clubMoney(paid)+'</span></div><button type="button" class="btn secondary command-open" data-command-open="'+esc(command.id)+'">Abrir comanda</button></article>';
+  }).join("")+'<button type="button" class="stage-command-add" id="stage-command-add"><span>+</span><small>Adicionar comanda</small></button>';
   grid.querySelectorAll("[data-command-open]").forEach(button=>button.addEventListener("click",()=>openStagePlayerCommand(button.dataset.commandOpen)));
+  $("stage-command-add")?.addEventListener("click",addStageCommand);
 }
-async function openStagePlayerCommand(playerId){
+async function addStageCommand(){
   if(!isStaff||!currentStage?.id)return;
-  const player=editorResults.find(item=>item.player_id===playerId);
-  if(!player)return;
-  stageCommandSelectedPlayer=player;
+  const {data:rows,error:loadError}=await db.from("stage_commands").select("command_number").eq("stage_id",currentStage.id).order("command_number",{ascending:false}).limit(1);
+  if(loadError){alert("Não foi possível adicionar comanda: "+loadError.message);return;}
+  const next=Number(rows?.[0]?.command_number||0)+1;
+  const {error}=await db.from("stage_commands").insert({stage_id:currentStage.id,club_id:tournament.club_id||selectedClubId,command_number:next});
+  if(error){alert("Não foi possível adicionar comanda: "+error.message);return;}
+  await loadStageCommandCards();
+}
+async function openStagePlayerCommand(commandId){
+  if(!isStaff||!currentStage?.id)return;
+  const {data:command,error:commandError}=await db.from("stage_commands").select("id,command_number,club_id,club_player_id").eq("id",commandId).eq("stage_id",currentStage.id).single();
+  if(commandError){alert("Não foi possível abrir a comanda: "+commandError.message);return;}
+  stageCommandSelectedPlayer={id:command.id,player_id:null,name:"Comanda "+command.command_number,command_number:command.command_number};
   stageCommandSelectedCustomer=null;
-  const modal=$("stage-command-modal");
-  const content=$("stage-command-modal-content");
-  $("stage-command-modal-title").textContent=player.name;
-  content.innerHTML='<div class="empty">Carregando clientes e histórico...</div>';
-  modal.classList.remove("hidden");
-  const clubId=tournament.club_id||selectedClubId;
+  const modal=$("stage-command-modal"),content=$("stage-command-modal-content");
+  $("stage-command-modal-title").textContent="Comanda "+command.command_number;
+  content.innerHTML='<div class="empty">Carregando clientes e histórico...</div>'; modal.classList.remove("hidden");
   const [{data:customers,error:customersError},{data:history,error:historyError}]=await Promise.all([
-    db.from("club_players").select("id,name").eq("club_id",clubId).order("name"),
-    db.from("club_player_ledger").select("id,club_player_id,tournament_player_id,attendant_name,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).eq("tournament_player_id",playerId).order("created_at",{ascending:false})
+    db.from("club_players").select("id,name").eq("club_id",command.club_id).order("name"),
+    db.from("club_player_ledger").select("id,club_player_id,stage_command_id,attendant_name,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).eq("stage_command_id",command.id).order("created_at",{ascending:false})
   ]);
-  if(customersError||historyError){
-    content.innerHTML='<div class="notice">Não foi possível abrir a comanda. Confira a migração no Supabase. '+esc((customersError||historyError).message)+'</div>';
-    return;
-  }
+  if(customersError||historyError){content.innerHTML='<div class="notice">Não foi possível abrir a comanda. '+esc((customersError||historyError).message)+'</div>';return;}
   stageCommandCustomers=customers||[];
-  const customerId=history?.[0]?.club_player_id||null;
-  stageCommandSelectedCustomer=stageCommandCustomers.find(item=>item.id===customerId)||null;
+  stageCommandSelectedCustomer=stageCommandCustomers.find(item=>item.id===command.club_player_id)||stageCommandCustomers.find(item=>item.id===history?.[0]?.club_player_id)||null;
   renderStagePlayerCommand(history||[]);
 }
-function renderStagePlayerCommand(history=[]){
-  const content=$("stage-command-modal-content");
-  const selected=stageCommandSelectedCustomer;
-  const player=stageCommandSelectedPlayer;
-  if(!content||!player)return;
-  const customerOptions=stageCommandCustomers.map(customer=>'<button type="button" class="stage-command-customer-option '+(selected?.id===customer.id?'selected':'')+'" data-select-customer="'+esc(customer.id)+'">'+esc(customer.name)+'</button>').join("");
-  const matching=stageCommandCustomers.filter(customer=>customer.name.toLowerCase().includes((content.querySelector("#stage-command-customer-search")?.value||"").trim().toLowerCase()));
-  const historyHtml=history.length?history.map(row=>'<div class="stage-command-history-item"><span><b>'+esc(row.description||row.category||"Lançamento")+'</b><br><small>'+esc(row.attendant_name||"Atendente não informado")+' · '+esc(row.category||"")+'</small></span><span>'+(row.entry_type==="payment"?"− ":"+ ")+clubMoney(row.amount)+'</span></div>').join(""):'<div class="empty">Nenhum lançamento nesta comanda.</div>';
-  content.innerHTML=
-    '<div class="stage-command-modal-section"><h4>1. CLIENTE DA COMANDA</h4>'+
-      '<label>Digite o nome do cliente<input id="stage-command-customer-search" type="text" placeholder="Comece a digitar o nome..." autocomplete="off"></label>'+
-      '<div class="stage-command-customer-results" id="stage-command-customer-results">'+(matching.length?customerOptions:'<div class="empty">Nenhum cliente encontrado.</div>')+'</div>'+
-      '<div id="stage-command-new-customer-area"></div>'+
-      (selected?'<p class="command-meta" style="margin-top:10px">Cliente selecionado: <b>'+esc(selected.name)+'</b></p>':'')+
-    '</div>'+
-    (selected?'<div class="stage-command-modal-section"><h4>2. ATENDIMENTO</h4>'+
-      '<label>Atendente<input id="stage-command-attendant" type="text" placeholder="Nome de quem está atendendo"></label>'+
-      '<div class="stage-command-modal-grid"><label>Descrição<input id="stage-command-description" type="text" placeholder="Ex.: Refrigerante, água, lanche"></label>'+
-      '<label>Valor (R$)<input id="stage-command-amount" type="number" min="0.01" step="0.01" placeholder="0,00"></label></div>'+
-      '<label>Categoria<select id="stage-command-category"><option>Bebidas</option><option>Alimentação</option><option>Fichas</option><option>Outros</option></select></label>'+
-      '<button type="button" class="btn command-charge" id="stage-command-save-charge">Lançar consumo</button></div>':'<div class="notice">Selecione um cliente para continuar o atendimento.</div>')+
-    '<div class="stage-command-modal-section"><h4>HISTÓRICO DESTA COMANDA</h4><div class="stage-command-modal-history">'+historyHtml+'</div></div>';
-  const search=content.querySelector("#stage-command-customer-search");
-  search.addEventListener("input",()=>{
-    const term=search.value.trim().toLowerCase();
-    const found=stageCommandCustomers.filter(customer=>customer.name.toLowerCase().includes(term));
-    const results=content.querySelector("#stage-command-customer-results");
-    results.innerHTML=found.length?found.map(customer=>'<button type="button" class="stage-command-customer-option" data-select-customer="'+esc(customer.id)+'">'+esc(customer.name)+'</button>').join(""):'<div class="empty">Nenhum cliente encontrado.</div>';
-    bindStageCommandCustomerOptions(history);
-    const newArea=content.querySelector("#stage-command-new-customer-area");
-    newArea.innerHTML=term&&!found.length?'<button type="button" class="btn secondary" id="stage-command-show-new-customer">+ Novo cliente</button>':'';
-    content.querySelector("#stage-command-show-new-customer")?.addEventListener("click",()=>{
-      newArea.innerHTML='<label>Nome do novo cliente<input id="stage-command-new-customer-name" type="text" value="'+esc(search.value.trim())+'" placeholder="Nome completo"></label><button type="button" class="btn" id="stage-command-create-customer">Cadastrar cliente</button>';
-      content.querySelector("#stage-command-create-customer").addEventListener("click",async()=>{
-        const name=content.querySelector("#stage-command-new-customer-name").value.trim();
-        if(!name){alert("Informe o nome do cliente.");return;}
-        const {data:userData}=await db.auth.getUser();
-        const {data:newCustomer,error}=await db.from("club_players").insert({club_id:tournament.club_id||selectedClubId,name,created_by:userData?.user?.id||null}).select("id,name").single();
-        if(error){alert("Não foi possível cadastrar o cliente: "+error.message);return;}
-        stageCommandCustomers.push(newCustomer);
-        stageCommandSelectedCustomer=newCustomer;
-        renderStagePlayerCommand(history);
-      });
-    });
-  });
-  bindStageCommandCustomerOptions(history);
-  content.querySelector("#stage-command-save-charge")?.addEventListener("click",async()=>{
-    if(!isStaff||!stageCommandSelectedCustomer||!stageCommandSelectedPlayer)return;
-    const attendant=content.querySelector("#stage-command-attendant").value.trim();
-    const description=content.querySelector("#stage-command-description").value.trim();
-    const amount=Number(content.querySelector("#stage-command-amount").value);
-    const category=content.querySelector("#stage-command-category").value;
-    if(!attendant){alert("Informe o nome do atendente.");return;}
-    if(!description||!Number.isFinite(amount)||amount<=0){alert("Informe a descrição e um valor maior que zero.");return;}
-    const button=content.querySelector("#stage-command-save-charge");button.disabled=true;
-    const {data:userData}=await db.auth.getUser();
-    const {error}=await db.from("club_player_ledger").insert({
-      club_player_id:stageCommandSelectedCustomer.id,tournament_player_id:stageCommandSelectedPlayer.player_id,
-      attendant_name:attendant,entry_type:"charge",category,description,amount,
-      tournament_id:tournament.id,stage_id:currentStage.id,created_by:userData?.user?.id||null
-    });
-    if(error){alert("Não foi possível registrar o consumo: "+error.message);button.disabled=false;return;}
-    const {data:updatedHistory,error:historyError}=await db.from("club_player_ledger").select("id,club_player_id,tournament_player_id,attendant_name,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).eq("tournament_player_id",stageCommandSelectedPlayer.player_id).order("created_at",{ascending:false});
-    if(historyError){alert("Consumo salvo, mas não foi possível atualizar o histórico: "+historyError.message);return;}
-    renderStagePlayerCommand(updatedHistory||[]);
-    await loadStageCommandCards();
-  });
-}
-function bindStageCommandCustomerOptions(history){
-  $("stage-command-modal-content").querySelectorAll("[data-select-customer]").forEach(button=>button.addEventListener("click",()=>{
-    stageCommandSelectedCustomer=stageCommandCustomers.find(customer=>customer.id===button.dataset.selectCustomer)||null;
-    renderStagePlayerCommand(history);
-  }));
-}
-
 function calculateStagePoints() {
   const totalPlayers = editorResults.length;
 
