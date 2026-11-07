@@ -2344,6 +2344,62 @@ body.clock-only-mode .blind-clock-ante{
   }
 }
 
+
+/* CENTRALIZACAO DO RELOGIO EM NOTEBOOKS */
+@media (min-width:701px) and (max-width:1440px){
+  body.clock-only-mode #club-clock-area{
+    align-items:stretch;
+    justify-content:center;
+    overflow-y:auto;
+    overflow-x:hidden;
+  }
+  body.clock-only-mode #blind-clock-view{
+    flex:1 0 auto;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    min-height:100%;
+    padding:18px 24px;
+  }
+  body.clock-only-mode #blind-clock-container{
+    width:100%;
+    max-width:1120px;
+    min-height:calc(100vh - 36px);
+    height:auto;
+    flex:0 0 auto;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    margin:0 auto;
+  }
+  body.clock-only-mode #blind-clock-admin:not(.hidden){
+    width:min(420px,100%);
+    margin:0 auto 8px;
+  }
+  body.clock-only-mode .blind-clock-hero{
+    flex:0 0 auto;
+    width:100%;
+    max-width:1120px;
+    min-height:0;
+    margin:0 auto;
+    padding:clamp(16px,2.6vh,28px) 24px;
+    justify-content:center;
+  }
+  body.clock-only-mode .blind-clock-time{
+    font-size:clamp(104px,13vw,176px);
+    margin:clamp(5px,1.2vh,12px) 0;
+  }
+  body.clock-only-mode .blind-clock-blinds{
+    margin:clamp(10px,1.8vh,20px) 0;
+  }
+  body.clock-only-mode .blind-clock-controls{
+    margin:clamp(10px,1.5vh,16px) 0 0;
+  }
+  body.clock-only-mode #blind-clock-time-admin:not(.hidden){
+    width:min(720px,calc(100% - 28px));
+    margin:8px auto 0;
+  }
+}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
