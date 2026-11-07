@@ -2458,6 +2458,7 @@ body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{width:100%
       <select id="blind-clock-structure-select" aria-label="Selecione a estrutura">
         <option value="">Selecione a estrutura</option>
       </select>
+      <button class="btn secondary hidden" id="blind-clock-prize-toggle" type="button">Exibir premiação no relógio</button>
       <p id="blind-clock-admin-message" class="season-info hidden" style="margin-top:10px"></p>
     </div>
     <div class="blind-clock-hero">
@@ -2482,7 +2483,7 @@ body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{width:100%
         <button class="btn secondary hidden" id="blind-clock-prev" type="button">‹ Voltar nível</button>
         <button class="btn secondary hidden" id="blind-clock-next" type="button">Avançar nível ›</button>
         <button class="btn secondary hidden blind-clock-fullscreen-toggle" id="blind-clock-fullscreen" type="button">⛶ Tela cheia</button>
-        <button class="btn secondary hidden" id="blind-clock-prize-toggle" type="button">Exibir premiação</button>
+        
         <button class="btn secondary blind-clock-exit" id="blind-clock-exit" type="button">Sair da tela cheia</button>
       </div>
     </div>
@@ -3023,10 +3024,9 @@ function renderBlindClock() {
         return `<div><span>${Number(entry.place)}º</span><strong>${prizeText}</strong></div>`;
       }).join("")
     : '<p class="blind-clock-payout-empty">Premiação por colocação não informada</p>';
-  const hasPrizeInfo = prizePool > 0 || payouts.length > 0;
-  $("blind-clock-prize").classList.toggle("hidden", !blindClockState?.show_prize_pool || !hasPrizeInfo);
-  $("blind-clock-prize-toggle").classList.toggle("hidden", !canControl || !hasPrizeInfo);
-  $("blind-clock-prize-toggle").textContent = blindClockState?.show_prize_pool ? "Ocultar premiação" : "Exibir premiação";
+  $("blind-clock-prize").classList.toggle("hidden", !blindClockState?.show_prize_pool);
+  $("blind-clock-prize-toggle").classList.toggle("hidden", !canControl);
+  $("blind-clock-prize-toggle").textContent = blindClockState?.show_prize_pool ? "Ocultar premiação do relógio" : "Exibir premiação no relógio";
   // Antes de carregar uma estrutura, manter a tela limpa e mostrar apenas os seletores.
   $("blind-clock-container").querySelector(".blind-clock-hero").classList.toggle("hidden", !hasStructure);
   $("blind-clock-container").querySelector(".blind-clock-structure-list").classList.toggle("hidden", !hasStructure);
