@@ -2932,9 +2932,8 @@ function renderBlindClock() {
     $("blind-clock-ante").textContent = "ANTE —";
   } else if (step.type === "break") {
     $("blind-clock-step-name").textContent = "INTERVALO";
-    $("blind-clock-sb").textContent = "—";
-    $("blind-clock-bb").textContent = "—";
-    $("blind-clock-ante").textContent = "—";
+    $("blind-clock-sb").textContent = "— / —";
+    $("blind-clock-ante").textContent = "ANTE —";
   } else {
     const levelNumber = blindClockState.structure_snapshot.slice(0, pos.index + 1).filter(item => item.type === "level").length;
     $("blind-clock-step-name").textContent = "NÍVEL " + levelNumber;
