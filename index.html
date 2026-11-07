@@ -5976,19 +5976,26 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
       }
       const [{data:details,error:detailsError},{data:entries,error:entriesError}]=await Promise.all([
         db.from("tournament_details").select("buy_in,tournament_fee,club_fee_type,ranking_contribution,rebuy_amount,addon_amount").eq("tournament_id",stageInfo.tournament_id).maybeSingle(),
-        db.from("tournament_entries").select("id,entry_type").eq("tournament_id",stageInfo.tournament_id).eq("stage_id",currentStage.id).eq("player_id",tournamentPlayerId)
+        db.from("tournament_entries").select("id,entry_type,ledger_entry_id").eq("tournament_id",stageInfo.tournament_id).eq("stage_id",currentStage.id).eq("player_id",tournamentPlayerId)
       ]);
       if(detailsError||entriesError){alert((detailsError||entriesError).message);button.disabled=false;return;}
       tournamentDetails=details||stageCommandTournamentDetails||{};
       const count=(entries||[]).filter(e=>e.entry_type===tournamentType).length;
       if(tournamentType==="buyin"&&count>=1){alert("Este jogador já possui inscrição nesta etapa.");button.disabled=false;return;}
       if(tournamentType==="addon"&&count>=1){
-        const existingAddon=(entries||[]).find(e=>e.entry_type==="addon");
-        const {error:removeEntryError}=await db.from("tournament_entries").delete().eq("id",existingAddon.id);
-        if(removeEntryError){alert("Não foi possível desconsiderar o Add-on: "+removeEntryError.message);button.disabled=false;return;}
-        if(existingAddon.ledger_entry_id){
-          const {error:removeLedgerError}=await db.from("club_player_ledger").delete().eq("id",existingAddon.ledger_entry_id);
-          if(removeLedgerError){alert("O Add-on saiu da conferência, mas não foi possível removê-lo da comanda: "+removeLedgerError.message);button.disabled=false;return;}
+        const existingAddons=(entries||[]).filter(e=>e.entry_type==="addon");
+        const linkedLedgerIds=existingAddons.map(e=>e.ledger_entry_id).filter(Boolean);
+        const {data:commandAddonRows,error:commandAddonError}=await db.from("club_player_ledger").select("id").eq("stage_id",currentStage.id).eq("stage_command_id",stageCommandSelectedPlayer.id).eq("category","Add-on");
+        if(commandAddonError){alert("Não foi possível localizar o Add-on no histórico: "+commandAddonError.message);button.disabled=false;return;}
+        const ledgerIds=[...new Set(linkedLedgerIds.concat((commandAddonRows||[]).map(row=>row.id)))];
+        if(ledgerIds.length){
+          const {error:removeLedgerError}=await db.from("club_player_ledger").delete().in("id",ledgerIds);
+          if(removeLedgerError){alert("Não foi possível remover o Add-on do histórico: "+removeLedgerError.message);button.disabled=false;return;}
+        }
+        const entryIds=existingAddons.map(e=>e.id);
+        if(entryIds.length){
+          const {error:removeEntryError}=await db.from("tournament_entries").delete().in("id",entryIds);
+          if(removeEntryError){alert("O histórico foi atualizado, mas não foi possível remover o Add-on da conferência: "+removeEntryError.message);button.disabled=false;return;}
         }
         const {data:updatedHistory,error:historyError}=await db.from("club_player_ledger").select("id,club_player_id,tournament_player_id,attendant_name,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).eq("stage_command_id",stageCommandSelectedPlayer.id).order("created_at",{ascending:false});
         if(historyError){alert("Add-on desconsiderado, mas houve erro ao atualizar o histórico: "+historyError.message);button.disabled=false;return;}
