@@ -1783,10 +1783,13 @@ input:focus,select:focus {
 .blind-clock-admin select{width:100%}
 .blind-clock-add-time{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
 .blind-clock-add-time input{width:100px}
-.blind-clock-live-adjust{margin:14px 0 18px;padding:14px;background:#101010;border:1px solid #383030;border-radius:10px}
-.blind-clock-live-adjust-label{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;color:#aaa;font-size:12px}
-.blind-clock-live-adjust-label strong{color:#ffd34f;font-size:18px;font-variant-numeric:tabular-nums}
-#blind-clock-time-slider{width:100%;height:9px;padding:0;accent-color:#ffd34f;cursor:pointer;touch-action:pan-y}
+.blind-clock-progress{position:relative!important;cursor:pointer}
+.blind-clock-progress-slider{position:absolute;inset:-9px 0;width:100%;height:25px;margin:0;padding:0;opacity:0;cursor:ew-resize;touch-action:pan-y;z-index:3}
+.blind-clock-progress-slider:not(.hidden){display:block!important}
+.blind-clock-progress:has(.blind-clock-progress-slider:not(.hidden)){outline:1px solid rgba(255,211,79,.4);outline-offset:5px}
+.blind-clock-progress:has(.blind-clock-progress-slider:not(.hidden))::after{content:"ARRASTE PARA AJUSTAR";position:absolute;left:50%;top:13px;transform:translateX(-50%);font-size:9px;letter-spacing:1px;color:#ffd34f;white-space:nowrap;opacity:.85;pointer-events:none}
+.blind-clock-progress-slider::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:#ffd34f}
+.blind-clock-progress-slider::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:#ffd34f}
 .blind-clock-structure-list{margin-top:20px}
 .blind-clock-structure-list .current-clock-step td{background:rgba(237,48,56,.14);color:#fff}
 .blind-clock-structure-list .current-clock-step td:first-child{border-left:3px solid #ed3038}
@@ -2807,7 +2810,7 @@ body.clock-only-mode .blind-clock-ante{
     <div class="blind-clock-hero">
       <div class="blind-clock-kicker" id="blind-clock-tournament-name">POKERZONE • TORNEIO</div>
       <div class="blind-clock-time" id="blind-clock-countdown">00:00</div>
-      <div class="blind-clock-progress" aria-label="Progresso do nível"><div class="blind-clock-progress-fill" id="blind-clock-progress-fill"></div></div>
+      <div class="blind-clock-progress" id="blind-clock-progress" aria-label="Progresso e ajuste do tempo restante"><div class="blind-clock-progress-fill" id="blind-clock-progress-fill"></div><input class="blind-clock-progress-slider hidden" type="range" id="blind-clock-time-slider" min="1" max="3600" value="300" step="1" aria-label="Ajustar tempo restante ao vivo"></div>
       <div class="blind-clock-step" id="blind-clock-step-name">Aguardando início</div>
       <div class="blind-clock-next-step" id="blind-clock-next-step">PRÓXIMO BLIND: —</div>
 
@@ -2832,10 +2835,7 @@ body.clock-only-mode .blind-clock-ante{
     </div>
     <div class="blind-clock-admin hidden" id="blind-clock-time-admin">
       <strong>AJUSTAR TEMPO AO VIVO</strong>
-      <div class="blind-clock-live-adjust">
-        <div class="blind-clock-live-adjust-label"><span>Tempo restante</span><strong id="blind-clock-slider-value">00:00</strong></div>
-        <input type="range" id="blind-clock-time-slider" min="1" max="3600" value="300" step="1" aria-label="Ajustar tempo restante ao vivo">
-      </div>
+      
       <div class="blind-clock-add-time">
         <input type="number" id="blind-clock-add-minutes" min="1" max="180" value="5">
         <button class="btn secondary" id="blind-clock-add-time" type="button">+ Adicionar minutos</button>
@@ -3379,13 +3379,14 @@ function renderBlindClock() {
   blindClockLastRenderedStatus = pos.status;
 
   const timeSlider = $("blind-clock-time-slider");
-  const sliderValue = $("blind-clock-slider-value");
-  if (timeSlider && document.activeElement !== timeSlider) {
+  if (timeSlider) {
     const sliderMax = Math.max(1, clockDurationSeconds(step));
     timeSlider.max = String(sliderMax);
-    timeSlider.value = String(Math.max(1, Math.min(sliderMax, pos.remaining || 1)));
+    if (document.activeElement !== timeSlider) {
+      timeSlider.value = String(Math.max(1, Math.min(sliderMax, pos.remaining || 1)));
+    }
+    timeSlider.classList.toggle("hidden", !isStaff || !step || pos.status === "finished");
   }
-  if (sliderValue) sliderValue.textContent = clockFormat(pos.remaining);
 
   const levelDuration = step ? clockDurationSeconds(step) : 0;
   const progress = levelDuration > 0 ? (pos.status === "finished" ? 100 : Math.max(0, Math.min(100, ((levelDuration - pos.remaining) / levelDuration) * 100))) : 0;
@@ -3804,7 +3805,10 @@ $("blind-clock-prev").addEventListener("click", () => moveBlindClock(-1));
 $("blind-clock-next").addEventListener("click", () => moveBlindClock(1));
 $("blind-clock-add-time").addEventListener("click", addBlindClockTime);
 $("blind-clock-time-slider").addEventListener("input", event => {
-  $("blind-clock-slider-value").textContent = clockFormat(Number(event.target.value));
+  const step = getBlindClockPosition(blindClockState).step;
+  const duration = Math.max(1, clockDurationSeconds(step));
+  const remaining = Math.max(1, Number(event.target.value) || 1);
+  $("blind-clock-progress-fill").style.width = Math.max(0, Math.min(100, ((duration - remaining) / duration) * 100)) + "%";
 });
 $("blind-clock-time-slider").addEventListener("change", async event => {
   if (!isStaff || !blindClockState?.structure_snapshot?.length) return;
