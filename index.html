@@ -5503,6 +5503,7 @@ async function openStage(id) {
   if (!isStaff) return;
   currentStage = stages.find(s => s.id === id);
   if (!currentStage) return;
+  updateDeleteActionButton();
 
   $("stage-list-box").classList.add("hidden");
   $("stage-editor").classList.remove("hidden");
@@ -5974,6 +5975,7 @@ $("new-stage").addEventListener("click", () => {
   $("stage-list-box").classList.add("hidden");
   currentStage = null;
   editorResults = [];
+  updateDeleteActionButton();
 
   $("stage-editor").classList.remove("hidden");
   $("editor-title").textContent = "Nova etapa";
@@ -6085,6 +6087,7 @@ async function saveStage() {
   $("stage-list-box").classList.toggle("hidden", isStaff);
   currentStage = null;
   editorResults = [];
+  updateDeleteActionButton();
 });
  
 async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){console.error(e);msg("Erro: "+e.message)}}
@@ -6108,6 +6111,7 @@ async function openTournament(selectedTournament) {
   currentStage = null;
   editorResults = [];
   $("stage-editor").classList.add("hidden");
+  updateDeleteActionButton();
   $("delete-tournament-btn").classList.toggle("hidden", !isStaff);
  $("edit-tournament-info-btn").classList.toggle("hidden", !isStaff);
 
@@ -7188,7 +7192,51 @@ async function deleteCurrentTournament() {
     alert("Não foi possível excluir o torneio: " + error.message);
   }
 }
-$("delete-tournament-btn").addEventListener("click", deleteCurrentTournament);
+function updateDeleteActionButton() {
+  const button = $("delete-tournament-btn");
+  if (!button) return;
+  const deletingStage = Boolean(currentStage?.id && !$("stage-editor").classList.contains("hidden"));
+  button.textContent = deletingStage ? "Excluir etapa" : "Excluir torneio";
+  button.classList.toggle("hidden", !isStaff || (deletingStage && !currentStage?.id));
+}
+
+async function deleteCurrentStage() {
+  if (!isStaff || !currentStage?.id) {
+    alert("Não foi possível identificar a etapa para excluir.");
+    return;
+  }
+
+  const stageId = currentStage.id;
+  const stageName = currentStage.name || "esta etapa";
+  if (!confirm(
+    `Tem certeza que deseja excluir "${stageName}"?\\n\\n` +
+    "Todos os resultados, pontuações e comandas desta etapa também serão apagados.\\n\\n" +
+    "Essa ação não poderá ser desfeita."
+  )) return;
+
+  try {
+    const { error } = await db.from("stages").delete().eq("id", stageId);
+    if (error) throw error;
+
+    currentStage = null;
+    editorResults = [];
+    $("stage-editor").classList.add("hidden");
+    $("stage-list-box").classList.remove("hidden");
+    updateDeleteActionButton();
+    await refreshAll();
+    alert("Etapa excluída com sucesso!");
+  } catch (error) {
+    alert("Não foi possível excluir a etapa: " + error.message);
+  }
+}
+
+$("delete-tournament-btn").addEventListener("click", () => {
+  if (currentStage?.id && !$("stage-editor").classList.contains("hidden")) {
+    deleteCurrentStage();
+  } else {
+    deleteCurrentTournament();
+  }
+});
  
  $("edit-tournament-info-btn").addEventListener("click", () => {
   if (!isStaff) return;
