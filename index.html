@@ -2544,6 +2544,11 @@ body.clock-only-mode .blind-clock-ante{
 .club-haver-quick-quantity{display:grid;place-items:center;min-width:30px;height:30px;padding:0 8px;border-radius:20px;background:#f5443b;color:white;font-weight:800}
 
 
+.stage-editor-tabs{display:flex;gap:8px;padding:14px 20px 0;border-bottom:1px solid #342629}
+.stage-editor-tab{appearance:none;border:0;border-bottom:3px solid transparent;background:transparent;color:#aaa;padding:11px 16px;font:inherit;font-weight:800;cursor:pointer}
+.stage-editor-tab.active{color:#ff858b;border-bottom-color:#f5443b}
+.stage-editor-panel.hidden{display:none!important}
+@media(max-width:600px){.stage-editor-tabs{padding:10px 12px 0}.stage-editor-tab{flex:1;padding:11px 8px}}
 /* COMANDAS INDIVIDUAIS POR ETAPA */
 .stage-command-area{padding:20px;border-top:1px solid #342629;margin-top:8px}
 .stage-command-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
@@ -3657,34 +3662,35 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
  <div id="stage-list"><div class="empty">Carregando etapas...</div></div></div>
  <div id="stage-editor" class="box hidden">
   <div class="box-head"><h2 id="editor-title">Editar etapa</h2><div class="actions"><button class="btn secondary" id="close-editor">Fechar</button><button class="btn admin-only" id="save-stage">Salvar etapa e resultados</button></div></div>
-  <div class="form-grid">
-   <label>Número da etapa<input id="stage-number" type="number" min="1"></label>
-   <label>Nome<input id="stage-name" placeholder="ETAPA 22"></label>
-   <label>Data<input id="stage-date" type="date"></label>
-   <label>Status<select id="stage-status"><option value="draft">Rascunho</option><option value="published">Publicada</option></select></label>
+  <div class="stage-editor-tabs">
+    <button type="button" class="stage-editor-tab" data-stage-editor-tab="data">Etapa</button>
+    <button type="button" class="stage-editor-tab" data-stage-editor-tab="commands">Comandas</button>
   </div>
-  <div class="panel-pad admin-only"><div class="notice">Edite posições e pontos diretamente. Para retirar um jogador da etapa, remova sua linha. A ausência não gera pontos.</div>
-  <div class="row">
-  <button class="btn secondary" id="calculate-points">
-    Calcular pontos
-  </button>
-</div>
-   <div class="row">
-  <input
-    id="player-search"
-    list="player-suggestions"
-    placeholder="Digite o nome do jogador..."
-    autocomplete="off"
-  >
-  <datalist id="player-suggestions"></datalist>
-  <button class="btn secondary" id="add-player">Adicionar jogador</button>
-</div>
-<div id="player-feedback" class="notice hidden"></div>
+  <div id="stage-data-panel" class="stage-editor-panel">
+    <div class="form-grid">
+     <label>Número da etapa<input id="stage-number" type="number" min="1"></label>
+     <label>Nome<input id="stage-name" placeholder="ETAPA 22"></label>
+     <label>Data<input id="stage-date" type="date"></label>
+     <label>Status<select id="stage-status"><option value="draft">Rascunho</option><option value="published">Publicada</option></select></label>
+    </div>
+    <div class="panel-pad admin-only"><div class="notice">Edite posições e pontos diretamente. Para retirar um jogador da etapa, remova sua linha. A ausência não gera pontos.</div>
+    <div class="row">
+    <button class="btn secondary" id="calculate-points">Calcular pontos</button>
+    </div>
+    <div class="row">
+      <input id="player-search" list="player-suggestions" placeholder="Digite o nome do jogador..." autocomplete="off">
+      <datalist id="player-suggestions"></datalist>
+      <button class="btn secondary" id="add-player">Adicionar jogador</button>
+    </div>
+    <div id="player-feedback" class="notice hidden"></div>
+    </div>
+    <div class="table-wrap"><table class="editor-table"><thead><tr><th>JOGADOR</th><th>POSIÇÃO</th><th>PONTOS</th><th class="admin-only">AÇÃO</th></tr></thead><tbody id="result-rows"><tr><td colspan="4" class="empty">Selecione uma etapa.</td></tr></tbody></table></div>
   </div>
-  <div class="table-wrap"><table class="editor-table"><thead><tr><th>JOGADOR</th><th>POSIÇÃO</th><th>PONTOS</th><th class="admin-only">AÇÃO</th></tr></thead><tbody id="result-rows"><tr><td colspan="4" class="empty">Selecione uma etapa.</td></tr></tbody></table></div>
-  <div class="stage-command-area admin-only">
-    <div class="stage-command-heading"><div><h3>COMANDAS INDIVIDUAIS</h3><p>Uma comanda para cada jogador participante desta etapa.</p></div><span id="stage-command-count">0 jogadores</span></div>
-    <div id="stage-command-grid" class="stage-command-grid"><div class="empty">Abra ou salve uma etapa para carregar as comandas.</div></div>
+  <div id="stage-commands-panel" class="stage-editor-panel hidden">
+    <div class="stage-command-area admin-only">
+      <div class="stage-command-heading"><div><h3>COMANDAS INDIVIDUAIS</h3><p>Uma comanda para cada jogador participante desta etapa.</p></div><span id="stage-command-count">0 jogadores</span></div>
+      <div id="stage-command-grid" class="stage-command-grid"><div class="empty">Abra ou salve uma etapa para carregar as comandas.</div></div>
+    </div>
   </div>
   <div id="stage-command-modal" class="stage-command-modal hidden" role="dialog" aria-modal="true" aria-labelledby="stage-command-modal-title">
     <div class="stage-command-modal-panel">
@@ -5481,7 +5487,19 @@ resultsContent.innerHTML =
     </div>
   `;
 }
- async function openStage(id) {
+ function setStageEditorTab(tab) {
+  const commands = tab === "commands";
+  $("stage-data-panel")?.classList.toggle("hidden", commands);
+  $("stage-commands-panel")?.classList.toggle("hidden", !commands);
+  document.querySelectorAll("[data-stage-editor-tab]").forEach(button => {
+    button.classList.toggle("active", button.dataset.stageEditorTab === tab);
+  });
+}
+document.querySelectorAll("[data-stage-editor-tab]").forEach(button => {
+  button.addEventListener("click", () => setStageEditorTab(button.dataset.stageEditorTab));
+});
+
+async function openStage(id) {
   if (!isStaff) return;
   currentStage = stages.find(s => s.id === id);
   if (!currentStage) return;
@@ -5489,6 +5507,7 @@ resultsContent.innerHTML =
   $("stage-list-box").classList.add("hidden");
   $("stage-editor").classList.remove("hidden");
   $("editor-title").textContent = currentStage.name;
+  setStageEditorTab("data");
 
   $("stage-number").value = currentStage.stage_number;
   $("stage-name").value = currentStage.name;
@@ -5985,6 +6004,7 @@ $("new-stage").addEventListener("click", () => {
 
   $("stage-editor").classList.remove("hidden");
   $("editor-title").textContent = "Nova etapa";
+  setStageEditorTab("commands");
 
   $("stage-number").value =
     stages.reduce((m, s) => Math.max(m, s.stage_number), 0) + 1;
@@ -6010,6 +6030,7 @@ $("new-stage").addEventListener("click", () => {
 });
 async function saveStage() {
   if (!isStaff || !season) return;
+  const isNewStage = !currentStage?.id;
 
   const number = Number($("stage-number").value);
   const name = $("stage-name").value.trim();
@@ -6083,6 +6104,7 @@ async function saveStage() {
   await refreshAll();
   currentStage = stages.find(stage => stage.id === stageId) || { ...stageData, id: stageId };
   await openStage(stageId);
+  if (isNewStage) setStageEditorTab("commands");
 }
  $("save-stage").addEventListener("click", saveStage);
  $("close-editor").addEventListener("click", () => {
