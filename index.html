@@ -1917,6 +1917,12 @@ body.clock-only-mode .blind-clock-state{order:6;color:rgba(255,255,255,.6);margi
 body.clock-only-mode .blind-clock-controls{order:7;margin-top:clamp(18px,3vh,30px)}
 body.clock-only-mode .blind-clock-controls .btn{min-height:44px;padding:10px 20px;border-radius:9px}
 @media(max-width:700px){body.clock-only-mode .blind-clock-hero{border-radius:18px;margin:8px;padding:24px 10px}body.clock-only-mode .blind-clock-hero:before{width:90vw}body.clock-only-mode .blind-clock-kicker{font-size:16px}body.clock-only-mode .blind-clock-step{margin-top:26px;font-size:15px}body.clock-only-mode .blind-clock-time{font-size:clamp(86px,20vw,145px);letter-spacing:-3px;margin:12px 0 16px}body.clock-only-mode .blind-clock-progress{width:72%;height:6px;margin-bottom:18px}body.clock-only-mode .blind-clock-blinds{gap:clamp(15px,5vw,34px)}body.clock-only-mode .blind-clock-blind{min-width:78px}body.clock-only-mode .blind-clock-blind strong{font-size:clamp(27px,8vw,42px)}body.clock-only-mode .blind-clock-next-step{max-width:95%;line-height:1.5}}
+/* AJUSTES FINAIS DA TELA DO RELOGIO */
+body.clock-only-mode #ranking-view{display:none!important}
+body.clock-only-mode #blind-clock-container{position:relative}
+body.clock-only-mode #blind-clock-admin:not(.hidden){position:absolute;top:12px;left:14px;z-index:20;width:190px;max-width:190px;margin:0;padding:0;border:0;background:transparent;box-shadow:none}
+body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{width:100%;min-height:34px;height:34px;padding:5px 26px 5px 9px;font-size:11px;text-align:left;border-radius:7px;background:rgba(20,8,12,.78);border:1px solid rgba(255,255,255,.18);color:#fff;box-shadow:0 3px 12px rgba(0,0,0,.2)}
+@media(max-width:700px){body.clock-only-mode #blind-clock-admin:not(.hidden){top:8px;left:8px;width:154px;max-width:154px}body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{height:32px;min-height:32px;font-size:10px;padding-left:7px}}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
