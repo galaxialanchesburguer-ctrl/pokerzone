@@ -3333,6 +3333,7 @@ body.clock-only-mode .blind-clock-ante{
 
 <nav class="tabs">
  <button class="tab" data-tab="tournament-info-view">Informações</button>
+ <button class="tab admin-only" data-tab="tournament-entries-view">Inscrições</button>
  <button class="tab" data-tab="stages-view">Etapas</button>
   <button class="tab active" data-tab="ranking-view">Ranking geral</button>
   <button class="tab" data-tab="final-ranking-view">Ranking final</button>
@@ -3401,6 +3402,50 @@ body.clock-only-mode .blind-clock-ante{
     <div class="panel-pad" id="info-notes">
       <div class="empty">Carregando informações...</div>
     </div>
+  </section>
+</section>
+
+<section id="tournament-entries-view" class="hidden">
+  <h2 class="section-title">Controle de inscrições</h2>
+  <section class="box">
+    <div class="box-head"><h2>LANÇAR INSCRIÇÃO / REBUY / ADD-ON</h2></div>
+    <div class="panel-pad">
+      <label for="entry-player-select">Jogador</label>
+      <select id="entry-player-select" style="width:100%;max-width:520px"><option value="">Selecione um jogador</option></select>
+      <div class="actions" style="margin-top:14px">
+        <button class="btn" id="entry-add-buyin">+ Buy-in</button>
+        <button class="btn secondary" id="entry-add-rebuy">+ Rebuy</button>
+        <button class="btn secondary" id="entry-add-addon">+ Add-on</button>
+      </div>
+      <p id="entry-action-message" class="season-info" style="margin-top:10px"></p>
+    </div>
+  </section>
+
+  <div class="club-haver-summary">
+    <div class="club-haver-stat"><span>BUY-INS</span><strong id="entries-total-buyins">0</strong></div>
+    <div class="club-haver-stat"><span>REBUYS</span><strong id="entries-total-rebuys">0</strong></div>
+    <div class="club-haver-stat"><span>ADD-ONS</span><strong id="entries-total-addons">0</strong></div>
+    <div class="club-haver-stat"><span>TOTAL ARRECADADO</span><strong id="entries-gross-total">R$ 0,00</strong></div>
+    <div class="club-haver-stat paid"><span>TAXAS</span><strong id="entries-fees-total">R$ 0,00</strong></div>
+    <div class="club-haver-stat debt"><span>PREMIAÇÃO (POTE)</span><strong id="entries-prize-total">R$ 0,00</strong></div>
+  </div>
+
+  <section class="box">
+    <div class="box-head">
+      <h2>LISTA GERAL DO TORNEIO</h2>
+      <input id="entries-search" class="search" type="search" placeholder="Pesquisar jogador...">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>JOGADOR</th><th>BUY-IN</th><th>REBUY</th><th>ADD-ON</th><th>TOTAL</th><th>PREMIAÇÃO</th><th></th></tr></thead>
+        <tbody id="tournament-entries-body"><tr><td colspan="7" class="empty">Carregando inscrições...</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="box">
+    <div class="box-head"><h2 id="entry-player-detail-title">HISTÓRICO INDIVIDUAL</h2></div>
+    <div id="entry-player-detail" class="panel-pad"><div class="empty">Selecione um jogador na lista geral para conferir os lançamentos individuais.</div></div>
   </section>
 </section>
 
@@ -3547,6 +3592,7 @@ const SUPABASE_URL="https://fwwkmpnwsyppctxgetkj.supabase.co";
 const SUPABASE_KEY="sb_publishable_SlbpXf6oi5Bw70ABeYp0Eg_nrZ9bQqm";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let tournament=null, season=null, players=[], stages=[], currentStage=null, editorResults=[], isStaff=false, isAdmin=false, selectedClubId=null;
+let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={};
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function msg(text){$("connection-status").textContent=text}
@@ -3568,6 +3614,8 @@ function showTab(id){
   $("player-profile-view").classList.toggle("hidden",id!=="player-profile-view");
   $("stages-view").classList.toggle("hidden",id!=="stages-view");
  $("tournament-info-view").classList.toggle("hidden",id!=="tournament-info-view");
+ $("tournament-entries-view").classList.toggle("hidden",id!=="tournament-entries-view");
+ if(id==="tournament-entries-view") loadTournamentEntries();
 }
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
 
@@ -4586,6 +4634,93 @@ const finalPodiumList=finalSorted;
  ).join("");
 }
  
+function moneyBRL(value){return Number(value||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
+async function loadTournamentEntries(){
+  if(!tournament || !isStaff) return;
+  const body=$("tournament-entries-body");
+  body.innerHTML='<tr><td colspan="7" class="empty">Carregando inscrições...</td></tr>';
+  const [{data:playerData,error:playerError},{data:entryData,error:entryError},{data:details,error:detailsError}]=await Promise.all([
+    db.from("players").select("id,display_name").eq("tournament_id",tournament.id).eq("is_active",true).order("display_name"),
+    db.from("tournament_entries").select("id,tournament_id,player_id,entry_type,amount,prize_amount,created_at").eq("tournament_id",tournament.id).order("created_at"),
+    db.from("tournament_details").select("buy_in,tournament_fee,rebuy_amount,rebuy_limit,addon_amount").eq("tournament_id",tournament.id).maybeSingle()
+  ]);
+  if(playerError || entryError || detailsError){
+    body.innerHTML='<tr><td colspan="7" class="empty">Erro ao carregar inscrições: '+esc((playerError||entryError||detailsError).message)+'</td></tr>';
+    return;
+  }
+  tournamentEntryPlayers=playerData||[];
+  tournamentEntryRows=entryData||[];
+  tournamentEntryDetails=details||{};
+  const select=$("entry-player-select");
+  const selected=select.value;
+  select.innerHTML='<option value="">Selecione um jogador</option>'+tournamentEntryPlayers.map(p=>'<option value="'+p.id+'">'+esc(p.display_name)+'</option>').join("");
+  if(tournamentEntryPlayers.some(p=>p.id===selected)) select.value=selected;
+  const groups=new Map(tournamentEntryPlayers.map(p=>[p.id,{player:p,buyins:0,rebuys:0,addons:0,gross:0,prize:0,fees:0,rows:[]}]));
+  tournamentEntryRows.forEach(row=>{
+    const g=groups.get(row.player_id); if(!g)return;
+    g.rows.push(row); g.gross+=Number(row.amount)||0; g.prize+=Number(row.prize_amount)||0;
+    if(row.entry_type==="buyin"){g.buyins++;g.fees+=Math.max(0,(Number(row.amount)||0)-(Number(row.prize_amount)||0));}
+    if(row.entry_type==="rebuy")g.rebuys++;
+    if(row.entry_type==="addon")g.addons++;
+  });
+  const all=[...groups.values()];
+  const totals=all.reduce((t,g)=>({buyins:t.buyins+g.buyins,rebuys:t.rebuys+g.rebuys,addons:t.addons+g.addons,gross:t.gross+g.gross,prize:t.prize+g.prize,fees:t.fees+g.fees}),{buyins:0,rebuys:0,addons:0,gross:0,prize:0,fees:0});
+  $("entries-total-buyins").textContent=totals.buyins;
+  $("entries-total-rebuys").textContent=totals.rebuys;
+  $("entries-total-addons").textContent=totals.addons;
+  $("entries-gross-total").textContent=moneyBRL(totals.gross);
+  $("entries-fees-total").textContent=moneyBRL(totals.fees);
+  $("entries-prize-total").textContent=moneyBRL(totals.prize);
+  const q=($("entries-search").value||"").trim().toLocaleLowerCase("pt-BR");
+  const filtered=all.filter(g=>g.player.display_name.toLocaleLowerCase("pt-BR").includes(q));
+  body.innerHTML=filtered.length?filtered.map(g=>'<tr><td class="player-cell">'+esc(g.player.display_name)+'</td><td>'+g.buyins+'</td><td>'+g.rebuys+'</td><td>'+g.addons+'</td><td>'+moneyBRL(g.gross)+'</td><td>'+moneyBRL(g.prize)+'</td><td><button class="btn secondary" data-entry-player="'+g.player.id+'">Ver ficha</button></td></tr>').join(""):'<tr><td colspan="7" class="empty">Nenhum jogador encontrado.</td></tr>';
+  body.querySelectorAll("[data-entry-player]").forEach(btn=>btn.addEventListener("click",()=>renderTournamentEntryPlayer(btn.dataset.entryPlayer)));
+  if(select.value) renderTournamentEntryPlayer(select.value);
+}
+function renderTournamentEntryPlayer(playerId){
+  const groupPlayer=tournamentEntryPlayers.find(p=>p.id===playerId);
+  if(!groupPlayer)return;
+  const rows=tournamentEntryRows.filter(r=>r.player_id===playerId);
+  const counts={buyin:0,rebuy:0,addon:0};
+  rows.forEach(r=>counts[r.entry_type]=(counts[r.entry_type]||0)+1);
+  const gross=rows.reduce((n,r)=>n+(Number(r.amount)||0),0);
+  const prize=rows.reduce((n,r)=>n+(Number(r.prize_amount)||0),0);
+  $("entry-player-detail-title").textContent="HISTÓRICO • "+groupPlayer.display_name;
+  $("entry-player-detail").innerHTML='<div class="club-haver-summary"><div class="club-haver-stat"><span>BUY-IN</span><strong>'+counts.buyin+'</strong></div><div class="club-haver-stat"><span>REBUYS</span><strong>'+counts.rebuy+'</strong></div><div class="club-haver-stat"><span>ADD-ON</span><strong>'+counts.addon+'</strong></div><div class="club-haver-stat"><span>TOTAL PAGO</span><strong>'+moneyBRL(gross)+'</strong></div><div class="club-haver-stat paid"><span>PARA PREMIAÇÃO</span><strong>'+moneyBRL(prize)+'</strong></div></div>'+
+    (rows.length?'<div class="table-wrap"><table><thead><tr><th>LANÇAMENTO</th><th>DATA / HORA</th><th>VALOR</th><th>PREMIAÇÃO</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+({buyin:"Buy-in",rebuy:"Rebuy",addon:"Add-on"}[r.entry_type]||r.entry_type)+'</td><td>'+new Date(r.created_at).toLocaleString("pt-BR")+'</td><td>'+moneyBRL(r.amount)+'</td><td>'+moneyBRL(r.prize_amount)+'</td></tr>').join("")+'</tbody></table></div>':'<div class="empty">Nenhuma inscrição lançada para este jogador.</div>');
+}
+async function addTournamentEntry(type){
+  if(!isStaff || !tournament)return;
+  const playerId=$("entry-player-select").value;
+  const message=$("entry-action-message");
+  if(!playerId){message.textContent="Selecione um jogador primeiro.";return;}
+  const player=tournamentEntryPlayers.find(p=>p.id===playerId);
+  const playerRows=tournamentEntryRows.filter(r=>r.player_id===playerId);
+  const count=playerRows.filter(r=>r.entry_type===type).length;
+  if(type==="buyin" && count>=1){message.textContent="Este jogador já possui Buy-in registrado.";return;}
+  if(type==="addon" && count>=1){message.textContent="Este jogador já possui Add-on registrado.";return;}
+  const limit=Number(tournamentEntryDetails.rebuy_limit)||0;
+  if(type==="rebuy" && limit>0 && count>=limit){message.textContent="Limite de Rebuys atingido ("+limit+").";return;}
+  const values={buyin:Number(tournamentEntryDetails.buy_in)||0,rebuy:Number(tournamentEntryDetails.rebuy_amount)||0,addon:Number(tournamentEntryDetails.addon_amount)||0};
+  const amount=values[type];
+  if(amount<=0){message.textContent="Configure o valor de "+({buyin:"Buy-in",rebuy:"Rebuy",addon:"Add-on"}[type])+" nas informações do torneio.";return;}
+  const fee=type==="buyin"?(Number(tournamentEntryDetails.tournament_fee)||0):0;
+  const {data:userData}=await db.auth.getUser();
+  const {error}=await db.from("tournament_entries").insert({
+    tournament_id:tournament.id,player_id:playerId,entry_type:type,
+    amount:amount+fee,prize_amount:amount,created_by:userData?.user?.id||null
+  });
+  if(error){message.textContent="Não foi possível registrar: "+error.message;return;}
+  message.textContent=({buyin:"Buy-in registrado",rebuy:"Rebuy registrado",addon:"Add-on registrado"}[type])+" para "+player.display_name+".";
+  await loadTournamentEntries();
+  $("entry-player-select").value=playerId;
+  renderTournamentEntryPlayer(playerId);
+}
+$("entry-add-buyin").addEventListener("click",()=>addTournamentEntry("buyin"));
+$("entry-add-rebuy").addEventListener("click",()=>addTournamentEntry("rebuy"));
+$("entry-add-addon").addEventListener("click",()=>addTournamentEntry("addon"));
+$("entry-player-select").addEventListener("change",e=>{if(e.target.value)renderTournamentEntryPlayer(e.target.value);});
+$("entries-search").addEventListener("input",()=>loadTournamentEntries());
 function filterRanking(){const q=$("search").value.toLowerCase().trim();renderRanking(players.filter(p=>p.name.toLowerCase().includes(q)))}
 $("search").addEventListener("input",filterRanking);
  $("final-search").addEventListener("input",()=>{
