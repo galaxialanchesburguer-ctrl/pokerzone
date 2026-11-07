@@ -1711,6 +1711,37 @@ input:focus,select:focus {
   font-size: 13px;
   margin: 12px 0 22px;
 }
+.blind-intro{color:#aaa;font-size:14px;line-height:1.5;margin:12px 0 20px}
+.blind-presets-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:24px}
+.blind-preset-card{background:#191919;border:1px solid #303030;border-radius:10px;padding:15px}
+.blind-preset-card h4{margin-bottom:7px}
+.blind-preset-card p{font-size:12px;color:#999;min-height:32px;margin-bottom:12px}
+.blind-editor-panel{background:#191919;border:1px solid #383838;border-radius:10px;padding:18px;margin-top:12px}
+.blind-editor-heading,.blind-step-header,.blind-save-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.blind-editor-hint{font-size:12px;color:#999}
+.blind-editor-panel label{display:block;margin:14px 0 6px;font-size:12px;color:#bbb}
+.blind-editor-panel input{width:100%;background:#101010;border:1px solid #383838;color:#fff;border-radius:6px;padding:11px}
+.blind-step-header{margin:22px 0 12px}
+.blind-step-actions{display:flex;gap:8px;flex-wrap:wrap}
+.blind-step-card{background:#111;border:1px solid #333;border-radius:8px;padding:13px;margin:10px 0;display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;align-items:start}
+.blind-step-card.dragging{opacity:.45;border-color:var(--red)}
+.blind-drag-handle{color:#999;cursor:grab;padding-top:12px;font-size:18px;user-select:none}
+.blind-step-fields{display:grid;grid-template-columns:repeat(4,minmax(90px,1fr));gap:9px}
+.blind-step-fields label{margin:0;font-size:11px}
+.blind-step-fields input{margin-top:5px}
+.blind-step-card.break-step{border-color:#69502a;background:#211b12}
+.blind-step-card.break-step .blind-step-fields{grid-template-columns:minmax(150px,1fr)}
+.blind-step-tools{display:flex;gap:6px;align-items:center}
+.blind-step-tools button{background:#292929;border:1px solid #444;color:#eee;border-radius:5px;padding:8px 10px;cursor:pointer}
+.blind-preview{margin-top:22px}
+.blind-preview h4,.blind-saved-title{font-size:13px;letter-spacing:1px;margin-bottom:12px}
+.blind-save-actions{margin-top:18px}
+.blind-editor-message{font-size:13px;color:#aaa;margin-top:12px}
+.blind-saved-title{margin-top:28px}
+.blind-saved-card{background:#191919;border:1px solid #303030;border-radius:8px;padding:14px;margin:10px 0;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.blind-saved-card p{color:#999;font-size:12px;margin-top:5px}
+.blind-saved-actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:650px){.blind-editor-panel{padding:12px}.blind-step-card{grid-template-columns:24px minmax(0,1fr)}.blind-step-tools{grid-column:2}.blind-step-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.blind-step-header{align-items:flex-start}}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2110,6 +2141,9 @@ input:focus,select:focus {
       <button class="btn secondary" id="club-settings-btn">
         Configurações
       </button>
+      <button class="btn secondary" id="club-blinds-btn">
+        ♠ Estruturas de Blinds
+      </button>
     </div>
   </div>
 </div>
@@ -2173,6 +2207,49 @@ input:focus,select:focus {
   <button class="btn secondary" id="club-settings-back-btn">
     Voltar ao clube
   </button>
+</div>
+
+<div id="club-blinds-area" class="club-tournaments-panel hidden">
+  <div class="box-head">
+    <h3>ESTRUTURAS DE BLINDS</h3>
+    <button class="btn secondary" id="club-blinds-back-btn">Voltar ao clube</button>
+  </div>
+  <p class="blind-intro">Escolha um modelo pronto para editar ou crie uma estrutura exclusiva para este clube.</p>
+  <div class="blind-presets-grid" id="blind-presets-list"></div>
+  <div class="blind-editor-panel">
+    <div class="blind-editor-heading">
+      <h3 id="blind-editor-title">Nova estrutura</h3>
+      <span class="blind-editor-hint">Arraste os níveis para reorganizar</span>
+    </div>
+    <label for="blind-structure-name">Nome da estrutura</label>
+    <input id="blind-structure-name" type="text" placeholder="Ex.: Torneio de sábado">
+    <label for="blind-structure-description">Descrição (opcional)</label>
+    <input id="blind-structure-description" type="text" placeholder="Ex.: Níveis de 20 minutos">
+    <div class="blind-step-header">
+      <strong>Níveis e intervalos</strong>
+      <div class="blind-step-actions">
+        <button class="btn secondary" id="blind-add-level-btn" type="button">+ Nível</button>
+        <button class="btn secondary" id="blind-add-break-btn" type="button">+ Intervalo</button>
+      </div>
+    </div>
+    <div id="blind-editor-steps"></div>
+    <div class="blind-preview">
+      <h4>PRÉVIA DA ESTRUTURA</h4>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Etapa</th><th>SB</th><th>BB</th><th>Ante</th><th>Duração</th></tr></thead>
+          <tbody id="blind-preview-body"><tr><td colspan="5" class="empty">Adicione níveis para visualizar a estrutura.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="blind-save-actions">
+      <button class="btn" id="blind-save-btn">Salvar estrutura</button>
+      <button class="btn secondary" id="blind-new-btn" type="button">Nova estrutura</button>
+    </div>
+    <p id="blind-editor-message" class="blind-editor-message"></p>
+  </div>
+  <h3 class="blind-saved-title">ESTRUTURAS SALVAS PELO CLUBE</h3>
+  <div id="blind-saved-list"><div class="empty">Carregando estruturas...</div></div>
 </div>
 </div>
 
@@ -4051,6 +4128,315 @@ $("club-tournaments-btn").addEventListener("click", async () => {
   $("club-tournaments-area").classList.remove("hidden");
   await loadClubTournaments();
 });
+
+$("club-blinds-btn").addEventListener("click", async () => {
+  if (!isStaff || !selectedClubId) {
+    alert("Acesso restrito à equipe do clube.");
+    return;
+  }
+  $("club-blinds-area").classList.remove("hidden");
+  await loadClubBlindStructures();
+  renderBlindPresets();
+  resetBlindEditor();
+});
+
+$("club-blinds-back-btn").addEventListener("click", () => {
+  $("club-blinds-area").classList.add("hidden");
+});
+
+$("blind-add-level-btn").addEventListener("click", () => {
+  blindStructureSteps.push({ type: "level", small_blind: 100, big_blind: 200, ante: 0, duration: 20 });
+  renderBlindEditorSteps();
+});
+
+$("blind-add-break-btn").addEventListener("click", () => {
+  blindStructureSteps.push({ type: "break", duration: 10 });
+  renderBlindEditorSteps();
+});
+
+$("blind-new-btn").addEventListener("click", resetBlindEditor);
+$("blind-save-btn").addEventListener("click", saveClubBlindStructure);
+
+$("blind-editor-steps").addEventListener("input", event => {
+  const input = event.target.closest("[data-step-index][data-step-field]");
+  if (!input) return;
+  const index = Number(input.dataset.stepIndex);
+  const field = input.dataset.stepField;
+  if (!blindStructureSteps[index]) return;
+  blindStructureSteps[index][field] = Number(input.value) || 0;
+  renderBlindPreview();
+});
+
+$("blind-editor-steps").addEventListener("click", event => {
+  const button = event.target.closest("[data-step-action]");
+  if (!button) return;
+  const index = Number(button.dataset.stepIndex);
+  const action = button.dataset.stepAction;
+  if (action === "remove") blindStructureSteps.splice(index, 1);
+  if (action === "up" && index > 0) {
+    [blindStructureSteps[index - 1], blindStructureSteps[index]] =
+      [blindStructureSteps[index], blindStructureSteps[index - 1]];
+  }
+  if (action === "down" && index < blindStructureSteps.length - 1) {
+    [blindStructureSteps[index + 1], blindStructureSteps[index]] =
+      [blindStructureSteps[index], blindStructureSteps[index + 1]];
+  }
+  renderBlindEditorSteps();
+});
+
+let blindStructureEditingId = null;
+let blindStructureSteps = [];
+let clubBlindStructures = [];
+
+function blindPresetData(name) {
+  const sets = {
+    "Turbo": [[100,200,0],[200,400,0],[300,600,0],[500,1000,100],[800,1600,200],[1000,2000,200],[1500,3000,300],[2000,4000,400]],
+    "Regular": [[100,200,0],[100,300,0],[200,400,0],[200,500,0],[300,600,0],[400,800,100],[500,1000,100],[600,1200,200],[800,1600,200],[1000,2000,300]],
+    "Deep Stack": [[100,200,0],[100,300,0],[200,400,0],[200,500,0],[300,600,0],[300,800,0],[400,800,100],[500,1000,100],[600,1200,200],[800,1600,200],[1000,2000,300],[1500,3000,300]],
+    "Slow": [[100,200,0],[100,300,0],[200,400,0],[200,500,0],[300,600,0],[400,800,0],[500,1000,100],[600,1200,100],[800,1600,200],[1000,2000,200],[1500,3000,300],[2000,4000,400]]
+  };
+  return (sets[name] || sets.Regular).map((v, i) => ({
+    type: "level", small_blind: v[0], big_blind: v[1], ante: v[2], duration: 20
+  })).reduce((all, level, i) => {
+    all.push(level);
+    if (i === 3 || i === 7) all.push({ type: "break", duration: 10 });
+    return all;
+  }, []);
+}
+
+function renderBlindPresets() {
+  const presets = [
+    ["Turbo", "Ritmo acelerado, níveis curtos."],
+    ["Regular", "Estrutura equilibrada para torneios tradicionais."],
+    ["Deep Stack", "Mais níveis e progressão gradual."],
+    ["Slow", "Ritmo mais lento e maior espaço de jogo."]
+  ];
+  $("blind-presets-list").innerHTML = presets.map(([name, description]) => `
+    <div class="blind-preset-card">
+      <h4>${name}</h4>
+      <p>${description}</p>
+      <button class="btn secondary use-blind-preset" data-preset="${name}">Usar modelo</button>
+    </div>
+  `).join("");
+  $("blind-presets-list").querySelectorAll(".use-blind-preset").forEach(button => {
+    button.addEventListener("click", () => {
+      blindStructureEditingId = null;
+      blindStructureSteps = blindPresetData(button.dataset.preset);
+      $("blind-structure-name").value = button.dataset.preset;
+      $("blind-structure-description").value = "Modelo padrão editável";
+      $("blind-editor-title").textContent = "Editar modelo " + button.dataset.preset;
+      $("blind-editor-message").textContent = "Edite os valores e salve para criar uma estrutura do clube.";
+      renderBlindEditorSteps();
+      $("blind-structure-name").focus();
+    });
+  });
+}
+
+function resetBlindEditor() {
+  blindStructureEditingId = null;
+  blindStructureSteps = [];
+  $("blind-structure-name").value = "";
+  $("blind-structure-description").value = "";
+  $("blind-editor-title").textContent = "Nova estrutura";
+  $("blind-editor-message").textContent = "";
+  renderBlindEditorSteps();
+}
+
+function renderBlindEditorSteps() {
+  const container = $("blind-editor-steps");
+  if (!blindStructureSteps.length) {
+    container.innerHTML = '<div class="empty">Escolha um modelo acima ou adicione um nível.</div>';
+    renderBlindPreview();
+    return;
+  }
+
+  container.innerHTML = blindStructureSteps.map((step, index) => {
+    const isBreak = step.type === "break";
+    return `
+      <div class="blind-step-card ${isBreak ? "break-step" : ""}" draggable="true" data-step-card="${index}">
+        <div class="blind-drag-handle" title="Arraste para reorganizar">⠿</div>
+        <div class="blind-step-fields">
+          ${isBreak ? `
+            <label>Intervalo
+              <input type="text" value="BREAK" disabled>
+            </label>
+            <label>Duração (min)
+              <input type="number" min="1" value="${Number(step.duration) || 10}" data-step-index="${index}" data-step-field="duration">
+            </label>
+          ` : `
+            <label>Small Blind
+              <input type="number" min="0" value="${Number(step.small_blind) || 0}" data-step-index="${index}" data-step-field="small_blind">
+            </label>
+            <label>Big Blind
+              <input type="number" min="0" value="${Number(step.big_blind) || 0}" data-step-index="${index}" data-step-field="big_blind">
+            </label>
+            <label>Ante
+              <input type="number" min="0" value="${Number(step.ante) || 0}" data-step-index="${index}" data-step-field="ante">
+            </label>
+            <label>Duração (min)
+              <input type="number" min="1" value="${Number(step.duration) || 20}" data-step-index="${index}" data-step-field="duration">
+            </label>
+          `}
+        </div>
+        <div class="blind-step-tools">
+          <button type="button" data-step-action="up" data-step-index="${index}" title="Mover para cima">↑</button>
+          <button type="button" data-step-action="down" data-step-index="${index}" title="Mover para baixo">↓</button>
+          <button type="button" data-step-action="remove" data-step-index="${index}" title="Remover">✕</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  container.querySelectorAll(".blind-step-card").forEach(card => {
+    card.addEventListener("dragstart", event => {
+      event.dataTransfer.setData("text/plain", card.dataset.stepCard);
+      card.classList.add("dragging");
+    });
+    card.addEventListener("dragend", () => card.classList.remove("dragging"));
+    card.addEventListener("dragover", event => event.preventDefault());
+    card.addEventListener("drop", event => {
+      event.preventDefault();
+      const from = Number(event.dataTransfer.getData("text/plain"));
+      const to = Number(card.dataset.stepCard);
+      if (from === to || !blindStructureSteps[from] || !blindStructureSteps[to]) return;
+      const moved = blindStructureSteps.splice(from, 1)[0];
+      blindStructureSteps.splice(to, 0, moved);
+      renderBlindEditorSteps();
+    });
+  });
+  renderBlindPreview();
+}
+
+function renderBlindPreview() {
+  const rows = blindStructureSteps.map((step, index) => {
+    if (step.type === "break") {
+      return `<tr><td>Intervalo</td><td colspan="3">Pausa</td><td>${Number(step.duration) || 0} min</td></tr>`;
+    }
+    return `<tr><td>${blindStructureSteps.slice(0, index + 1).filter(s => s.type === "level").length}</td><td>${Number(step.small_blind) || 0}</td><td>${Number(step.big_blind) || 0}</td><td>${Number(step.ante) || 0}</td><td>${Number(step.duration) || 0} min</td></tr>`;
+  });
+  $("blind-preview-body").innerHTML = rows.length
+    ? rows.join("")
+    : '<tr><td colspan="5" class="empty">Adicione níveis para visualizar a estrutura.</td></tr>';
+}
+
+async function loadClubBlindStructures() {
+  $("blind-saved-list").innerHTML = '<div class="empty">Carregando estruturas...</div>';
+  const { data, error } = await db
+    .from("club_blind_structures")
+    .select("id, club_id, name, description, levels, created_at")
+    .eq("club_id", selectedClubId)
+    .order("name");
+  if (error) {
+    $("blind-saved-list").innerHTML = '<div class="empty">Erro ao carregar: ' + escapeHtml(error.message) + '</div>';
+    return;
+  }
+  clubBlindStructures = data || [];
+  renderSavedBlindStructures();
+}
+
+function renderSavedBlindStructures() {
+  const list = $("blind-saved-list");
+  if (!clubBlindStructures.length) {
+    list.innerHTML = '<div class="empty">Ainda não há estruturas salvas neste clube.</div>';
+    return;
+  }
+  list.innerHTML = clubBlindStructures.map(item => `
+    <div class="blind-saved-card">
+      <div><strong>${escapeHtml(item.name)}</strong><p>${escapeHtml(item.description || "Estrutura personalizada")} • ${(item.levels || []).filter(s => s.type === "level").length} níveis</p></div>
+      <div class="blind-saved-actions">
+        <button class="btn secondary edit-blind-structure" data-id="${item.id}">Editar</button>
+        <button class="btn secondary delete-blind-structure" data-id="${item.id}">Excluir</button>
+      </div>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".edit-blind-structure").forEach(button => {
+    button.addEventListener("click", () => {
+      const item = clubBlindStructures.find(s => s.id === button.dataset.id);
+      if (!item) return;
+      blindStructureEditingId = item.id;
+      blindStructureSteps = Array.isArray(item.levels) ? item.levels.map(s => ({...s})) : [];
+      $("blind-structure-name").value = item.name;
+      $("blind-structure-description").value = item.description || "";
+      $("blind-editor-title").textContent = "Editar estrutura";
+      $("blind-editor-message").textContent = "";
+      renderBlindEditorSteps();
+      $("blind-structure-name").focus();
+    });
+  });
+
+  list.querySelectorAll(".delete-blind-structure").forEach(button => {
+    button.addEventListener("click", async () => {
+      const item = clubBlindStructures.find(s => s.id === button.dataset.id);
+      if (!item || !confirm("Excluir a estrutura " + item.name + "?")) return;
+      const { error } = await db.from("club_blind_structures")
+        .delete().eq("id", item.id).eq("club_id", selectedClubId);
+      if (error) {
+        alert("Não foi possível excluir: " + error.message);
+        return;
+      }
+      if (blindStructureEditingId === item.id) resetBlindEditor();
+      await loadClubBlindStructures();
+    });
+  });
+}
+
+async function saveClubBlindStructure() {
+  const name = $("blind-structure-name").value.trim();
+  const description = $("blind-structure-description").value.trim();
+  if (!selectedClubId || !isStaff) {
+    alert("Apenas a equipe do clube pode salvar estruturas.");
+    return;
+  }
+  if (!name) {
+    $("blind-editor-message").textContent = "Informe um nome para a estrutura.";
+    $("blind-structure-name").focus();
+    return;
+  }
+  if (!blindStructureSteps.some(step => step.type === "level")) {
+    $("blind-editor-message").textContent = "Adicione pelo menos um nível.";
+    return;
+  }
+  const invalid = blindStructureSteps.find(step =>
+    !Number.isFinite(Number(step.duration)) || Number(step.duration) <= 0 ||
+    (step.type === "level" && (Number(step.big_blind) <= 0 || Number(step.small_blind) < 0 || Number(step.ante) < 0))
+  );
+  if (invalid) {
+    $("blind-editor-message").textContent = "Confira os valores e a duração dos níveis e intervalos.";
+    return;
+  }
+
+  $("blind-save-btn").disabled = true;
+  $("blind-editor-message").textContent = "Salvando estrutura...";
+  try {
+    const { data: userData } = await db.auth.getUser();
+    const payload = {
+      club_id: selectedClubId,
+      name,
+      description: description || null,
+      levels: blindStructureSteps,
+      created_by: userData?.user?.id || null,
+      updated_at: new Date().toISOString()
+    };
+    let query = db.from("club_blind_structures");
+    if (blindStructureEditingId) {
+      const { error } = await query.update(payload)
+        .eq("id", blindStructureEditingId).eq("club_id", selectedClubId);
+      if (error) throw error;
+    } else {
+      const { error } = await query.insert(payload);
+      if (error) throw error;
+    }
+    $("blind-editor-message").textContent = "Estrutura salva com sucesso!";
+    resetBlindEditor();
+    await loadClubBlindStructures();
+  } catch (error) {
+    console.error("Erro ao salvar estrutura de blinds:", error);
+    $("blind-editor-message").textContent = "Erro ao salvar: " + error.message;
+  } finally {
+    $("blind-save-btn").disabled = false;
+  }
+}
 
 $("club-settings-btn").addEventListener("click", () => {
   $("club-settings-area").classList.remove("hidden");
