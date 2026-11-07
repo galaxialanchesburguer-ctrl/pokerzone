@@ -2506,7 +2506,7 @@ body.clock-only-mode .blind-clock-ante{
   body.clock-only-mode .blind-clock-payout-total strong{color:#ffd34f!important}
 }
 
-/* ===== CADERNO DE HAVER DO CLUBE ===== */
+/* ===== CONTAS DOS JOGADORES DO CLUBE ===== */
 .club-haver-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
 .club-haver-stat{background:linear-gradient(145deg,#202020,#111);border:1px solid #393030;border-radius:11px;padding:17px}
 .club-haver-stat span{display:block;color:#999;font-size:10px;font-weight:800;letter-spacing:1px}
@@ -2931,7 +2931,7 @@ body.clock-only-mode .blind-clock-ante{
       </button>
 
 
-      <button class="btn secondary" id="club-haver-btn">📒 Caderno de Haver</button>
+      <button class="btn secondary" id="club-haver-btn">📒 Contas dos Jogadores</button>
 
       <button class="btn secondary" id="club-settings-btn">
         Configurações
@@ -2948,18 +2948,34 @@ body.clock-only-mode .blind-clock-ante{
 
   <div id="club-haver-area" class="club-tournaments-panel hidden">
     <div class="club-haver-detail-head">
-      <div><h3>📒 CADERNO DE HAVER</h3><p class="season-info">Contas individuais dos jogadores. O saldo continua acumulado até o pagamento.</p></div>
+      <div><h3>📒 CONTAS DOS JOGADORES</h3><p class="season-info">Contas individuais dos jogadores. O saldo continua acumulado até o pagamento.</p></div>
       <button class="btn secondary" id="club-haver-back">Voltar ao clube</button>
     </div>
     <div id="club-haver-overview">
       <div class="club-haver-summary">
         <div class="club-haver-stat"><span>TOTAL LANÇADO</span><strong id="club-haver-total-charged">R$ 0,00</strong></div>
         <div class="club-haver-stat paid"><span>TOTAL RECEBIDO</span><strong id="club-haver-total-paid">R$ 0,00</strong></div>
-        <div class="club-haver-stat debt"><span>TOTAL EM HAVER</span><strong id="club-haver-total-open">R$ 0,00</strong></div>
+        <div class="club-haver-stat debt"><span>TOTAL EM ABERTO</span><strong id="club-haver-total-open">R$ 0,00</strong></div>
       </div>
       <div class="club-haver-toolbar">
         <input id="club-haver-search" type="search" placeholder="Buscar jogador...">
+        <button class="btn secondary" id="club-haver-report-toggle">📊 Relatórios</button>
         <button class="btn" id="club-haver-new-player-toggle">+ Cadastrar jogador</button>
+      </div>
+      <div id="club-haver-report" class="club-haver-form hidden" style="display:block">
+        <h4>Relatório geral de movimentações</h4>
+        <div class="club-haver-form">
+          <label>De <input type="date" id="club-haver-report-from"></label>
+          <label>Até <input type="date" id="club-haver-report-to"></label>
+          <label>Tipo <select id="club-haver-report-type"><option value="all">Tudo</option><option value="charge">Consumos / cobranças</option><option value="payment">Pagamentos</option></select></label>
+          <div><button class="btn" id="club-haver-report-apply" type="button">Gerar relatório</button></div>
+        </div>
+        <div class="club-haver-summary">
+          <div class="club-haver-stat"><span>CONSUMOS NO PERÍODO</span><strong id="club-haver-report-charged">R$ 0,00</strong></div>
+          <div class="club-haver-stat paid"><span>PAGAMENTOS NO PERÍODO</span><strong id="club-haver-report-paid">R$ 0,00</strong></div>
+          <div class="club-haver-stat debt"><span>SALDO DO PERÍODO</span><strong id="club-haver-report-net">R$ 0,00</strong></div>
+        </div>
+        <div id="club-haver-report-results" class="box"><div class="empty">Selecione o período e gere o relatório.</div></div>
       </div>
       <div id="club-haver-new-player" class="club-haver-form hidden">
         <label class="wide">Nome do jogador<input id="club-haver-player-name" maxlength="100" placeholder="Nome completo"></label>
@@ -2975,8 +2991,11 @@ body.clock-only-mode .blind-clock-ante{
       <div class="club-haver-summary">
         <div class="club-haver-stat"><span>TOTAL CONSUMIDO</span><strong id="club-haver-player-charged">R$ 0,00</strong></div>
         <div class="club-haver-stat paid"><span>TOTAL PAGO</span><strong id="club-haver-player-paid">R$ 0,00</strong></div>
-        <div class="club-haver-stat debt"><span>SALDO EM HAVER</span><strong id="club-haver-player-balance">R$ 0,00</strong></div>
+        <div class="club-haver-stat debt"><span>SALDO DEVEDOR</span><strong id="club-haver-player-balance">R$ 0,00</strong></div>
       </div>
+      <div class="club-haver-stat" style="margin:12px 0"><span>GASTOU HOJE</span><strong id="club-haver-player-today">R$ 0,00</strong></div>
+      <h4>Consumo de hoje</h4>
+      <div id="club-haver-today-history" class="box"><div class="empty">Nenhum consumo registrado hoje.</div></div>
       <h4>Adicionar lançamento</h4>
       <div class="club-haver-form">
         <label>Tipo<select id="club-haver-entry-type"><option value="charge">Consumo / cobrança</option><option value="payment">Pagamento</option></select></label>
@@ -6604,7 +6623,7 @@ if (club.logo_url) {
 $("club-settings-logo").value = "";
 }
 
-/* ===== CADERNO DE HAVER ===== */
+/* ===== CONTAS DOS JOGADORES ===== */
 let clubHaverPlayers = [];
 let clubHaverSelectedPlayer = null;
 let clubHaverTransactions = [];
@@ -6619,7 +6638,7 @@ async function loadClubHaver() {
   const {data: playersData,error: playersError} = await db.from("club_players")
     .select("id,name,created_at").eq("club_id",selectedClubId).order("name");
   if (playersError) {
-    $("club-haver-player-list").innerHTML = '<div class="notice">Não foi possível carregar o caderno. Verifique se as tabelas do Caderno de Haver já foram criadas no Supabase. Detalhe: ' + esc(playersError.message) + '</div>';
+    $("club-haver-player-list").innerHTML = '<div class="notice">Não foi possível carregar o caderno. Verifique se as tabelas do Contas dos Jogadores já foram criadas no Supabase. Detalhe: ' + esc(playersError.message) + '</div>';
     return;
   }
   clubHaverPlayers = playersData || [];
@@ -6696,6 +6715,11 @@ async function loadClubHaverLedger() {
   $("club-haver-player-charged").textContent = clubMoney(charged);
   $("club-haver-player-paid").textContent = clubMoney(paid);
   $("club-haver-player-balance").textContent = clubMoney(charged-paid);
+  const todayKey = new Date().toLocaleDateString("en-CA");
+  const todayCharges = clubHaverTransactions.filter(row => row.entry_type === "charge" && new Date(row.created_at).toLocaleDateString("en-CA") === todayKey);
+  const todayTotal = todayCharges.reduce((sum,row) => sum + Number(row.amount),0);
+  $("club-haver-player-today").textContent = clubMoney(todayTotal);
+  $("club-haver-today-history").innerHTML = todayCharges.length ? todayCharges.map(row => '<div class="club-haver-entry"><div><strong>' + esc(row.description) + '</strong><small>' + esc(row.category || "Consumo") + ' • ' + new Date(row.created_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) + '</small></div><span class="charge">+ ' + clubMoney(row.amount) + '</span></div>').join("") : '<div class="empty">Nenhum consumo registrado hoje.</div>';
   $("club-haver-history").innerHTML = clubHaverTransactions.length ? clubHaverTransactions.map(row => {
     const date = new Date(row.created_at).toLocaleString("pt-BR");
     const payment = row.entry_type==="payment";
@@ -6753,6 +6777,27 @@ $("club-haver-back-list").addEventListener("click",()=>{
 $("club-haver-new-player-toggle").addEventListener("click",()=>$("club-haver-new-player").classList.toggle("hidden"));
 $("club-haver-save-player").addEventListener("click",saveClubHaverPlayer);
 $("club-haver-search").addEventListener("input",renderClubHaverPlayers);
+$("club-haver-report-toggle").addEventListener("click",()=>$("club-haver-report").classList.toggle("hidden"));
+function renderClubHaverReport() {
+  const from = $("club-haver-report-from").value;
+  const to = $("club-haver-report-to").value;
+  const type = $("club-haver-report-type").value;
+  const rows = clubHaverAllEntries.filter(row => {
+    const day = new Date(row.created_at).toLocaleDateString("en-CA");
+    return (!from || day >= from) && (!to || day <= to) && (type === "all" || row.entry_type === type);
+  }).sort((a,b) => new Date(b.created_at)-new Date(a.created_at));
+  const charged = rows.filter(row=>row.entry_type==="charge").reduce((sum,row)=>sum+Number(row.amount),0);
+  const paid = rows.filter(row=>row.entry_type==="payment").reduce((sum,row)=>sum+Number(row.amount),0);
+  $("club-haver-report-charged").textContent = clubMoney(charged);
+  $("club-haver-report-paid").textContent = clubMoney(paid);
+  $("club-haver-report-net").textContent = clubMoney(charged-paid);
+  const playerNames = Object.fromEntries(clubHaverPlayers.map(player=>[player.id,player.name]));
+  $("club-haver-report-results").innerHTML = rows.length ? rows.map(row => {
+    const payment = row.entry_type === "payment";
+    return '<div class="club-haver-entry"><div><strong>' + esc(playerNames[row.club_player_id] || "Jogador") + ' — ' + esc(row.description) + '</strong><small>' + esc(row.category || (payment?"Pagamento":"Consumo")) + (row.payment_method?' • '+esc(row.payment_method):'') + ' • ' + new Date(row.created_at).toLocaleString("pt-BR") + '</small></div><span class="' + (payment?'payment':'charge') + '">' + (payment?'- ':'+ ') + clubMoney(row.amount) + '</span></div>';
+  }).join("") : '<div class="empty">Nenhuma movimentação encontrada nesse período.</div>';
+}
+$("club-haver-report-apply").addEventListener("click",renderClubHaverReport);
 $("club-haver-entry-type").addEventListener("change",()=>{
   const payment = $("club-haver-entry-type").value==="payment";
   $("club-haver-payment-method-wrap").classList.toggle("hidden",!payment);
