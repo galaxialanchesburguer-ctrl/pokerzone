@@ -4920,6 +4920,7 @@ function resetBlindEditor() {
   $("blind-structure-description").value = "";
   $("blind-editor-title").textContent = "Nova estrutura";
   $("blind-editor-message").textContent = "";
+  $("blind-save-btn").textContent = "Salvar estrutura";
   renderBlindEditorSteps();
 }
 
@@ -5039,9 +5040,11 @@ function renderSavedBlindStructures() {
       blindStructureSteps = Array.isArray(item.levels) ? item.levels.map(s => ({...s})) : [];
       $("blind-structure-name").value = item.name;
       $("blind-structure-description").value = item.description || "";
-      $("blind-editor-title").textContent = "Editar estrutura";
-      $("blind-editor-message").textContent = "";
+      $("blind-editor-title").textContent = "Editar estrutura: " + item.name;
+      $("blind-editor-message").textContent = "Altere o nome ou os níveis e clique em Atualizar estrutura para salvar as mudanças.";
+      $("blind-save-btn").textContent = "Atualizar estrutura";
       renderBlindEditorSteps();
+      $("blind-editor-panel").scrollIntoView({ behavior: "smooth", block: "start" });
       $("blind-structure-name").focus();
     });
   });
@@ -5108,8 +5111,9 @@ async function saveClubBlindStructure() {
       const { error } = await query.insert(payload);
       if (error) throw error;
     }
-    $("blind-editor-message").textContent = "Estrutura salva com sucesso!";
+    const savedMessage = blindStructureEditingId ? "Estrutura atualizada com sucesso!" : "Estrutura salva com sucesso!";
     resetBlindEditor();
+    $("blind-editor-message").textContent = savedMessage;
     await loadClubBlindStructures();
   } catch (error) {
     console.error("Erro ao salvar estrutura de blinds:", error);
