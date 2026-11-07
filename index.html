@@ -1819,6 +1819,9 @@ input:focus,select:focus {
 <label for="tournament-buy-in">Buy-in (R$)</label>
 <input id="tournament-buy-in" type="number" min="0" step="0.01" placeholder="Ex.: 100">
 
+<label for="tournament-fee">Taxa do torneio (R$)</label>
+<input id="tournament-fee" type="number" min="0" step="0.01" placeholder="Ex.: 50">
+
 <label for="tournament-rebuy">Valor do Rebuy (R$)</label>
 <input id="tournament-rebuy" type="number" min="0" step="0.01" placeholder="Ex.: 100">
 
@@ -3773,6 +3776,7 @@ function renderTournamentDetails(details) {
       field("edit-tournament-name", "Nome do torneio", tournament.name || "", "text") +
       `<div class="info-form-field info-form-field-wide"><label for="edit-tournament-description">Descrição do torneio</label><textarea id="edit-tournament-description" rows="3">${esc(tournament.description || "")}</textarea></div>` +
       field("edit-tournament-buy-in", "Buy-in (R$)", details.buy_in) +
+      field("edit-tournament-fee", "Taxa do torneio (R$)", details.tournament_fee) +
       field("edit-tournament-rebuy", "Rebuy (R$)", details.rebuy_amount) +
       field("edit-tournament-rebuy-limit", "Limite de rebuys", details.rebuy_limit) +
       field("edit-tournament-addon", "Add-on (R$)", details.addon_amount) +
@@ -3837,7 +3841,9 @@ function renderTournamentDetails(details) {
   $("info-registration").innerHTML =
     row("Nome do torneio", esc(tournament.name || "Não informado")) +
     row("Descrição", esc(tournament.description || "Não informada")) +
-    row("Buy-in", money(details.buy_in)) +
+    row("Buy-in", details.buy_in != null
+      ? money(details.buy_in) + (details.tournament_fee != null ? " + " + money(details.tournament_fee) + " (taxa)" : "")
+      : "Não informado") +
     row("Rebuy", money(details.rebuy_amount)) +
     row("Limite de rebuys", details.rebuy_limit ?? "Não informado") +
     row("Add-on", money(details.addon_amount)) +
@@ -3882,6 +3888,7 @@ function renderTournamentDetails(details) {
   if (!details) details = {};
 
   $("edit-tournament-buy-in").value = details.buy_in ?? "";
+  $("edit-tournament-fee").value = details.tournament_fee ?? "";
   $("edit-tournament-rebuy").value = details.rebuy_amount ?? "";
   $("edit-tournament-rebuy-limit").value = details.rebuy_limit ?? "";
   $("edit-tournament-addon").value = details.addon_amount ?? "";
@@ -3952,6 +3959,7 @@ async function saveTournamentInfo() {
   const details = {
     tournament_id: tournament.id,
     buy_in: optionalNumber("edit-tournament-buy-in"),
+    tournament_fee: optionalNumber("edit-tournament-fee"),
     rebuy_amount: optionalNumber("edit-tournament-rebuy"),
     rebuy_limit: optionalNumber("edit-tournament-rebuy-limit"),
     addon_amount: optionalNumber("edit-tournament-addon"),
@@ -4691,6 +4699,7 @@ const optionalNumber = (id) => {
 
 const tournamentDetails = {
   buy_in: optionalNumber("tournament-buy-in"),
+  tournament_fee: optionalNumber("tournament-fee"),
   rebuy_amount: optionalNumber("tournament-rebuy"),
   rebuy_limit: optionalNumber("tournament-rebuy-limit"),
   addon_amount: optionalNumber("tournament-addon"),
@@ -5420,7 +5429,7 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
 
   const { data: tournamentDetails, error: detailsError } = await db
     .from("tournament_details")
-    .select("tournament_id, event_date, start_time, buy_in, rebuy_amount, late_registration_end_level, late_registration_end_time")
+    .select("tournament_id, event_date, start_time, buy_in, tournament_fee, rebuy_amount, late_registration_end_level, late_registration_end_time")
     .in("tournament_id", ids);
 
   if (detailsError) {
@@ -5456,6 +5465,9 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
   const formatMoney = value => value != null
     ? Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
     : "Não informado";
+  const formatBuyIn = t => t.buy_in != null
+    ? formatMoney(t.buy_in) + (t.tournament_fee != null ? " + " + formatMoney(t.tournament_fee) + " (taxa)" : "")
+    : "Não informado";
   const formatLateRegistration = t => {
     const parts = [];
     if (t.late_registration_end_level != null) parts.push("Nível " + t.late_registration_end_level);
@@ -5469,7 +5481,7 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
         <strong>${esc(t.name)}</strong>
         <small>${esc(t.description || "Torneio PokerZone")}</small>
         <small>📅 ${formatDate(t.event_date)} &nbsp; • &nbsp; 🕒 ${formatTime(t.start_time)}</small>
-        <small>Buy-in: ${formatMoney(t.buy_in)} &nbsp; • &nbsp; Rebuy: ${formatMoney(t.rebuy_amount)}</small>
+        <small>Buy-in: ${formatBuyIn(t)} &nbsp; • &nbsp; Rebuy: ${formatMoney(t.rebuy_amount)}</small>
         <small>Registro tardio: ${formatLateRegistration(t)}</small>
       </div>
       <button class="btn" data-recent-tournament="${t.id}">
