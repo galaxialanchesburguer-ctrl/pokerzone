@@ -2618,6 +2618,16 @@ body.stage-sidebar-active main{width:calc(100% - 498px)}
 .admin-sidebar-link{width:100%;display:flex;align-items:center;gap:12px;text-align:left;background:transparent;border:1px solid transparent;color:#bbb;border-radius:8px;padding:12px 11px;font-size:13px;font-weight:700;cursor:pointer;transition:.18s}
 .admin-sidebar-link:hover{background:#251719;color:#fff;border-color:#472326}
 .admin-sidebar-link.active{background:linear-gradient(110deg,rgba(237,48,56,.23),rgba(237,48,56,.06));border-color:#713036;color:#fff}
+.tournament-tree{margin:2px 0 5px 31px;padding-left:10px;border-left:1px solid #563036;display:grid;gap:4px}
+.tournament-tree.hidden{display:none!important}
+#tournament-tree-list{display:grid;gap:4px}
+.tournament-tree-item{width:100%;display:block;text-align:left;padding:7px 8px;border:0;border-radius:5px;background:transparent;color:#c9c0c1;font-size:12px;line-height:1.35;cursor:pointer}
+.tournament-tree-item:hover,.tournament-tree-item.active{background:#321c20;color:#fff}
+.tournament-tree-stage{margin-left:10px;padding-left:8px;border-left:1px solid #382326;display:grid;gap:2px}
+.tournament-tree-stage .tournament-tree-item{font-size:11px;color:#aaa;padding:6px 7px}
+.tournament-tree-stage .tournament-tree-item.active{color:#fff;background:#402126}
+.tournament-tree-create{width:100%;margin:5px 0 2px;padding:7px 8px;border:1px dashed #704047;border-radius:5px;background:transparent;color:#f08b90;font-size:11px;text-align:left;cursor:pointer}
+
 .admin-sidebar-icon{width:20px;text-align:center;font-size:16px;flex-shrink:0}
 .admin-sidebar-foot{margin-top:auto;padding:12px 10px;color:#777;font-size:10px;line-height:1.6;border-top:1px solid #302426}
 body.admin-sidebar-active header,body.admin-sidebar-active main,body.admin-sidebar-active footer{margin-left:248px}
@@ -2653,7 +2663,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     <div class="admin-sidebar-label">PAINEL</div>
     <nav class="admin-sidebar-nav">
       <button type="button" class="admin-sidebar-link active" data-admin-nav="home" title="Visão geral"><span class="admin-sidebar-icon">⌂</span><span class="admin-sidebar-text">Visão geral</span></button>
-      <button type="button" class="admin-sidebar-link" data-admin-nav="tournaments" title="Torneios"><span class="admin-sidebar-icon">♛</span><span class="admin-sidebar-text">Torneios</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="tournaments" title="Torneios"><span class="admin-sidebar-icon">♛</span><span class="admin-sidebar-text">Torneios</span></button><div id="tournament-tree" class="tournament-tree hidden"><div id="tournament-tree-list"></div></div>
       <button type="button" class="admin-sidebar-link" data-admin-nav="clubs" title="Meu clube"><span class="admin-sidebar-icon">♣</span><span class="admin-sidebar-text">Meu clube / Clubes</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="clients" title="Clientes"><span class="admin-sidebar-icon">♙</span><span class="admin-sidebar-text">Clientes</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="settings" title="Configurações"><span class="admin-sidebar-icon">⚙</span><span class="admin-sidebar-text">Configurações</span></button>
@@ -4994,61 +5004,41 @@ function hideStageSidebar() {
 function showSidebarTournamentList() {
   if (!isStaff) return;
   if (!selectedClubId && isClubManager && managedClubId) selectedClubId = managedClubId;
-  if (!selectedClubId) {
-    alert("Abra um clube antes de acessar os torneios.");
-    openAdminClubs();
-    return;
-  }
-  tournament = null;
-  season = null;
-  stages = [];
-  currentStage = null;
-  $("stage-sidebar-title").textContent = "TORNEIOS DO CLUBE";
-  $("stage-sidebar-create").classList.add("hidden");
-  $("stage-sidebar-list").innerHTML = '<div class="empty">Carregando torneios...</div>';
-  $("stage-sidebar").classList.add("visible");
-  document.body.classList.add("stage-sidebar-active");
+  if (!selectedClubId) { alert("Abra um clube antes de acessar os torneios."); openAdminClubs(); return; }
+  hideStageSidebar();
   setPublicHomeChrome(false);
+  $("tournament-tree").classList.remove("hidden");
+  $("tournament-tree-list").innerHTML = '<div class="empty">Carregando torneios...</div>';
   $("home-tournaments").classList.remove("hidden");
   $("tournament-app").classList.add("hidden");
   ["manage-clubs-area","club-details-area","create-tournament-area","tournament-search-area","public-tournament-search","public-player-search"].forEach(id => $(id)?.classList.add("hidden"));
-  $("stage-sidebar-list").innerHTML = '<div class="empty">Carregando torneios...</div>';
   loadSidebarTournaments();
 }
 async function loadSidebarTournaments() {
-  const list = $("stage-sidebar-list");
-  if (!selectedClubId) {
-    list.innerHTML = '<div class="empty">Nenhum clube selecionado.</div>';
-    return;
-  }
-  const { data, error } = await db.from("tournaments")
-    .select("id,name,description")
-    .eq("club_id", selectedClubId)
-    .order("name");
-  if (error) {
-    list.innerHTML = '<div class="empty">Erro ao carregar torneios: ' + esc(error.message) + '</div>';
-    return;
-  }
-  if (!data?.length) {
-    list.innerHTML = '<div class="empty">Nenhum torneio cadastrado neste clube.</div>';
-    return;
-  }
-  list.innerHTML = data.map(item => `
-    <button type="button" class="stage-sidebar-item" data-sidebar-tournament="${item.id}">
-      <strong>${esc(item.name)}</strong>
-      <span class="stage-sidebar-description">${esc(item.description || "Clique para ver as etapas")}</span>
-    </button>`).join("");
-  list.querySelectorAll("[data-sidebar-tournament]").forEach(button => {
-    button.addEventListener("click", async () => {
-      const selected = data.find(item => item.id === button.dataset.sidebarTournament);
-      if (!selected) return;
-      await openTournament(selected);
-      $("stage-sidebar-title").textContent = "ETAPAS DO TORNEIO";
-      $("stage-sidebar-create").classList.remove("hidden");
-      $("stage-sidebar-list").querySelectorAll("[data-sidebar-tournament]").forEach(item => item.classList.toggle("active", item.dataset.sidebarTournament === selected.id));
-      showTab("stages-view");
-    });
-  });
+  const list = $("tournament-tree-list");
+  const { data, error } = await db.from("tournaments").select("id,name").eq("club_id",selectedClubId).order("name");
+  if (error) { list.innerHTML = '<div class="empty">Erro ao carregar torneios.</div>'; return; }
+  if (!data?.length) { list.innerHTML = '<div class="empty">Nenhum torneio cadastrado.</div>'; return; }
+  list.innerHTML = data.map(t => `<div><button type="button" class="tournament-tree-item" data-sidebar-tournament="${t.id}">${esc(t.name)}</button><div class="tournament-tree-stage hidden" id="tree-stages-${t.id}"></div></div>`).join("");
+  list.querySelectorAll("[data-sidebar-tournament]").forEach(button => button.addEventListener("click",async()=>{
+    const selected=data.find(t=>t.id===button.dataset.sidebarTournament);
+    list.querySelectorAll("[data-sidebar-tournament]").forEach(x=>x.classList.toggle("active",x===button));
+    const stageList=$("tree-stages-"+selected.id);
+    stageList.classList.remove("hidden");
+    stageList.innerHTML='<div class="empty">Carregando etapas...</div>';
+    await openTournament(selected);
+    showTab("stages-view");
+    const {data:activeSeason,error:seasonError}=await db.from("seasons").select("id,name").eq("tournament_id",selected.id).eq("status","active").maybeSingle();
+    if(seasonError){stageList.innerHTML='<div class="empty">Erro ao carregar etapas.</div>';return;}
+    season=activeSeason;
+    if(!season){stageList.innerHTML='<div class="empty">Nenhuma etapa cadastrada.</div>';return;}
+    const {data:rows,error:stageError}=await db.from("stages").select("id,stage_number,name").eq("season_id",season.id).order("stage_number");
+    if(stageError){stageList.innerHTML='<div class="empty">Erro ao carregar etapas.</div>';return;}
+    stages=rows||[];
+    stageList.innerHTML=stages.length?stages.map(st=>`<button type="button" class="tournament-tree-item" data-tree-stage="${st.id}">${esc(st.name||"Etapa "+st.stage_number)}</button>`).join(""):'<div class="empty">Nenhuma etapa cadastrada.</div>';
+    stageList.querySelectorAll("[data-tree-stage]").forEach(sb=>sb.addEventListener("click",()=>{stageList.querySelectorAll("[data-tree-stage]").forEach(x=>x.classList.toggle("active",x===sb));showTab("stages-view");openStage(sb.dataset.treeStage);}));
+    const create=document.createElement("button");create.type="button";create.className="tournament-tree-create";create.textContent="+ Criar etapa";create.addEventListener("click",()=>$("new-stage").click());stageList.appendChild(create);
+  }));
 }
 function setPublicHomeChrome(visible) {
   const header = document.querySelector("#home-tournaments > .home-header");
@@ -5112,8 +5102,9 @@ function openAdminTournamentSection(tabId, navKey) {
 }
 function handleAdminSidebarNavigation(key) {
   if (!isStaff) return;
-  if (["home","clubs","clients","settings"].includes(key)) hideStageSidebar();
+  if (["home","clubs","clients","settings"].includes(key)) { hideStageSidebar(); $("tournament-tree")?.classList.add("hidden"); }
   if (key === "home") {
+    $("tournament-tree")?.classList.add("hidden");
     showAdminHome();
     return;
   }
@@ -5123,10 +5114,12 @@ function handleAdminSidebarNavigation(key) {
     return;
   }
   if (key === "clubs") {
+    $("tournament-tree")?.classList.add("hidden");
     openAdminClubs();
     return;
   }
   if (key === "clients") {
+    $("tournament-tree")?.classList.add("hidden");
     if (selectedClubId && !$("club-details-area").classList.contains("hidden")) {
       $("club-haver-btn").click();
       setAdminSidebarActive("clients");
@@ -5137,6 +5130,7 @@ function handleAdminSidebarNavigation(key) {
     return;
   }
   if (key === "settings") {
+    $("tournament-tree")?.classList.add("hidden");
     if (selectedClubId && !$("club-details-area").classList.contains("hidden")) {
       $("club-settings-btn").click();
       setAdminSidebarActive("settings");
