@@ -5623,12 +5623,77 @@ async function loadStageCommandCards() {
 async function addStageCommand(){
   if(!isStaff||!currentStage?.id)return;
   if(editorResults?.length){alert("Nesta etapa, cada jogador já possui sua própria comanda.");return;}
+  const modal=$("stage-command-modal"),content=$("stage-command-modal-content");
+  $("stage-command-modal-title").textContent="Adicionar comanda";
+  content.innerHTML='<div class="empty">Carregando clientes...</div>';
+  modal.classList.remove("hidden");
+  const {data:customers,error}=await db.from("club_players").select("id,name,phone,notes").eq("club_id",tournament.club_id||selectedClubId).order("name");
+  if(error){content.innerHTML='<div class="notice">Não foi possível carregar os clientes: '+esc(error.message)+'</div>';return;}
+  stageCommandCustomers=customers||[];
+  renderStageCommandCreation();
+}
+function renderStageCommandCreation(searchTerm=""){
+  const content=$("stage-command-modal-content");
+  if(!content)return;
+  const normalize=value=>(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim();
+  const term=normalize(searchTerm);
+  const found=stageCommandCustomers.filter(customer=>normalize(customer.name).includes(term)||(customer.phone||"").includes(searchTerm.trim()));
+  content.innerHTML=
+    '<div class="stage-command-modal-section"><h4>1. ESCOLHA O CLIENTE DA NOVA COMANDA</h4>'+
+      '<label>Buscar cliente ou jogador<input id="stage-command-create-search" type="search" value="'+esc(searchTerm)+'" placeholder="Digite o nome ou telefone..." autocomplete="off"></label>'+
+      '<div class="stage-command-customer-results" id="stage-command-create-results">'+
+        (found.length?found.map(customer=>'<button type="button" class="stage-command-customer-option" data-create-command-customer="'+esc(customer.id)+'"><strong>'+esc(customer.name)+'</strong>'+(customer.phone?'<small style="display:block;color:#999;margin-top:3px">'+esc(customer.phone)+'</small>':'')+'</button>').join(""):'<div class="empty">Nenhum cliente encontrado.</div>')+
+      '</div>'+
+      '<button type="button" class="btn secondary" id="stage-command-create-new-customer" style="width:100%;margin-top:12px">+ Novo cliente</button>'+
+    '</div>';
+  content.querySelector("#stage-command-create-search").addEventListener("input",event=>renderStageCommandCreation(event.target.value));
+  content.querySelectorAll("[data-create-command-customer]").forEach(button=>button.addEventListener("click",async()=>{
+    const customer=stageCommandCustomers.find(item=>item.id===button.dataset.createCommandCustomer);
+    if(customer)await createStageCommandForCustomer(customer);
+  }));
+  content.querySelector("#stage-command-create-new-customer").addEventListener("click",()=>renderStageCommandNewCustomer(searchTerm));
+}
+function renderStageCommandNewCustomer(initialName=""){
+  const content=$("stage-command-modal-content");
+  if(!content)return;
+  content.innerHTML=
+    '<div class="stage-command-modal-section">'+
+      '<button type="button" class="btn secondary" id="stage-command-back-create">← Voltar para busca</button>'+
+      '<h4 style="margin-top:18px">CADASTRO RÁPIDO DE CLIENTE</h4>'+
+      '<label>Nome<input id="stage-command-new-customer-name" type="text" maxlength="120" value="'+esc(initialName)+'" placeholder="Nome do cliente" autocomplete="name"></label>'+
+      '<label>Telefone<input id="stage-command-new-customer-phone" type="tel" maxlength="30" placeholder="(00) 00000-0000" autocomplete="tel"></label>'+
+      '<label>Anotações<textarea id="stage-command-new-customer-notes" rows="4" maxlength="1000" placeholder="Informações adicionais (opcional)"></textarea></label>'+
+      '<button type="button" class="btn" id="stage-command-create-customer" style="width:100%">Cadastrar e criar comanda</button>'+
+    '</div>';
+  content.querySelector("#stage-command-back-create").addEventListener("click",()=>renderStageCommandCreation(initialName));
+  content.querySelector("#stage-command-create-customer").addEventListener("click",async()=>{
+    const name=content.querySelector("#stage-command-new-customer-name").value.trim();
+    const phone=content.querySelector("#stage-command-new-customer-phone").value.trim();
+    const notes=content.querySelector("#stage-command-new-customer-notes").value.trim();
+    if(!name){alert("Informe o nome do cliente.");return;}
+    const button=content.querySelector("#stage-command-create-customer");button.disabled=true;
+    const {data:userData}=await db.auth.getUser();
+    const {data:newCustomer,error}=await db.from("club_players").insert({
+      club_id:tournament.club_id||selectedClubId,name,phone:phone||null,notes:notes||null,created_by:userData?.user?.id||null
+    }).select("id,name,phone,notes").single();
+    if(error){alert("Não foi possível cadastrar o cliente: "+error.message);button.disabled=false;return;}
+    stageCommandCustomers.push(newCustomer);
+    await createStageCommandForCustomer(newCustomer);
+  });
+}
+async function createStageCommandForCustomer(customer){
+  if(!isStaff||!currentStage?.id||!customer?.id)return;
+  const content=$("stage-command-modal-content");
+  content.innerHTML='<div class="empty">Criando comanda para '+esc(customer.name)+'...</div>';
   const {data:rows,error:loadError}=await db.from("stage_commands").select("command_number").eq("stage_id",currentStage.id).order("command_number",{ascending:false}).limit(1);
-  if(loadError){alert("Não foi possível adicionar comanda: "+loadError.message);return;}
+  if(loadError){content.innerHTML='<div class="notice">Não foi possível criar comanda: '+esc(loadError.message)+'</div>';return;}
   const next=Number(rows?.[0]?.command_number||0)+1;
-  const {error}=await db.from("stage_commands").insert({stage_id:currentStage.id,club_id:tournament.club_id||selectedClubId,command_number:next});
-  if(error){alert("Não foi possível adicionar comanda: "+error.message);return;}
+  const {data:command,error}=await db.from("stage_commands").insert({
+    stage_id:currentStage.id,club_id:tournament.club_id||selectedClubId,command_number:next,club_player_id:customer.id
+  }).select("id").single();
+  if(error){content.innerHTML='<div class="notice">Não foi possível criar comanda: '+esc(error.message)+'</div>';return;}
   await loadStageCommandCards();
+  await openStagePlayerCommand(command.id);
 }
 async function openStagePlayerCommand(commandId){
   if(!isStaff||!currentStage?.id)return;
@@ -5663,7 +5728,7 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
     '<div class="stage-command-modal-section"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><h4>1. CLIENTE DA COMANDA</h4><button type="button" class="btn danger" id="stage-command-delete" style="padding:7px 10px;font-size:11px">Excluir comanda</button></div>'+
       '<label>Buscar cliente ou jogador<input id="stage-command-customer-search" type="search" value="'+esc(searchTerm)+'" placeholder="Digite o nome..." autocomplete="off"></label>'+
       '<div class="stage-command-customer-results" id="stage-command-customer-results">'+(found.length?customerOptions:'<div class="empty">Nenhum cliente encontrado.</div>')+'</div>'+
-      '<button type="button" class="btn secondary" id="stage-command-show-new-customer" style="width:100%;margin-top:10px">+ Cadastrar novo cliente</button>'+
+      ''+
       (selected?'<p class="command-meta" style="margin-top:10px">Cliente selecionado: <b>'+esc(selected.name)+'</b></p>':'')+
     '</div>'+
     (selected?'<div class="stage-command-modal-section"><h4>2. ATENDIMENTO</h4>'+
@@ -5688,7 +5753,6 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
   });
   const search=content.querySelector("#stage-command-customer-search");
   search.addEventListener("input",()=>renderStagePlayerCommand(history,search.value));
-  content.querySelector("#stage-command-show-new-customer")?.addEventListener("click",()=>renderStageNewCustomer(history,search.value));
   bindStageCommandCustomerOptions(history);
   content.querySelector("#stage-command-save-charge")?.addEventListener("click",async()=>{
     if(!isStaff||!stageCommandSelectedCustomer||!stageCommandSelectedPlayer)return;
