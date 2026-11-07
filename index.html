@@ -3334,7 +3334,7 @@ body.clock-only-mode .blind-clock-ante{
 <nav class="tabs">
  <button class="tab" data-tab="tournament-info-view">Informações</button>
  <button class="tab admin-only" data-tab="tournament-entries-view">Conferência</button>
- <button class="tab" data-tab="stages-view">Etapas</button>
+ <button class="tab admin-only" data-tab="stages-view">Etapas</button>
   <button class="tab active" data-tab="tournament-ranking-view">Ranking geral</button>
   <button class="tab" data-tab="final-ranking-view">Ranking final</button>
 </nav>
@@ -3599,6 +3599,7 @@ const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function msg(text){$("connection-status").textContent=text}
 function showTab(id){
+  if (id === "stages-view" && !isStaff) id = "tournament-ranking-view";
   $("home-tournaments").classList.add("hidden");
    if (id !== "stages-view") {
     $("stage-editor").classList.add("hidden");
