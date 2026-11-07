@@ -5972,8 +5972,7 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
       if(tournamentType==="buyin"&&count>=1){alert("Este jogador já possui inscrição nesta etapa.");button.disabled=false;return;}
       if(tournamentType==="addon"&&count>=1){alert("Este jogador já possui Add-on nesta etapa.");button.disabled=false;return;}
       if(tournamentType!=="buyin"&&!(entries||[]).some(e=>e.entry_type==="buyin")){alert("Registre a inscrição antes da recompra ou do Add-on.");button.disabled=false;return;}
-      const limit=Number(tournamentDetails.rebuy_limit)||0;
-      if(tournamentType==="rebuy"&&limit>0&&count>=limit){alert("Limite de recompras atingido ("+limit+").");button.disabled=false;return;}
+      // Rebuy pode ser lançado várias vezes durante a etapa.
     }
     const baseAmount=Number(product.unit_price);
     const rankingAmount=tournamentType?Math.min(baseAmount,Number(tournamentDetails?.ranking_contribution)||0):0;
