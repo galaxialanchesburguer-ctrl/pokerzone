@@ -2553,6 +2553,8 @@ body.clock-only-mode .blind-clock-ante{
 #tournament-app>.row:has(#season-status),
 #tournament-app>nav.tabs{display:none!important}
 #tournament-app{padding-top:0!important}
+/* Respeita a classe hidden nas telas de torneio e no editor, mesmo com regras de layout forçadas. */
+#tournament-app.hidden,#stages-view.hidden,#tournament-ranking-view.hidden,#stage-editor.hidden{display:none!important}
 /* O app usa a classe .season em flex; aqui as seções devem ocupar a largura inteira. */ #tournament-app{display:block!important;width:100%;min-width:0} #stages-view{display:block!important;width:100%;min-width:0} #stage-editor{margin-left:0!important;margin-right:0!important;align-self:stretch!important} #stage-editor>.stage-editor-panel{display:block;width:100%!important;max-width:100%!important;min-width:0!important;float:none!important;clear:both!important;grid-column:1/-1!important;justify-self:stretch!important} #stage-commands-panel .stage-command-area{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;float:none!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important} #stage-command-grid{display:grid!important;width:100%!important;max-width:100%!important;min-width:0!important;grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr))!important;justify-items:stretch!important;justify-content:stretch!important;box-sizing:border-box!important} #stage-command-grid>.stage-command-card,#stage-command-grid>.stage-command-add{width:100%!important;max-width:none!important;min-width:0!important;justify-self:stretch!important;box-sizing:border-box!important} @media(max-width:600px){.stage-editor-tabs{padding:10px 12px 0}.stage-editor-tab{flex:1;padding:11px 8px}}
 /* COMANDAS INDIVIDUAIS POR ETAPA */
 .stage-command-area{padding:20px;border-top:1px solid #342629;margin-top:8px}
@@ -9222,7 +9224,6 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
         <small>${esc(t.description || "Torneio PokerZone")}</small>
         <small>📅 ${formatDate(t.event_date)} &nbsp; • &nbsp; 🕒 ${formatTime(t.start_time)}</small>
         <small>Buy-in: ${formatBuyIn(t)} &nbsp; • &nbsp; Rebuy: ${formatMoney(t.rebuy_amount)}</small>
-        <small>Registro tardio: ${formatLateRegistration(t)}</small>
       </div>
       <button class="btn" data-recent-tournament="${t.id}">
         Entrar
