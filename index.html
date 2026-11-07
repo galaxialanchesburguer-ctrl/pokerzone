@@ -2603,6 +2603,14 @@ body.clock-only-mode .blind-clock-ante{
 .stage-command-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .stage-command-modal-history{max-height:none;overflow:visible}
 .stage-command-modal-history .stage-command-history-item{padding:9px 0}
+.stage-payment-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-top:14px}
+.stage-payment-option{min-height:92px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;border:1px solid #493638;border-radius:10px;background:#171515;color:#fff;cursor:pointer;padding:10px 5px}
+.stage-payment-option span{font-size:25px}.stage-payment-option strong{font-size:12px}
+.stage-payment-option:hover,.stage-payment-option.selected{border-color:#ff747c;background:#351c20;box-shadow:0 0 0 1px #ff747c}
+.stage-payment-change{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border:1px solid #3d593f;border-radius:9px;background:#152219;color:#b9e8c1}
+.stage-payment-change strong{font-size:20px;color:#fff}
+@media(max-width:600px){.stage-payment-options{grid-template-columns:repeat(2,minmax(0,1fr))}.stage-payment-option:last-child{grid-column:1/-1}.stage-payment-option{min-height:76px}}
+
 @media(max-width:600px){.stage-command-modal{padding:8px;align-items:flex-start}.stage-command-modal-panel{max-height:96vh;padding:14px;margin:auto 0}.stage-command-modal-head h3{font-size:17px}.stage-command-modal-grid{grid-template-columns:1fr}}
 
 
@@ -5885,6 +5893,51 @@ async function openStagePlayerCommand(commandId){
 }
 let stageCommandQuickProducts=[];
 let stageCommandTournamentDetails={};
+function openStageCommandPayment(history=[]){
+  if(!stageCommandSelectedPlayer||!stageCommandSelectedCustomer)return;
+  const total=history.filter(row=>row.entry_type==="charge").reduce((sum,row)=>sum+Number(row.amount||0),0);
+  const paid=history.filter(row=>row.entry_type==="payment").reduce((sum,row)=>sum+Number(row.amount||0),0);
+  const due=Math.max(0,total-paid);
+  const content=$("stage-command-modal-content");
+  if(!content||due<=0.009)return;
+  const money=value=>Number(value||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  content.innerHTML='<div class="stage-command-modal-section"><button type="button" class="btn secondary" id="stage-command-payment-back">← Voltar à comanda</button><h4 style="margin-top:18px">FECHAR CONTA</h4><p class="command-meta">Cliente: <b>'+esc(stageCommandSelectedCustomer.name)+'</b></p><div style="text-align:center;padding:18px 8px"><small style="color:#aaa;letter-spacing:1px">VALOR A PAGAR</small><strong style="display:block;font-size:32px;color:#fff;margin-top:7px">'+money(due)+'</strong></div><div class="stage-payment-options">'+[
+    ["Dinheiro","💵"],["Crédito","💳"],["Débito","💳"],["Pix","▦"],["Caderno","📒"]
+  ].map(([name,icon])=>'<button type="button" class="stage-payment-option" data-payment-method="'+name+'"><span>'+icon+'</span><strong>'+name+'</strong></button>').join("")+'</div><div id="stage-payment-details" class="hidden" style="margin-top:18px"></div></div>';
+  content.querySelector("#stage-command-payment-back").addEventListener("click",()=>renderStagePlayerCommand(history));
+  content.querySelectorAll("[data-payment-method]").forEach(button=>button.addEventListener("click",()=>{
+    content.querySelectorAll("[data-payment-method]").forEach(item=>item.classList.toggle("selected",item===button));
+    const method=button.dataset.paymentMethod,details=content.querySelector("#stage-payment-details");
+    details.classList.remove("hidden");
+    details.innerHTML=(method==="Dinheiro"?'<label>Valor recebido (R$)<input id="stage-payment-received" type="number" min="'+due.toFixed(2)+'" step="0.01" value="'+due.toFixed(2)+'"></label><div class="stage-payment-change"><span>Troco</span><strong id="stage-payment-change-value">'+money(0)+'</strong></div>':'<p class="command-meta" style="margin:10px 0 15px">'+(method==="Caderno"?"O valor será lançado como pagamento no caderno.":"Pagamento de "+money(due)+" via "+method+".")+'</p>')+'<button type="button" class="btn" id="stage-payment-confirm" style="width:100%;margin-top:12px">Confirmar pagamento</button>';
+    const received=details.querySelector("#stage-payment-received");
+    const updateChange=()=>{const value=Math.max(0,Number(received?.value||0)-due);const change=details.querySelector("#stage-payment-change-value");if(change)change.textContent=money(value);};
+    received?.addEventListener("input",updateChange);
+    details.querySelector("#stage-payment-confirm").addEventListener("click",async()=>{
+      if(!isStaff||!stageCommandSelectedPlayer||!stageCommandSelectedCustomer)return;
+      const button=details.querySelector("#stage-payment-confirm");
+      const cashReceived=method==="Dinheiro"?Number(received.value):due;
+      if(method==="Dinheiro"&&(!Number.isFinite(cashReceived)||cashReceived<due)){alert("O valor recebido precisa ser igual ou maior que o total.");return;}
+      button.disabled=true;button.textContent="Registrando...";
+      const {data:userData}=await db.auth.getUser();
+      const change=method==="Dinheiro"?cashReceived-due:0;
+      const description=method==="Dinheiro"?"Pagamento em dinheiro"+(change>0.009?" (recebido "+money(cashReceived)+"; troco "+money(change)+")":""):"Pagamento via "+method;
+      const {error}=await db.from("club_player_ledger").insert({
+        club_player_id:stageCommandSelectedCustomer.id,
+        stage_command_id:stageCommandSelectedPlayer.id,
+        attendant_name:null,entry_type:"payment",category:"Pagamento",
+        description,amount:due,payment_method:method,
+        tournament_id:tournament?.id||null,stage_id:currentStage.id,
+        created_by:userData?.user?.id||null
+      });
+      if(error){alert("Não foi possível registrar o pagamento: "+error.message);button.disabled=false;button.textContent="Confirmar pagamento";return;}
+      const {data:updatedHistory,error:historyError}=await db.from("club_player_ledger").select("id,club_player_id,stage_command_id,attendant_name,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).eq("stage_command_id",stageCommandSelectedPlayer.id).order("created_at",{ascending:false});
+      if(historyError){alert("Pagamento registrado, mas não foi possível atualizar a comanda: "+historyError.message);return;}
+      renderStagePlayerCommand(updatedHistory||[]);
+      await loadStageCommandCards();
+    });
+  }));
+}
 function renderStagePlayerCommand(history=[],searchTerm=""){
   const content=$("stage-command-modal-content");
   const selected=stageCommandSelectedCustomer;
@@ -5925,7 +5978,9 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
       '<label>Preço unitário (R$)<input id="stage-command-product-price" type="number" min="0.01" step="0.01" placeholder="10,00"></label>'+
       '<label>Categoria<select id="stage-command-product-category"><option value="Bebidas">Bebidas</option><option value="Alimentação">Alimentação</option><option value="Fichas">Fichas</option><option value="Outros">Outros</option></select></label>'+
       '<div><button type="button" class="btn" id="stage-command-product-save">Salvar produto</button> <span id="stage-command-product-message" class="season-info"></span></div></div>'+
-      '<div id="stage-command-quick-products" class="club-haver-quick-products">'+(stageCommandQuickProducts.length?stageCommandQuickProducts.filter(product=>/heineken/i.test(product.name||"")).map(product=>'<button type="button" class="club-haver-quick-product" data-stage-quick-product="'+esc(product.id)+'"><span><strong>'+esc(product.name)+'</strong><small>'+esc(product.category||"Outros")+' • '+clubMoney(product.unit_price)+'</small></span><span class="club-haver-quick-quantity">+</span></button>').join(""):'<div class="empty">Heineken ainda não está cadastrada no bar.</div>')+'</div></div></div>':'<div class="notice">Selecione um cliente para continuar o atendimento.</div>')+    '<div class="stage-command-modal-section"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h4>HISTÓRICO DESTA COMANDA</h4><div style="text-align:right"><strong style="display:block;font-size:20px;color:#fff">Total: '+clubMoney(commandTotal)+'</strong><small class="command-meta">Pagamentos: '+clubMoney(commandPaid)+'</small></div></div><div class="stage-command-modal-history">'+historyHtml+'</div></div>';
+      '<div id="stage-command-quick-products" class="club-haver-quick-products">'+(stageCommandQuickProducts.length?stageCommandQuickProducts.filter(product=>/heineken/i.test(product.name||"")).map(product=>'<button type="button" class="club-haver-quick-product" data-stage-quick-product="'+esc(product.id)+'"><span><strong>'+esc(product.name)+'</strong><small>'+esc(product.category||"Outros")+' • '+clubMoney(product.unit_price)+'</small></span><span class="club-haver-quick-quantity">+</span></button>').join(""):'<div class="empty">Heineken ainda não está cadastrada no bar.</div>')+'</div></div></div>':'<div class="notice">Selecione um cliente para continuar o atendimento.</div>')+    '<div class="stage-command-modal-section"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h4>HISTÓRICO DESTA COMANDA</h4><div style="text-align:right"><strong style="display:block;font-size:20px;color:#fff">Total: '+clubMoney(commandTotal)+'</strong><small class="command-meta">Pagamentos: '+clubMoney(commandPaid)+'</small></div></div><div class="stage-command-modal-history">'+historyHtml+'</div></div>'+
+    (selected&&commandTotal-commandPaid>0.009?'<div class="stage-command-modal-section"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h4 style="margin-bottom:4px">FECHAMENTO</h4><small class="command-meta">Saldo pendente: '+clubMoney(commandTotal-commandPaid)+'</small></div><button type="button" class="btn" id="stage-command-close-account">Fechar conta</button></div></div>':'');
+  content.querySelector("#stage-command-close-account")?.addEventListener("click",()=>openStageCommandPayment(history));
   content.querySelector("#stage-command-delete")?.addEventListener("click",async()=>{
     if(!isStaff||!stageCommandSelectedPlayer)return;
     const confirmed=confirm("Excluir esta comanda? Todos os lançamentos e o histórico vinculados a ela também serão excluídos. Esta ação não pode ser desfeita.");
