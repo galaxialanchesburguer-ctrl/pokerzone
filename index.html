@@ -2589,6 +2589,8 @@ body.clock-only-mode .blind-clock-ante{
 #stage-sidebar.visible{display:flex}
 #stage-sidebar .stage-sidebar-title{font-size:12px;font-weight:900;letter-spacing:1.2px;padding:4px 8px 12px;border-bottom:1px solid #352426}
 #stage-sidebar-list{display:grid;gap:6px}
+.stage-sidebar-item .stage-sidebar-description{font-size:10px;color:#aaa;line-height:1.4}
+.stage-sidebar-back{width:100%;margin-bottom:3px}
 .stage-sidebar-item{width:100%;display:flex;flex-direction:column;gap:4px;text-align:left;padding:11px 10px;border:1px solid #342729;border-radius:7px;background:#1a1516;color:#eee;cursor:pointer}
 .stage-sidebar-item:hover,.stage-sidebar-item.active{border-color:#a83b43;background:#321c20}
 .stage-sidebar-item small{color:#aaa;font-size:10px}
@@ -2670,10 +2672,10 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   <div class="admin-sidebar-foot">ÁREA ADMINISTRATIVA<br>POKERZONE</div>
 </aside>
 
-<aside id="stage-sidebar" aria-label="Navegação das etapas">
-  <div class="stage-sidebar-title">ETAPAS DO TORNEIO</div>
-  <div id="stage-sidebar-list"><div class="empty">Carregando etapas...</div></div>
-  <button type="button" class="btn" id="stage-sidebar-create">+ Criar etapa</button>
+<aside id="stage-sidebar" aria-label="Navegação de torneios e etapas">
+  <div class="stage-sidebar-title" id="stage-sidebar-title">TORNEIOS DO CLUBE</div>
+  <div id="stage-sidebar-list"><div class="empty">Selecione Torneios para carregar.</div></div>
+  <button type="button" class="btn hidden" id="stage-sidebar-create">+ Criar etapa</button>
 </aside>
 
 <header><div class="logo">POKER<span>ZONE</span></div><div class="header-right"><div class="header-tag">RANKING OFICIAL</div><button class="btn secondary header-logout hidden" id="logout-btn">↪ Sair da conta</button></div></header>
@@ -4989,6 +4991,65 @@ function hideStageSidebar() {
   $("stage-sidebar")?.classList.remove("visible");
   document.body.classList.remove("stage-sidebar-active");
 }
+function showSidebarTournamentList() {
+  if (!isStaff) return;
+  if (!selectedClubId && isClubManager && managedClubId) selectedClubId = managedClubId;
+  if (!selectedClubId) {
+    alert("Abra um clube antes de acessar os torneios.");
+    openAdminClubs();
+    return;
+  }
+  tournament = null;
+  season = null;
+  stages = [];
+  currentStage = null;
+  $("stage-sidebar-title").textContent = "TORNEIOS DO CLUBE";
+  $("stage-sidebar-create").classList.add("hidden");
+  $("stage-sidebar-list").innerHTML = '<div class="empty">Carregando torneios...</div>';
+  $("stage-sidebar").classList.add("visible");
+  document.body.classList.add("stage-sidebar-active");
+  setPublicHomeChrome(false);
+  $("home-tournaments").classList.remove("hidden");
+  $("tournament-app").classList.add("hidden");
+  ["manage-clubs-area","club-details-area","create-tournament-area","tournament-search-area","public-tournament-search","public-player-search"].forEach(id => $(id)?.classList.add("hidden"));
+  $("stage-sidebar-list").innerHTML = '<div class="empty">Carregando torneios...</div>';
+  loadSidebarTournaments();
+}
+async function loadSidebarTournaments() {
+  const list = $("stage-sidebar-list");
+  if (!selectedClubId) {
+    list.innerHTML = '<div class="empty">Nenhum clube selecionado.</div>';
+    return;
+  }
+  const { data, error } = await db.from("tournaments")
+    .select("id,name,description")
+    .eq("club_id", selectedClubId)
+    .order("name");
+  if (error) {
+    list.innerHTML = '<div class="empty">Erro ao carregar torneios: ' + esc(error.message) + '</div>';
+    return;
+  }
+  if (!data?.length) {
+    list.innerHTML = '<div class="empty">Nenhum torneio cadastrado neste clube.</div>';
+    return;
+  }
+  list.innerHTML = data.map(item => `
+    <button type="button" class="stage-sidebar-item" data-sidebar-tournament="${item.id}">
+      <strong>${esc(item.name)}</strong>
+      <span class="stage-sidebar-description">${esc(item.description || "Clique para ver as etapas")}</span>
+    </button>`).join("");
+  list.querySelectorAll("[data-sidebar-tournament]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const selected = data.find(item => item.id === button.dataset.sidebarTournament);
+      if (!selected) return;
+      await openTournament(selected);
+      $("stage-sidebar-title").textContent = "ETAPAS DO TORNEIO";
+      $("stage-sidebar-create").classList.remove("hidden");
+      $("stage-sidebar-list").querySelectorAll("[data-sidebar-tournament]").forEach(item => item.classList.toggle("active", item.dataset.sidebarTournament === selected.id));
+      showTab("stages-view");
+    });
+  });
+}
 function setPublicHomeChrome(visible) {
   const header = document.querySelector("#home-tournaments > .home-header");
   const actions = document.querySelector("#home-tournaments > .home-actions");
@@ -5057,16 +5118,8 @@ function handleAdminSidebarNavigation(key) {
     return;
   }
   if (key === "tournaments") {
-    if (tournament && season) {
-      setPublicHomeChrome(false);
-      showTab("stages-view");
-      setAdminSidebarActive("tournaments");
-    } else {
-      showAdminHome();
-      setPublicHomeChrome(false);
-      setAdminSidebarActive("tournaments");
-      alert("Abra um torneio para visualizar suas etapas.");
-    }
+    showSidebarTournamentList();
+    setAdminSidebarActive("tournaments");
     return;
   }
   if (key === "clubs") {
@@ -5150,6 +5203,8 @@ async function loadStages() {
 
     stages = data || [];
 
+    $("stage-sidebar-title").textContent = "ETAPAS DO TORNEIO";
+    $("stage-sidebar-create").classList.remove("hidden");
     const stageSidebarList = $("stage-sidebar-list");
     if (stageSidebarList) {
       stageSidebarList.innerHTML = stages.length
