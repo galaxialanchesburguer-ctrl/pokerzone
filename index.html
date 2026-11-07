@@ -2581,6 +2581,15 @@ body.clock-only-mode .blind-clock-ante{
 .stage-command-modal-section label{display:grid;gap:6px;color:#aaa;font-size:11px;margin:10px 0}
 .stage-command-modal-section input,.stage-command-modal-section select{width:100%;min-height:42px}
 .stage-command-customer-results{display:grid;gap:7px;margin-top:8px}
+.stage-command-buyin-switch{display:flex!important;flex-direction:row!important;align-items:center;justify-content:space-between;gap:14px;padding:12px 13px;margin:14px 0 8px!important;border:1px solid #493638;border-radius:10px;background:#171515;cursor:pointer}
+.stage-command-buyin-copy{display:grid;gap:3px}.stage-command-buyin-copy strong{color:#fff;font-size:12px}.stage-command-buyin-copy small{color:#999;font-size:10px}
+.stage-command-buyin-switch input{position:absolute;opacity:0;width:1px!important;height:1px!important;pointer-events:none}
+.stage-command-switch-track{position:relative;flex:0 0 46px;width:46px;height:26px;border-radius:20px;background:#555;transition:background .18s}
+.stage-command-switch-track:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .18s}
+.stage-command-buyin-switch input:checked+.stage-command-switch-track{background:#f5443b}
+.stage-command-buyin-switch input:checked+.stage-command-switch-track:after{transform:translateX(20px)}
+.stage-command-buyin-switch input:focus-visible+.stage-command-switch-track{outline:2px solid #fff;outline-offset:3px}
+
 .stage-command-customer-option{width:100%;text-align:left;padding:10px 12px;border-radius:8px;border:1px solid #493638;background:#171515;color:#fff;cursor:pointer}
 .stage-command-customer-option.selected{border-color:#ff747c;background:#351c20}
 .stage-command-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -5670,43 +5679,46 @@ async function addStageCommand(){
   content.innerHTML='<div class="empty">Identificando clube e carregando clientes...</div>';
   modal.classList.remove("hidden");
   modal.style.display="flex";
-  const {data:stageInfo,error:stageInfoError}=await db.from("stages").select("club_id").eq("id",currentStage.id).single();
+  const {data:stageInfo,error:stageInfoError}=await db.from("stages").select("club_id,tournament_id").eq("id",currentStage.id).single();
   if(stageInfoError){content.innerHTML='<div class="notice">Não foi possível identificar o clube desta etapa: '+esc(stageInfoError.message)+'</div>';return;}
-  stageCommandClubId=stageInfo?.club_id||tournament?.club_id||selectedClubId||managedClubId||null;
-  if(!stageCommandClubId){content.innerHTML='<div class="notice">Não foi possível identificar o clube desta etapa.</div>';return;}
-  const {data:customers,error}=await db.from("club_players").select("id,name,phone,notes").eq("club_id",stageCommandClubId).order("name");
+  stageCommandClubId=stageInfo?.club_id||selectedClubId||tournament?.club_id||managedClubId||null;
+  const clubIds=[...new Set([stageInfo?.club_id,selectedClubId,tournament?.club_id,managedClubId].filter(Boolean))];
+  if(!clubIds.length){content.innerHTML='<div class="notice">Não foi possível identificar o clube desta etapa.</div>';return;}
+  const {data:customers,error}=await db.from("club_players").select("id,name,phone,notes,club_id").in("club_id",clubIds).order("name");
   if(error){content.innerHTML='<div class="notice">Não foi possível carregar os clientes: '+esc(error.message)+'</div>';return;}
-  stageCommandCustomers=customers||[];
+  stageCommandCustomers=[...new Map((customers||[]).map(customer=>[customer.id,customer])).values()];
   renderStageCommandCreation();
 }
 function renderStageCommandCreation(searchTerm=""){
   const content=$("stage-command-modal-content");
   if(!content)return;
-  const normalize=value=>(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim();
+  const normalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
   const renderResults=termValue=>{
     const results=content.querySelector("#stage-command-create-results");
     if(!results)return;
     const term=normalize(termValue);
     if(!term){results.innerHTML="";return;}
-    const found=stageCommandCustomers.filter(customer=>normalize(customer.name).includes(term)||(customer.phone||"").includes((termValue||"").trim()));
-    results.innerHTML=found.length?found.map(customer=>'<button type="button" class="stage-command-customer-option" data-create-command-customer="'+esc(customer.id)+'"><strong>'+esc(customer.name)+'</strong>'+(customer.phone?'<small style="display:block;color:#999;margin-top:3px">'+esc(customer.phone)+'</small>':'')+'</button>').join(""):'<div class="empty">Nenhum cliente encontrado.</div>';
+    const found=stageCommandCustomers.filter(customer=>normalize(customer.name).includes(term)||String(customer.phone||"").replace(/\D/g,"").includes(String(termValue||"").replace(/\D/g,"")));
+    results.innerHTML=found.length?found.map(customer=>'<button type="button" class="stage-command-customer-option" data-create-command-customer="'+esc(customer.id)+'"><strong>'+esc(customer.name)+'</strong>'+(customer.phone?'<small style="display:block;color:#999;margin-top:3px">'+esc(customer.phone)+'</small>':'')+'</button>').join(""):'<div class="empty">Nenhum cliente encontrado entre os '+stageCommandCustomers.length+' clientes cadastrados.</div>';
     results.querySelectorAll("[data-create-command-customer]").forEach(button=>button.addEventListener("click",async()=>{
       const customer=stageCommandCustomers.find(item=>item.id===button.dataset.createCommandCustomer);
-      if(customer)await createStageCommandForCustomer(customer);
+      const buyinEnabled=content.querySelector("#stage-command-buyin-toggle")?.checked!==false;
+      if(customer)await createStageCommandForCustomer(customer,buyinEnabled);
     }));
   };
   content.innerHTML=
     '<div class="stage-command-modal-section"><h4>1. ESCOLHA O CLIENTE DA NOVA COMANDA</h4>'+
       '<label>Buscar cliente ou jogador<input id="stage-command-create-search" type="search" value="'+esc(searchTerm)+'" placeholder="Digite o nome ou telefone..." autocomplete="off"></label>'+
       '<div class="stage-command-customer-results" id="stage-command-create-results"></div>'+
+      '<label class="stage-command-buyin-switch" for="stage-command-buyin-toggle"><span class="stage-command-buyin-copy"><strong>Já entra com buy-in</strong><small>Registrar a inscrição automaticamente nesta etapa</small></span><input id="stage-command-buyin-toggle" type="checkbox" checked><span class="stage-command-switch-track" aria-hidden="true"></span></label>'+
       '<button type="button" class="btn secondary" id="stage-command-create-new-customer" style="width:100%;margin-top:12px">+ Novo cliente</button>'+
     '</div>';
   const search=content.querySelector("#stage-command-create-search");
   search.addEventListener("input",()=>renderResults(search.value));
-  content.querySelector("#stage-command-create-new-customer").addEventListener("click",()=>renderStageCommandNewCustomer(search.value));
+  content.querySelector("#stage-command-create-new-customer").addEventListener("click",()=>renderStageCommandNewCustomer(search.value,content.querySelector("#stage-command-buyin-toggle").checked));
   renderResults(searchTerm);
 }
-function renderStageCommandNewCustomer(initialName=""){
+function renderStageCommandNewCustomer(initialName="",buyinEnabled=true){
   const content=$("stage-command-modal-content");
   if(!content)return;
   content.innerHTML=
@@ -5716,6 +5728,7 @@ function renderStageCommandNewCustomer(initialName=""){
       '<label>Nome<input id="stage-command-new-customer-name" type="text" maxlength="120" value="'+esc(initialName)+'" placeholder="Nome do cliente" autocomplete="name"></label>'+
       '<label>Telefone<input id="stage-command-new-customer-phone" type="tel" maxlength="30" placeholder="(00) 00000-0000" autocomplete="tel"></label>'+
       '<label>Anotações<textarea id="stage-command-new-customer-notes" rows="4" maxlength="1000" placeholder="Informações adicionais (opcional)"></textarea></label>'+
+      '<label class="stage-command-buyin-switch" for="stage-command-new-buyin-toggle"><span class="stage-command-buyin-copy"><strong>Já entra com buy-in</strong><small>Registrar a inscrição automaticamente nesta etapa</small></span><input id="stage-command-new-buyin-toggle" type="checkbox" '+(buyinEnabled?'checked':'')+'><span class="stage-command-switch-track" aria-hidden="true"></span></label>'+
       '<button type="button" class="btn" id="stage-command-create-customer" style="width:100%">Cadastrar e criar comanda</button>'+
     '</div>';
   content.querySelector("#stage-command-back-create").addEventListener("click",()=>renderStageCommandCreation(initialName));
@@ -5723,6 +5736,7 @@ function renderStageCommandNewCustomer(initialName=""){
     const name=content.querySelector("#stage-command-new-customer-name").value.trim();
     const phone=content.querySelector("#stage-command-new-customer-phone").value.trim();
     const notes=content.querySelector("#stage-command-new-customer-notes").value.trim();
+    const buyinEnabled=content.querySelector("#stage-command-new-buyin-toggle").checked;
     if(!name){alert("Informe o nome do cliente.");return;}
     const button=content.querySelector("#stage-command-create-customer");button.disabled=true;
     const {data:userData}=await db.auth.getUser();
@@ -5731,20 +5745,67 @@ function renderStageCommandNewCustomer(initialName=""){
     }).select("id,name,phone,notes").single();
     if(error){alert("Não foi possível cadastrar o cliente: "+error.message);button.disabled=false;return;}
     stageCommandCustomers.push(newCustomer);
-    await createStageCommandForCustomer(newCustomer);
+    await createStageCommandForCustomer(newCustomer,buyinEnabled);
   });
 }
-async function createStageCommandForCustomer(customer){
+async function createStageCommandForCustomer(customer,buyinEnabled=true){
   if(!isStaff||!currentStage?.id||!customer?.id)return;
   const content=$("stage-command-modal-content");
-  content.innerHTML='<div class="empty">Criando comanda para '+esc(customer.name)+'...</div>';
+  content.innerHTML='<div class="empty">Preparando comanda para '+esc(customer.name)+'...</div>';
+  let buyinData=null,tournamentPlayer=null;
+  if(buyinEnabled){
+    const {data:stageInfo,error:stageError}=await db.from("stages").select("club_id,tournament_id").eq("id",currentStage.id).single();
+    if(stageError||!stageInfo?.tournament_id){content.innerHTML='<div class="notice">Esta etapa não está vinculada a um torneio. Desative o buy-in para criar apenas a comanda.</div><button type="button" class="btn secondary" id="stage-command-buyin-back">Voltar</button>';content.querySelector("#stage-command-buyin-back")?.addEventListener("click",()=>renderStageCommandCreation(customer.name));return;}
+    const {data:details,error:detailsError}=await db.from("tournament_details").select("buy_in,tournament_fee,club_fee_type,ranking_contribution").eq("tournament_id",stageInfo.tournament_id).maybeSingle();
+    if(detailsError||!details||details.buy_in==null||Number(details.buy_in)<=0){content.innerHTML='<div class="notice">O valor do buy-in não está configurado neste torneio. Configure em Informações ou desative o interruptor para criar apenas a comanda.</div><button type="button" class="btn secondary" id="stage-command-buyin-back">Voltar</button>';content.querySelector("#stage-command-buyin-back")?.addEventListener("click",()=>renderStageCommandCreation(customer.name));return;}
+    const normalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+    const {data:playersData,error:playersError}=await db.from("players").select("id,display_name").eq("tournament_id",stageInfo.tournament_id).eq("is_active",true);
+    if(playersError){content.innerHTML='<div class="notice">Não foi possível localizar o jogador no torneio: '+esc(playersError.message)+'</div>';return;}
+    tournamentPlayer=(playersData||[]).find(player=>normalize(player.display_name)===normalize(customer.name));
+    if(!tournamentPlayer){
+      const {data:newPlayer,error:newPlayerError}=await db.from("players").insert({full_name:customer.name,display_name:customer.name,is_active:true,tournament_id:stageInfo.tournament_id}).select("id,display_name").single();
+      if(newPlayerError){content.innerHTML='<div class="notice">Não foi possível cadastrar o jogador no torneio: '+esc(newPlayerError.message)+'</div>';return;}
+      tournamentPlayer=newPlayer;
+    }
+    const {data:existing,error:existingError}=await db.from("tournament_entries").select("id,entry_type").eq("tournament_id",stageInfo.tournament_id).eq("stage_id",currentStage.id).eq("player_id",tournamentPlayer.id);
+    if(existingError){content.innerHTML='<div class="notice">Não foi possível conferir a inscrição: '+esc(existingError.message)+'</div>';return;}
+    if((existing||[]).some(row=>row.entry_type==="buyin")){content.innerHTML='<div class="notice">'+esc(customer.name)+' já possui buy-in registrado nesta etapa. Volte e desative o interruptor para criar somente a comanda.</div><button type="button" class="btn secondary" id="stage-command-buyin-back">Voltar</button>';content.querySelector("#stage-command-buyin-back")?.addEventListener("click",()=>renderStageCommandCreation(customer.name));return;}
+    const baseAmount=Number(details.buy_in);
+    const feeValue=Number(details.tournament_fee)||0;
+    const fee=details.club_fee_type==="percent"?baseAmount*feeValue/100:feeValue;
+    const rankingAmount=Math.min(baseAmount,Number(details.ranking_contribution)||0);
+    buyinData={tournamentId:stageInfo.tournament_id,baseAmount,fee,totalCharge:baseAmount+fee,rankingAmount,prizeAmount:Math.max(0,baseAmount-rankingAmount)};
+  }
   const {data:rows,error:loadError}=await db.from("stage_commands").select("command_number").eq("stage_id",currentStage.id).order("command_number",{ascending:false}).limit(1);
   if(loadError){content.innerHTML='<div class="notice">Não foi possível criar comanda: '+esc(loadError.message)+'</div>';return;}
   const next=Number(rows?.[0]?.command_number||0)+1;
   const {data:command,error}=await db.from("stage_commands").insert({
-    stage_id:currentStage.id,club_id:stageCommandClubId||tournament?.club_id||selectedClubId||managedClubId,command_number:next,club_player_id:customer.id
+    stage_id:currentStage.id,club_id:stageCommandClubId||tournament?.club_id||selectedClubId||managedClubId,command_number:next,club_player_id:customer.id,tournament_player_id:tournamentPlayer?.id||null
   }).select("id").single();
   if(error){content.innerHTML='<div class="notice">Não foi possível criar comanda: '+esc(error.message)+'</div>';return;}
+  if(buyinData){
+    const {data:userData}=await db.auth.getUser();
+    const {data:ledgerRow,error:ledgerError}=await db.from("club_player_ledger").insert({
+      club_player_id:customer.id,tournament_player_id:tournamentPlayer.id,stage_command_id:command.id,
+      attendant_name:"Sistema",entry_type:"charge",category:"Inscrição",description:"Buy-in",amount:buyinData.totalCharge,
+      tournament_id:buyinData.tournamentId,stage_id:currentStage.id,created_by:userData?.user?.id||null
+    }).select("id").single();
+    if(ledgerError){
+      await db.from("stage_commands").delete().eq("id",command.id);
+      content.innerHTML='<div class="notice">Não foi possível registrar o buy-in: '+esc(ledgerError.message)+'</div>';return;
+    }
+    const {error:entryError}=await db.from("tournament_entries").insert({
+      tournament_id:buyinData.tournamentId,stage_id:currentStage.id,ledger_entry_id:ledgerRow.id,
+      player_id:tournamentPlayer.id,entry_type:"buyin",amount:buyinData.totalCharge,
+      prize_amount:buyinData.prizeAmount,ranking_amount:buyinData.rankingAmount,
+      club_fee_amount:buyinData.fee,created_by:userData?.user?.id||null
+    });
+    if(entryError){
+      await db.from("club_player_ledger").delete().eq("id",ledgerRow.id);
+      await db.from("stage_commands").delete().eq("id",command.id);
+      content.innerHTML='<div class="notice">A comanda foi preparada, mas o buy-in não foi registrado: '+esc(entryError.message)+'</div>';return;
+    }
+  }
   await loadStageCommandCards();
   await openStagePlayerCommand(command.id);
 }
