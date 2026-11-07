@@ -3015,7 +3015,7 @@ body.clock-only-mode .blind-clock-ante{
         <div id="club-haver-quick-product-form" class="club-haver-form hidden">
           <label>Nome do produto<input id="club-haver-quick-product-name" maxlength="100" placeholder="Ex.: Heineken"></label>
           <label>Preço unitário (R$)<input id="club-haver-quick-product-price" type="number" min="0.01" step="0.01" placeholder="10,00"></label>
-          <label>Categoria<select id="club-haver-quick-product-category"><option value="Bebidas">Bebidas</option><option value="Alimentação">Alimentação</option><option value="Fichas">Fichas</option><option value="Inscrição">Inscrição</option><option value="Outros">Outros</option></select></label>
+          <label>Categoria<select id="club-haver-quick-product-category"><option value="Bebidas">Bebidas</option><option value="Alimentação">Alimentação</option><option value="Fichas">Fichas</option><option value="Inscrição">Inscrição</option><option value="Rebuy">Recompra</option><option value="Add-on">Add-on</option><option value="Outros">Outros</option></select></label>
           <div><button class="btn" id="club-haver-quick-product-save" type="button">Salvar produto</button><span id="club-haver-quick-product-message" class="season-info"></span></div>
         </div>
         <div id="club-haver-quick-products" class="club-haver-quick-products"><div class="empty">Carregando produtos...</div></div>
@@ -3593,7 +3593,7 @@ const SUPABASE_URL="https://fwwkmpnwsyppctxgetkj.supabase.co";
 const SUPABASE_KEY="sb_publishable_SlbpXf6oi5Bw70ABeYp0Eg_nrZ9bQqm";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let tournament=null, season=null, players=[], stages=[], currentStage=null, editorResults=[], isStaff=false, isAdmin=false, selectedClubId=null;
-let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={};
+let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}, activeTournamentStage=null;
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function msg(text){$("connection-status").textContent=text}
@@ -4639,10 +4639,14 @@ function moneyBRL(value){return Number(value||0).toLocaleString("pt-BR",{style:"
 async function loadTournamentEntries(){
   if(!tournament || !isStaff) return;
   const body=$("tournament-entries-body");
+  const {data:activeStage,error:activeStageError}=await db.from("stages").select("id,season_id,stage_number,name,played_at").eq("season_id",season?.id || "").eq("is_open",true).maybeSingle();
+  if(activeStageError){body.innerHTML='<tr><td colspan="7" class="empty">Erro ao identificar a etapa aberta: '+esc(activeStageError.message)+'</td></tr>';return;}
+  activeTournamentStage=activeStage||null;
+  if(!activeTournamentStage){body.innerHTML='<tr><td colspan="7" class="empty">Abra uma etapa na aba Etapas para iniciar a conferência.</td></tr>';return;}
   body.innerHTML='<tr><td colspan="7" class="empty">Carregando inscrições...</td></tr>';
   const [{data:playerData,error:playerError},{data:entryData,error:entryError},{data:details,error:detailsError}]=await Promise.all([
     db.from("players").select("id,display_name").eq("tournament_id",tournament.id).eq("is_active",true).order("display_name"),
-    db.from("tournament_entries").select("id,tournament_id,player_id,entry_type,amount,prize_amount,ranking_amount,club_fee_amount,created_at").eq("tournament_id",tournament.id).order("created_at"),
+    db.from("tournament_entries").select("id,tournament_id,stage_id,ledger_entry_id,player_id,entry_type,amount,prize_amount,ranking_amount,club_fee_amount,created_at").eq("tournament_id",tournament.id).eq("stage_id",activeTournamentStage.id).order("created_at"),
     db.from("tournament_details").select("buy_in,tournament_fee,club_fee_type,ranking_contribution,rebuy_amount,rebuy_limit,addon_amount").eq("tournament_id",tournament.id).maybeSingle()
   ]);
   if(playerError || entryError || detailsError){
@@ -4665,7 +4669,7 @@ async function loadTournamentEntries(){
     if(row.entry_type==="rebuy")g.rebuys++;
     if(row.entry_type==="addon")g.addons++;
   });
-  const all=[...groups.values()];
+  const all=[...groups.values()].filter(g=>g.buyins>0);
   const totals=all.reduce((t,g)=>({buyins:t.buyins+g.buyins,rebuys:t.rebuys+g.rebuys,addons:t.addons+g.addons,gross:t.gross+g.gross,prize:t.prize+g.prize,fees:t.fees+g.fees,ranking:t.ranking+g.ranking}),{buyins:0,rebuys:0,addons:0,gross:0,prize:0,fees:0,ranking:0});
   $("entries-total-buyins").textContent=totals.buyins;
   $("entries-total-rebuys").textContent=totals.rebuys;
@@ -4698,7 +4702,8 @@ async function addTournamentEntry(type){
   const message=$("entry-action-message");
   if(!playerId){message.textContent="Selecione um jogador primeiro.";return;}
   const player=tournamentEntryPlayers.find(p=>p.id===playerId);
-  const playerRows=tournamentEntryRows.filter(r=>r.player_id===playerId);
+  if(!activeTournamentStage){message.textContent="Abra uma etapa antes de lançar inscrições.";return;}
+  const playerRows=tournamentEntryRows.filter(r=>r.player_id===playerId && r.stage_id===activeTournamentStage.id);
   const count=playerRows.filter(r=>r.entry_type===type).length;
   if(type==="buyin" && count>=1){message.textContent="Este jogador já possui Buy-in registrado.";return;}
   if(type==="addon" && count>=1){message.textContent="Este jogador já possui Add-on registrado.";return;}
@@ -4712,7 +4717,7 @@ async function addTournamentEntry(type){
   const fee=tournamentEntryDetails.club_fee_type==="percent"?amount*feeValue/100:(type==="buyin"?feeValue:0);
   const {data:userData}=await db.auth.getUser();
   const {error}=await db.from("tournament_entries").insert({
-    tournament_id:tournament.id,player_id:playerId,entry_type:type,
+    tournament_id:tournament.id,stage_id:activeTournamentStage.id,player_id:playerId,entry_type:type,
     amount:amount+fee,prize_amount:Math.max(0,amount-rankingAmount),
     ranking_amount:rankingAmount,club_fee_amount:fee,created_by:userData?.user?.id||null
   });
@@ -4786,6 +4791,20 @@ if (manageClubsButton) {
     msg("● Consulta pública");
   }
 }
+async function setActiveTournamentStage(stageId) {
+  if (!isStaff || !tournament || !season) return;
+  const stage = stages.find(item => item.id === stageId);
+  if (!stage) return;
+  const clubId=tournament.club_id || selectedClubId;
+  const { error: closeError } = await db.from("stages").update({is_open:false}).eq("club_id", clubId);
+  if (closeError) { alert("Não foi possível fechar a etapa anterior: " + closeError.message); return; }
+  const { error } = await db.from("stages").update({is_open:true,tournament_id:tournament.id,club_id:clubId}).eq("id",stageId);
+  if (error) { alert("Não foi possível abrir a etapa: " + error.message); return; }
+  alert("Etapa " + (stage.name || stage.stage_number) + " aberta para lançamentos!");
+  await loadStages();
+  await loadTournamentEntries();
+}
+
 async function loadStages() {
   if (!season) {
     stages = [];
@@ -4801,7 +4820,7 @@ async function loadStages() {
   try {
     let query = db
       .from("stages")
-      .select("id,season_id,stage_number,name,played_at,participant_count,status")
+      .select("id,season_id,stage_number,name,played_at,participant_count,status,is_open,tournament_id,club_id")
       .eq("season_id", season.id)
       .order("stage_number");
 
@@ -4840,6 +4859,7 @@ async function loadStages() {
 
   <div class="actions">
     <span class="tag">👥 ${s.participant_count || 0} participantes</span>
+    ${isStaff ? `<button class="btn ${s.is_open ? "secondary" : ""}" data-open-stage="${s.id}">${s.is_open ? "Etapa aberta ✓" : "Abrir etapa"}</button>` : ""}
 
     <button class="btn" data-edit-stage="${s.id}">
       ${isStaff ? "Editar etapa" : "Ver etapa →"}
@@ -4865,7 +4885,10 @@ async function loadStages() {
     `).join("")
   : '<div class="empty">Nenhuma etapa disponível.</div>';
 
-    document.querySelectorAll("[data-edit-stage]").forEach(b => {
+    document.querySelectorAll("[data-open-stage]").forEach(b => {
+  b.addEventListener("click", async event => { event.stopPropagation(); await setActiveTournamentStage(b.dataset.openStage); });
+});
+document.querySelectorAll("[data-edit-stage]").forEach(b => {
   b.addEventListener("click", () => {
     if (isStaff) {
       openStage(b.dataset.editStage);
@@ -7035,24 +7058,63 @@ async function addClubHaverQuickProduct(product) {
   if (!clubHaverSelectedPlayer) return;
   const area = $("club-haver-quick-products");
   area.querySelectorAll("button").forEach(button=>button.disabled=true);
+  const category = product.category || "Outros";
+  const tournamentType = category==="Inscrição" ? "buyin" : category==="Rebuy" ? "rebuy" : category==="Add-on" ? "addon" : null;
+  let activeStage = null, tournamentPlayer = null, fee = 0, rankingAmount = 0, baseAmount = Number(product.unit_price);
+  if (tournamentType) {
+    const {data:stage,error:stageError}=await db.from("stages").select("id,season_id,tournament_id,club_id").eq("club_id",selectedClubId).eq("is_open",true).maybeSingle();
+    if(stageError || !stage?.tournament_id){alert(stageError?.message || "Abra uma etapa do torneio antes de lançar inscrição ou recompra.");renderClubHaverQuickProducts();return;}
+    activeStage=stage;
+    const [{data:tournamentDetails,error:detailsError},{data:playersData,error:playersError}]=await Promise.all([
+      db.from("tournament_details").select("buy_in,tournament_fee,club_fee_type,ranking_contribution,rebuy_amount,rebuy_limit,addon_amount").eq("tournament_id",stage.tournament_id).maybeSingle(),
+      db.from("players").select("id,display_name").eq("tournament_id",stage.tournament_id).eq("is_active",true)
+    ]);
+    if(detailsError || playersError){alert("Erro ao preparar lançamento na Conferência: "+(detailsError||playersError).message);renderClubHaverQuickProducts();return;}
+    const details=tournamentDetails||{};
+    const normalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+    tournamentPlayer=(playersData||[]).find(p=>normalize(p.display_name)===normalize(clubHaverSelectedPlayer.name));
+    if(!tournamentPlayer){
+      const {data:newPlayer,error:newPlayerError}=await db.from("players").insert({full_name:clubHaverSelectedPlayer.name,display_name:clubHaverSelectedPlayer.name,is_active:true,tournament_id:stage.tournament_id}).select("id,display_name").single();
+      if(newPlayerError){alert("Não foi possível vincular o jogador ao torneio: "+newPlayerError.message);renderClubHaverQuickProducts();return;}
+      tournamentPlayer=newPlayer;
+    }
+    const {data:existing,error:existingError}=await db.from("tournament_entries").select("id,entry_type").eq("tournament_id",stage.tournament_id).eq("stage_id",stage.id).eq("player_id",tournamentPlayer.id);
+    if(existingError){alert("Erro ao conferir lançamentos do jogador: "+existingError.message);renderClubHaverQuickProducts();return;}
+    const count=(existing||[]).filter(row=>row.entry_type===tournamentType).length;
+    if(tournamentType==="buyin" && count>=1){alert("Este jogador já possui inscrição nesta etapa.");renderClubHaverQuickProducts();return;}
+    if(tournamentType==="addon" && count>=1){alert("Este jogador já possui Add-on nesta etapa.");renderClubHaverQuickProducts();return;}
+    const rebuyLimit=Number(details.rebuy_limit)||0;
+    if(tournamentType==="rebuy" && rebuyLimit>0 && count>=rebuyLimit){alert("Limite de recompras atingido ("+rebuyLimit+").");renderClubHaverQuickProducts();return;}
+    rankingAmount=Math.min(baseAmount,Number(details.ranking_contribution)||0);
+    const feeValue=Number(details.tournament_fee)||0;
+    fee=details.club_fee_type==="percent"?baseAmount*feeValue/100:(tournamentType==="buyin"?feeValue:0);
+  }
   const {data:userData} = await db.auth.getUser();
-  const {error} = await db.from("club_player_ledger").insert({
-    club_player_id:clubHaverSelectedPlayer.id,
-    entry_type:"charge",
-    category:product.category || "Outros",
-    description:product.name,
-    amount:Number(product.unit_price),
-    payment_method:null,
+  const totalCharge=baseAmount+fee;
+  const {data:ledgerRow,error} = await db.from("club_player_ledger").insert({
+    club_player_id:clubHaverSelectedPlayer.id,entry_type:"charge",category,
+    description:product.name,amount:totalCharge,payment_method:null,
+    tournament_id:activeStage?.tournament_id || null,stage_id:activeStage?.id || null,
     created_by:userData?.user?.id || null
-  });
+  }).select("id").single();
   if (error) {
     alert("Não foi possível lançar o produto: " + error.message);
     renderClubHaverQuickProducts();
     return;
   }
+  if(tournamentType && activeStage && tournamentPlayer){
+    const {error:entryError}=await db.from("tournament_entries").insert({
+      tournament_id:activeStage.tournament_id,stage_id:activeStage.id,ledger_entry_id:ledgerRow.id,
+      player_id:tournamentPlayer.id,entry_type:tournamentType,amount:totalCharge,
+      prize_amount:Math.max(0,baseAmount-rankingAmount),ranking_amount:rankingAmount,
+      club_fee_amount:fee,created_by:userData?.user?.id||null
+    });
+    if(entryError){alert("O lançamento entrou na Conta do Jogador, mas não foi para a Conferência. Avise o administrador: "+entryError.message);}
+  }
   await loadClubHaverLedger();
   await loadClubHaver();
   renderClubHaverQuickProducts();
+  if(tournamentType && tournament && activeStage?.tournament_id===tournament.id) await loadTournamentEntries();
 }
 $("club-haver-add-product-toggle").addEventListener("click",()=>$("club-haver-quick-product-form").classList.toggle("hidden"));
 $("club-haver-quick-product-save").addEventListener("click",saveClubHaverQuickProduct);
