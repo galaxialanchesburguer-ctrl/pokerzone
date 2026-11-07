@@ -4796,6 +4796,7 @@ async function setActiveTournamentStage(stageId) {
   const stage = stages.find(item => item.id === stageId);
   if (!stage) return;
   const clubId=tournament.club_id || selectedClubId;
+  if(!clubId){alert("Não foi possível identificar o clube desta etapa.");return;}
   const { error: closeError } = await db.from("stages").update({is_open:false}).eq("club_id", clubId);
   if (closeError) { alert("Não foi possível fechar a etapa anterior: " + closeError.message); return; }
   const { error } = await db.from("stages").update({is_open:true,tournament_id:tournament.id,club_id:clubId}).eq("id",stageId);
@@ -7080,6 +7081,7 @@ async function addClubHaverQuickProduct(product) {
     }
     const {data:existing,error:existingError}=await db.from("tournament_entries").select("id,entry_type").eq("tournament_id",stage.tournament_id).eq("stage_id",stage.id).eq("player_id",tournamentPlayer.id);
     if(existingError){alert("Erro ao conferir lançamentos do jogador: "+existingError.message);renderClubHaverQuickProducts();return;}
+    if(tournamentType!=="buyin" && !(existing||[]).some(row=>row.entry_type==="buyin")){alert("Registre a inscrição antes da recompra ou do Add-on.");renderClubHaverQuickProducts();return;}
     const count=(existing||[]).filter(row=>row.entry_type===tournamentType).length;
     if(tournamentType==="buyin" && count>=1){alert("Este jogador já possui inscrição nesta etapa.");renderClubHaverQuickProducts();return;}
     if(tournamentType==="addon" && count>=1){alert("Este jogador já possui Add-on nesta etapa.");renderClubHaverQuickProducts();return;}
