@@ -3390,7 +3390,7 @@ function renderBlindClock() {
     const sliderMax = Math.max(1, clockDurationSeconds(step));
     timeSlider.min = "0";
     timeSlider.max = String(sliderMax);
-    if (document.activeElement !== timeSlider && !blindClockSliderInteracting) {
+    if (!blindClockSliderInteracting) {
       const elapsed = Math.max(0, Math.min(sliderMax, sliderMax - (Number(pos.remaining) || 0)));
       timeSlider.value = String(elapsed);
     }
@@ -3398,7 +3398,7 @@ function renderBlindClock() {
   }
 
   const levelDuration = step ? clockDurationSeconds(step) : 0;
-  const displayedRemaining = timeSlider && (document.activeElement === timeSlider || blindClockSliderInteracting)
+  const displayedRemaining = timeSlider && blindClockSliderInteracting
     ? Math.max(0, levelDuration - (Number(timeSlider.value) || 0))
     : pos.remaining;
   countdownElement.textContent = clockFormat(displayedRemaining);
