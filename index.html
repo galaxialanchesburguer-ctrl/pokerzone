@@ -2838,14 +2838,53 @@ function updatePlayerSuggestions() {
 }
  async function openStageResults(id) {
   const stage = stages.find(s => s.id === id);
-  if (!stage) return;
+if (!stage) return;
 
 const resultsBox = $("stage-results-" + id);
 const resultsContent = $("stage-results-content-" + id);
-  if (!resultsBox.classList.contains("hidden")) {
+
+const stageCard = document.querySelector(
+  `[data-stage-card="${id}"]`
+);
+
+const toggleButton = stageCard?.querySelector("[data-edit-stage]");
+
+// Se já estiver aberto, fecha
+if (!resultsBox.classList.contains("hidden")) {
   resultsBox.classList.add("hidden");
+
+  if (!isStaff && toggleButton) {
+    toggleButton.textContent = "Ver etapa →";
+  }
+
   return;
 }
+
+// Fecha outras etapas abertas
+document.querySelectorAll('[id^="stage-results-"]').forEach(element => {
+  if (element.classList.contains("box")) {
+    element.classList.add("hidden");
+  }
+});
+
+// Restaura os botões das outras etapas
+if (!isStaff) {
+  document.querySelectorAll("[data-stage-card] [data-edit-stage]").forEach(button => {
+    button.textContent = "Ver etapa →";
+  });
+}
+
+// Abre a etapa selecionada
+resultsBox.classList.remove("hidden");
+
+if (!isStaff && toggleButton) {
+  toggleButton.textContent = "Ocultar etapa ↑";
+}
+
+resultsBox.scrollIntoView({
+  behavior: "smooth",
+  block: "nearest"
+});
 
 document.querySelectorAll('[id^="stage-results-"]').forEach(element => {
   if (element.classList.contains("box")) {
