@@ -5982,6 +5982,7 @@ async function openTournament(selectedTournament) {
  showTab("tournament-info-view");
 
   await refreshAll();
+  $("admin-sidebar-tournament-group").classList.toggle("hidden", !isStaff || !season);
 
   // Carregar informações do torneio
   const { data: tournamentDetails, error: detailsError } = await db
