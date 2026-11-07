@@ -3268,7 +3268,8 @@ function renderBlindClock() {
   if (!nextStep || pos.status === "finished") {
     $("blind-clock-next-step").textContent = "PRÓXIMO BLIND: —";
   } else if (nextStep.type === "break") {
-    $("blind-clock-next-step").textContent = "PRÓXIMO: INTERVALO • " + (Number(nextStep.duration) || 0) + " MIN";
+    const currentLevelNumber = blindClockState.structure_snapshot.slice(0, pos.index + 1).filter(item => item.type === "level").length;
+    $("blind-clock-next-step").textContent = "PRÓXIMO: BREAK • APÓS NÍVEL " + currentLevelNumber + " • " + (Number(nextStep.duration) || 0) + " MIN";
   } else {
     const nextLevelNumber = blindClockState.structure_snapshot.slice(0, pos.index + 2).filter(item => item.type === "level").length;
     const nextSb = Number(nextStep.small_blind || 0).toLocaleString("pt-BR");
