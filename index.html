@@ -5119,6 +5119,7 @@ function renderBlindPayoutEditor(existingPayouts = []) {
   });
 }
 $("blind-paid-places").addEventListener("change", () => renderBlindPayoutEditor());
+renderBlindPayoutEditor();
 
 function resetBlindEditor() {
   blindStructureEditingId = null;
