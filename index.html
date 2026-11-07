@@ -1724,8 +1724,6 @@ input:focus,select:focus {
 .blind-step-header{margin:22px 0 12px}
 .blind-step-actions{display:flex;gap:8px;flex-wrap:wrap}
 .blind-step-card{background:#111;border:1px solid #333;border-radius:8px;padding:13px;margin:10px 0;display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;align-items:start}
-.blind-step-card.dragging{opacity:.45;border-color:var(--red)}
-.blind-drag-handle{color:#999;cursor:grab;padding-top:12px;font-size:18px;user-select:none}
 .blind-step-fields{display:grid;grid-template-columns:repeat(4,minmax(90px,1fr));gap:9px}
 .blind-step-fields label{margin:0;font-size:11px}
 .blind-step-fields input{margin-top:5px}
@@ -4935,8 +4933,7 @@ function renderBlindEditorSteps() {
   container.innerHTML = blindStructureSteps.map((step, index) => {
     const isBreak = step.type === "break";
     return `
-      <div class="blind-step-card ${isBreak ? "break-step" : ""}" draggable="true" data-step-card="${index}">
-        <div class="blind-drag-handle" title="Arraste para reorganizar">⠿</div>
+      <div class="blind-step-card ${isBreak ? "break-step" : ""}" data-step-card="${index}">
         <div class="blind-step-fields">
           ${isBreak ? `
             <label>Intervalo
@@ -4969,23 +4966,6 @@ function renderBlindEditorSteps() {
     `;
   }).join("");
 
-  container.querySelectorAll(".blind-step-card").forEach(card => {
-    card.addEventListener("dragstart", event => {
-      event.dataTransfer.setData("text/plain", card.dataset.stepCard);
-      card.classList.add("dragging");
-    });
-    card.addEventListener("dragend", () => card.classList.remove("dragging"));
-    card.addEventListener("dragover", event => event.preventDefault());
-    card.addEventListener("drop", event => {
-      event.preventDefault();
-      const from = Number(event.dataTransfer.getData("text/plain"));
-      const to = Number(card.dataset.stepCard);
-      if (from === to || !blindStructureSteps[from] || !blindStructureSteps[to]) return;
-      const moved = blindStructureSteps.splice(from, 1)[0];
-      blindStructureSteps.splice(to, 0, moved);
-      renderBlindEditorSteps();
-    });
-  });
   renderBlindPreview();
 }
 
