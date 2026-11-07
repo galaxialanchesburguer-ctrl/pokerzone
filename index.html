@@ -2899,6 +2899,12 @@ async function checkSession() {
   isStaff = false;
   isAdmin = false;
 
+  // Mantém a lista de torneios recentes separada por conta do navegador.
+  recentTournamentsStorageKey = session?.user?.id
+    ? `pokerzone_recent_tournaments_${session.user.id}`
+    : "pokerzone_recent_tournaments_public";
+  loadRecentTournaments();
+
   if (session) {
     const { data: profile } = await db
       .from("profiles")
@@ -3675,6 +3681,7 @@ async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){
  
 let currentTournamentDetails = null;
  let isEditingTournamentInfo = false;
+ let recentTournamentsStorageKey = "pokerzone_recent_tournaments_public";
  
 async function openTournament(selectedTournament) {
   tournament = selectedTournament;
@@ -3685,10 +3692,10 @@ async function openTournament(selectedTournament) {
  $("edit-tournament-info-btn").classList.toggle("hidden", !isStaff);
 
   localStorage.setItem(
-    "pokerzone_recent_tournaments",
+    recentTournamentsStorageKey,
     JSON.stringify([
       tournament,
-      ...JSON.parse(localStorage.getItem("pokerzone_recent_tournaments") || "[]")
+      ...JSON.parse(localStorage.getItem(recentTournamentsStorageKey) || "[]")
         .filter(t => t.id !== tournament.id)
     ].slice(0, 10))
   );
@@ -3976,10 +3983,10 @@ async function saveTournamentInfo() {
     tournament = { ...tournament, ...savedTournament };
 
     const recentTournaments = JSON.parse(
-      localStorage.getItem("pokerzone_recent_tournaments") || "[]"
+      localStorage.getItem(recentTournamentsStorageKey) || "[]"
     );
     localStorage.setItem(
-      "pokerzone_recent_tournaments",
+      recentTournamentsStorageKey,
       JSON.stringify(recentTournaments.map(item =>
         item.id === tournament.id
           ? { ...item, name: tournament.name, description: tournament.description }
@@ -4323,11 +4330,11 @@ async function deleteCurrentTournament() {
     if (error) throw error;
 
     const recent = JSON.parse(
-      localStorage.getItem("pokerzone_recent_tournaments") || "[]"
+      localStorage.getItem(recentTournamentsStorageKey) || "[]"
     ).filter(item => item.id !== tournamentId);
 
     localStorage.setItem(
-      "pokerzone_recent_tournaments",
+      recentTournamentsStorageKey,
       JSON.stringify(recent)
     );
 
@@ -5387,7 +5394,7 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
   const container = $("recent-tournaments-list");
 
   const recent = JSON.parse(
-    localStorage.getItem("pokerzone_recent_tournaments") || "[]"
+    localStorage.getItem(recentTournamentsStorageKey) || "[]"
   );
 
   if (!recent.length) {
