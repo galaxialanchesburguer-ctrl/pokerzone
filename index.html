@@ -3513,9 +3513,28 @@ async function loadBlindClockStructures() {
   $("blind-clock-structure-select").innerHTML = blindClockStructures.length
     ? '<option value="">Selecione uma estrutura</option>' + blindClockStructures.map(item => `<option value="${item.id}">${esc(item.name)}</option>`).join("")
     : '<option value="">Você ainda não criou estruturas</option>';
+
+  const storageKey = getBlindClockStructureStorageKey(clubId);
+  const lastSelectedId = localStorage.getItem(storageKey);
+  const lastSelected = blindClockStructures.find(item => item.id === lastSelectedId);
+  if (lastSelected) {
+    $("blind-clock-structure-select").value = lastSelected.id;
+    blindClockSelectedStructure = lastSelected;
+  } else {
+    $("blind-clock-structure-select").value = "";
+    blindClockSelectedStructure = null;
+  }
+
   $("blind-clock-admin-message").textContent = blindClockStructures.length
-    ? "Escolha uma estrutura que você criou para iniciar o relógio do clube."
+    ? (lastSelected
+        ? "Última estrutura selecionada: " + lastSelected.name + "."
+        : "Escolha uma estrutura que você criou para iniciar o relógio do clube.")
     : "Você ainda não criou estruturas neste clube. Cadastre uma em Estruturas de Blinds.";
+}
+
+function getBlindClockStructureStorageKey(clubId) {
+  const contextId = blindClockClubId || blindClockTournament?.id || clubId;
+  return "pokerzone_last_blind_structure_" + contextId;
 }
 
 async function fetchBlindClock() {
@@ -3580,6 +3599,10 @@ async function loadSelectedBlindStructure() {
     if (!confirm("O relógio está em andamento. Carregar outra estrutura vai reiniciar o relógio. Deseja continuar?")) return;
   }
   blindClockSelectedStructure = selected;
+  localStorage.setItem(
+    getBlindClockStructureStorageKey(blindClockClubId || blindClockTournament?.club_id),
+    selected.id
+  );
   await saveBlindClock({
     structure_snapshot: selected.levels,
     prize_pool: selected.prize_pool ?? null,
