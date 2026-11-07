@@ -5873,12 +5873,18 @@ async function openStagePlayerCommand(commandId){
     const {error:linkError}=await db.from("stage_commands").update({club_player_id:stageCommandSelectedCustomer.id}).eq("id",command.id);
     if(linkError){content.innerHTML='<div class="notice">Não foi possível salvar o vínculo do jogador: '+esc(linkError.message)+'</div>';return;}
   }
+  const {data:stageInfo,error:stageInfoError}=await db.from("stages").select("id,tournament_id").eq("id",currentStage.id).single();
+  if(stageInfoError){content.innerHTML='<div class="notice">Não foi possível carregar os valores do torneio: '+esc(stageInfoError.message)+'</div>';return;}
+  const {data:stageTournamentDetails,error:stageDetailsError}=await db.from("tournament_details").select("buy_in,tournament_fee,club_fee_type,ranking_contribution,rebuy_amount,addon_amount").eq("tournament_id",stageInfo.tournament_id).maybeSingle();
+  if(stageDetailsError){content.innerHTML='<div class="notice">Não foi possível carregar os valores do torneio: '+esc(stageDetailsError.message)+'</div>';return;}
+  stageCommandTournamentDetails=stageTournamentDetails||{};
   const {data:quickProducts,error:quickProductsError}=await db.from("club_quick_items").select("id,name,unit_price,category").eq("club_id",command.club_id).order("name");
   stageCommandQuickProducts=quickProducts||[];
   renderStagePlayerCommand(history||[]);
   if(quickProductsError){const area=$("stage-command-quick-products");if(area)area.innerHTML='<div class="notice">Não foi possível carregar os produtos rápidos: '+esc(quickProductsError.message)+'</div>';}
 }
 let stageCommandQuickProducts=[];
+let stageCommandTournamentDetails={};
 function renderStagePlayerCommand(history=[],searchTerm=""){
   const content=$("stage-command-modal-content");
   const selected=stageCommandSelectedCustomer;
