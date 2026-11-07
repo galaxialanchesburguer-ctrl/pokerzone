@@ -2818,7 +2818,7 @@ body.clock-only-mode .blind-clock-ante{
     <div class="blind-clock-hero">
       <div class="blind-clock-kicker" id="blind-clock-tournament-name">POKERZONE • TORNEIO</div>
       <div class="blind-clock-time" id="blind-clock-countdown">00:00</div>
-      <div class="blind-clock-progress" id="blind-clock-progress" aria-label="Progresso e ajuste do tempo restante"><div class="blind-clock-progress-fill" id="blind-clock-progress-fill"></div><input class="blind-clock-progress-slider hidden" type="range" id="blind-clock-time-slider" min="1" max="3600" value="300" step="1" aria-label="Ajustar tempo restante ao vivo"></div>
+      <div class="blind-clock-progress" id="blind-clock-progress" aria-label="Progresso e ajuste do tempo restante"><div class="blind-clock-progress-fill" id="blind-clock-progress-fill"></div><input class="blind-clock-progress-slider hidden" type="range" id="blind-clock-time-slider" min="0" max="3600" value="0" step="1" aria-label="Ajustar tempo restante ao vivo"></div>
       <div class="blind-clock-step" id="blind-clock-step-name">Aguardando início</div>
       <div class="blind-clock-next-step" id="blind-clock-next-step">PRÓXIMO BLIND: —</div>
 
@@ -3389,16 +3389,18 @@ function renderBlindClock() {
   const timeSlider = $("blind-clock-time-slider");
   if (timeSlider) {
     const sliderMax = Math.max(1, clockDurationSeconds(step));
+    timeSlider.min = "0";
     timeSlider.max = String(sliderMax);
     if (document.activeElement !== timeSlider) {
-      timeSlider.value = String(Math.max(1, Math.min(sliderMax, pos.remaining || 1)));
+      const elapsed = Math.max(0, Math.min(sliderMax, sliderMax - (Number(pos.remaining) || 0)));
+      timeSlider.value = String(elapsed);
     }
     timeSlider.classList.toggle("hidden", !isStaff || !step || pos.status === "finished");
   }
 
   const levelDuration = step ? clockDurationSeconds(step) : 0;
   const displayedRemaining = timeSlider && document.activeElement === timeSlider
-    ? Math.max(1, Number(timeSlider.value) || 1)
+    ? Math.max(0, levelDuration - (Number(timeSlider.value) || 0))
     : pos.remaining;
   const progress = levelDuration > 0 ? (pos.status === "finished" ? 100 : Math.max(0, Math.min(100, ((levelDuration - displayedRemaining) / levelDuration) * 100))) : 0;
   $("blind-clock-progress-fill").style.width = progress + "%";
@@ -3841,14 +3843,17 @@ $("blind-clock-add-time").addEventListener("click", addBlindClockTime);
 $("blind-clock-time-slider").addEventListener("input", event => {
   const step = getBlindClockPosition(blindClockState).step;
   const duration = Math.max(1, clockDurationSeconds(step));
-  const remaining = Math.max(1, Number(event.target.value) || 1);
-  $("blind-clock-progress-fill").style.width = Math.max(0, Math.min(100, ((duration - remaining) / duration) * 100)) + "%";
+  const elapsed = Math.max(0, Math.min(duration, Number(event.target.value) || 0));
+  const remaining = Math.max(0, duration - elapsed);
+  $("blind-clock-progress-fill").style.width = (elapsed / duration) * 100 + "%";
   $("blind-clock-countdown").textContent = String(Math.floor(remaining / 60)).padStart(2, "0") + ":" + String(remaining % 60).padStart(2, "0");
 });
 $("blind-clock-time-slider").addEventListener("change", async event => {
   if (!isStaff || !blindClockState?.structure_snapshot?.length) return;
   const pos = getBlindClockPosition(blindClockState);
-  const seconds = Math.max(1, Number(event.target.value) || 1);
+  const duration = Math.max(1, clockDurationSeconds(pos.step));
+  const elapsed = Math.max(0, Math.min(duration, Number(event.target.value) || 0));
+  const seconds = Math.max(0, duration - elapsed);
   await saveBlindClock({
     current_step_index: pos.index,
     status: pos.status === "running" ? "running" : pos.status,
