@@ -1916,6 +1916,35 @@ body.clock-only-mode .blind-clock-next-step{order:5;align-self:center;color:rgba
 body.clock-only-mode .blind-clock-state{order:6;color:rgba(255,255,255,.6);margin-top:10px;letter-spacing:1.5px}
 body.clock-only-mode .blind-clock-controls{order:7;margin-top:clamp(18px,3vh,30px)}
 body.clock-only-mode .blind-clock-controls .btn{min-height:44px;padding:10px 20px;border-radius:9px}
+/* PREMIAÇÃO NO PADRÃO DE PAINEL LATERAL */
+.blind-prize-editor{margin:22px 0 26px;padding:18px;border:1px solid rgba(245,68,59,.28);border-radius:12px;background:rgba(245,68,59,.055)}
+.blind-prize-editor-heading{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.blind-prize-editor-heading strong{font-size:13px;letter-spacing:1.2px;color:var(--accent,#f5443b)}
+.blind-prize-editor-heading span{font-size:12px;line-height:1.5;color:var(--muted,#888)}
+.blind-payout-editor{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:12px}
+.blind-payout-editor label{font-size:11px}
+@media(max-width:650px){.blind-payout-editor{grid-template-columns:repeat(2,minmax(0,1fr))}}
+body.clock-only-mode .blind-clock-hero{display:grid;grid-template-columns:minmax(0,1fr) 190px;grid-template-areas:"title prize" "level prize" "timer prize" "progress prize" "blinds prize" "ante prize" "next prize" "state prize" "controls controls";align-items:center}
+body.clock-only-mode .blind-clock-tournament-name{grid-area:title}
+body.clock-only-mode .blind-clock-step{grid-area:level}
+body.clock-only-mode .blind-clock-time{grid-area:timer}
+body.clock-only-mode .blind-clock-progress{grid-area:progress}
+body.clock-only-mode .blind-clock-blinds{grid-area:blinds}
+body.clock-only-mode .blind-clock-ante{grid-area:ante}
+body.clock-only-mode .blind-clock-next-step{grid-area:next}
+body.clock-only-mode .blind-clock-state{grid-area:state}
+body.clock-only-mode .blind-clock-controls{grid-area:controls}
+body.clock-only-mode .blind-clock-prize{grid-area:prize;position:static;transform:none;width:auto;max-width:220px;margin:auto 0 auto auto;padding:16px;background:rgba(20,5,10,.24);border:1px solid rgba(255,255,255,.14);border-radius:12px}
+body.clock-only-mode .blind-clock-prize-total{position:relative;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.14);margin-bottom:10px}
+body.clock-only-mode .blind-clock-prize-total span{display:block;font-size:11px;letter-spacing:.3px;color:rgba(255,255,255,.7);margin-bottom:5px}
+body.clock-only-mode .blind-clock-prize-total strong{font-size:25px;color:#fff}
+body.clock-only-mode .blind-clock-prize-total small{display:inline-block;margin-left:5px;padding:2px 5px;border-radius:4px;background:rgba(255,255,255,.16);font-size:9px;font-weight:800}
+body.clock-only-mode .blind-clock-payout-list{display:flex;flex-direction:column;gap:8px}
+body.clock-only-mode .blind-clock-payout-list>div{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:rgba(255,255,255,.8)}
+body.clock-only-mode .blind-clock-payout-list>div strong{color:#fff}
+body.clock-only-mode .blind-clock-payout-empty{font-size:11px;color:rgba(255,255,255,.55);margin:0}
+@media(max-width:900px){body.clock-only-mode .blind-clock-hero{grid-template-columns:minmax(0,1fr);grid-template-areas:"title" "level" "timer" "progress" "blinds" "ante" "next" "prize" "state" "controls"}body.clock-only-mode .blind-clock-prize{width:min(280px,90%);max-width:none;margin:16px auto 0}}
+@media(max-width:700px){body.clock-only-mode .blind-clock-hero{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"title" "level" "timer" "progress" "blinds" "ante" "next" "prize" "state" "controls"}}
 /* BLINDS EM DESTAQUE + PREMIAÇÃO LATERAL */
 body.clock-only-mode .blind-clock-blinds{order:3;margin:clamp(14px,2.5vh,26px) 0 0;gap:0}
 body.clock-only-mode .blind-clock-primary{min-width:0}
@@ -2440,7 +2469,8 @@ body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{width:100%
       </div>
       <div class="blind-clock-ante" id="blind-clock-ante">ANTE 0</div>
       <div class="blind-clock-prize hidden" id="blind-clock-prize">
-        <span>PREMIAÇÃO</span><strong id="blind-clock-prize-value">R$ 0,00</strong>
+        <div class="blind-clock-prize-total"><span>PREMIAÇÃO TOTAL</span><strong id="blind-clock-prize-value">R$ 0,00</strong><small>GTD</small></div>
+        <div class="blind-clock-payout-list" id="blind-clock-payout-list"></div>
       </div>
       <div class="blind-clock-state" id="blind-clock-status">RELÓGIO PARADO</div>
       <div class="blind-clock-controls">
@@ -2498,8 +2528,21 @@ body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{width:100%
     <input id="blind-structure-name" type="text" placeholder="Ex.: Torneio de sábado">
     <label for="blind-structure-description">Descrição (opcional)</label>
     <input id="blind-structure-description" type="text" placeholder="Ex.: Níveis de 20 minutos">
-    <label for="blind-structure-prize">Premiação total (R$)</label>
-    <input id="blind-structure-prize" type="number" min="0" step="0.01" placeholder="Ex.: 1500,00">
+    <div class="blind-prize-editor">
+      <div class="blind-prize-editor-heading">
+        <strong>PREMIAÇÃO DO TORNEIO</strong>
+        <span>Informe o valor total e, se desejar, a divisão por colocação. Essa informação poderá ser exibida no relógio.</span>
+      </div>
+      <label for="blind-structure-prize">Premiação total (R$)</label>
+      <input id="blind-structure-prize" type="number" min="0" step="0.01" placeholder="Ex.: 1500,00">
+      <div class="blind-payout-editor">
+        <div><label for="blind-payout-1">1º lugar (R$)</label><input id="blind-payout-1" type="number" min="0" step="0.01" placeholder="Valor"></div>
+        <div><label for="blind-payout-2">2º lugar (R$)</label><input id="blind-payout-2" type="number" min="0" step="0.01" placeholder="Valor"></div>
+        <div><label for="blind-payout-3">3º lugar (R$)</label><input id="blind-payout-3" type="number" min="0" step="0.01" placeholder="Valor"></div>
+        <div><label for="blind-payout-4">4º lugar (R$)</label><input id="blind-payout-4" type="number" min="0" step="0.01" placeholder="Valor"></div>
+        <div><label for="blind-payout-5">5º lugar (R$)</label><input id="blind-payout-5" type="number" min="0" step="0.01" placeholder="Valor"></div>
+      </div>
+    </div>
     <div class="blind-step-header">
       <strong>Níveis e intervalos</strong>
     </div>
@@ -2964,6 +3007,10 @@ function renderBlindClock() {
   const canControl = isStaff && hasStructure;
   const prizePool = Number(blindClockState?.prize_pool || 0);
   $("blind-clock-prize-value").textContent = prizePool.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const payouts = Array.isArray(blindClockState?.payouts) ? blindClockState.payouts : [];
+  $("blind-clock-payout-list").innerHTML = payouts.length
+    ? payouts.map(entry => `<div><span>${Number(entry.place)}º</span><strong>${Number(entry.amount || 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</strong></div>`).join("")
+    : '<p class="blind-clock-payout-empty">Premiação por colocação não informada</p>';
   $("blind-clock-prize").classList.toggle("hidden", !blindClockState?.show_prize_pool || prizePool <= 0);
   $("blind-clock-prize-toggle").classList.toggle("hidden", !canControl || prizePool <= 0);
   $("blind-clock-prize-toggle").textContent = blindClockState?.show_prize_pool ? "Ocultar premiação" : "Exibir premiação";
@@ -3019,7 +3066,7 @@ async function loadBlindClockStructures() {
     return;
   }
   const { data, error } = await db.from("club_blind_structures")
-    .select("id, name, description, levels, prize_pool")
+    .select("id, name, description, levels, prize_pool, payouts")
     .eq("club_id", clubId)
     .eq("created_by", userId)
     .order("name");
@@ -3061,6 +3108,7 @@ async function saveBlindClock(nextState) {
     ...(blindClockClubId ? { club_id: blindClockClubId } : { tournament_id: blindClockTournament.id }),
     structure_snapshot: nextState.structure_snapshot || blindClockState?.structure_snapshot || [],
     prize_pool: nextState.prize_pool ?? blindClockState?.prize_pool ?? null,
+    payouts: nextState.payouts ?? blindClockState?.payouts ?? [],
     show_prize_pool: nextState.show_prize_pool ?? blindClockState?.show_prize_pool ?? false,
     current_step_index: Number(nextState.current_step_index ?? blindClockState?.current_step_index ?? 0),
     status: nextState.status ?? blindClockState?.status ?? "stopped",
@@ -3100,6 +3148,7 @@ async function loadSelectedBlindStructure() {
   await saveBlindClock({
     structure_snapshot: selected.levels,
     prize_pool: selected.prize_pool ?? null,
+    payouts: selected.payouts || [],
     show_prize_pool: false,
     current_step_index: 0,
     status: "stopped",
@@ -5028,6 +5077,7 @@ function resetBlindEditor() {
   $("blind-structure-name").value = "";
   $("blind-structure-description").value = "";
   $("blind-structure-prize").value = "";
+  [1,2,3,4,5].forEach(place => $("blind-payout-" + place).value = "");
   $("blind-editor-title").textContent = "Nova estrutura";
   $("blind-editor-message").textContent = "";
   $("blind-save-btn").textContent = "Salvar estrutura";
@@ -5100,7 +5150,7 @@ async function loadClubBlindStructures() {
   $("blind-saved-list").innerHTML = '<div class="empty">Carregando estruturas...</div>';
   const { data, error } = await db
     .from("club_blind_structures")
-    .select("id, club_id, name, description, levels, prize_pool, created_at")
+    .select("id, club_id, name, description, levels, prize_pool, payouts, created_at")
     .eq("club_id", selectedClubId)
     .order("name");
   if (error) {
@@ -5136,6 +5186,10 @@ function renderSavedBlindStructures() {
       $("blind-structure-name").value = item.name;
       $("blind-structure-description").value = item.description || "";
       $("blind-structure-prize").value = item.prize_pool ?? "";
+      [1,2,3,4,5].forEach(place => {
+        const payout = (item.payouts || []).find(entry => Number(entry.place) === place);
+        $("blind-payout-" + place).value = payout?.amount ?? "";
+      });
       $("blind-editor-title").textContent = "Editar estrutura: " + item.name;
       $("blind-editor-message").textContent = "Altere o nome ou os níveis e clique em Atualizar estrutura para salvar as mudanças.";
       $("blind-save-btn").textContent = "Atualizar estrutura";
@@ -5166,6 +5220,14 @@ async function saveClubBlindStructure() {
   const description = $("blind-structure-description").value.trim();
   const prizePoolRaw = $("blind-structure-prize").value.trim();
   const prizePool = prizePoolRaw === "" ? null : Number(prizePoolRaw);
+  const payouts = [1,2,3,4,5].map(place => ({
+    place,
+    amount: $("blind-payout-" + place).value.trim() === "" ? null : Number($("blind-payout-" + place).value)
+  })).filter(entry => entry.amount !== null);
+  if (payouts.some(entry => !Number.isFinite(entry.amount) || entry.amount < 0)) {
+    $("blind-editor-message").textContent = "Confira os valores da premiação por colocação.";
+    return;
+  }
   if (prizePool !== null && (!Number.isFinite(prizePool) || prizePool < 0)) {
     $("blind-editor-message").textContent = "Informe um valor válido para a premiação.";
     $("blind-structure-prize").focus();
@@ -5202,6 +5264,7 @@ async function saveClubBlindStructure() {
       name,
       description: description || null,
       prize_pool: prizePool,
+      payouts,
       levels: blindStructureSteps,
       created_by: userData?.user?.id || null,
       updated_at: new Date().toISOString()
