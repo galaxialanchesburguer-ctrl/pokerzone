@@ -1827,6 +1827,79 @@ body.clock-only-mode .blind-clock-structure-list{display:none!important}
 body.clock-only-mode #blind-clock-time-admin{display:none!important}
 body.clock-only-mode #blind-clock-admin:not(.hidden){max-width:720px;width:calc(100% - 28px);margin:20px auto}
 body.clock-only-mode #blind-clock-time-admin:not(.hidden){max-width:720px;width:calc(100% - 28px);margin:12px auto}
+
+/* ===== RELÓGIO DO CLUBE EM TELA INTEGRAL ===== */
+body.clock-only-mode #club-clock-area{
+  display:flex!important;
+  flex-direction:column;
+  height:100vh;
+  min-height:100vh;
+  overflow:hidden;
+}
+body.clock-only-mode #blind-clock-view{
+  display:flex;
+  flex:1 1 auto;
+  min-height:0;
+  width:100%;
+}
+body.clock-only-mode #blind-clock-container{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  min-height:0;
+  height:100%;
+  padding:0;
+}
+body.clock-only-mode #blind-clock-admin:not(.hidden){
+  width:min(420px,calc(100% - 28px));
+  max-width:420px;
+  margin:12px auto 0;
+  padding:0;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+}
+body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{
+  width:100%;
+  min-height:48px;
+  font-size:15px;
+  text-align:center;
+  background:#171717;
+  border:1px solid #54252a;
+  border-radius:9px;
+}
+body.clock-only-mode .blind-clock-hero{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  justify-content:center;
+  width:100%;
+  max-width:none;
+  min-height:0;
+  margin:0;
+  padding:clamp(12px,3vh,34px) 14px;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  background:radial-gradient(circle at 50% 15%,#251014 0%,#090909 68%);
+}
+body.clock-only-mode .blind-clock-time{
+  font-size:clamp(88px,22vw, min(25vh,240px));
+  line-height:.95;
+  margin:clamp(8px,2vh,22px) 0;
+}
+body.clock-only-mode .blind-clock-step{font-size:clamp(20px,4vw,42px)}
+body.clock-only-mode .blind-clock-blinds{gap:clamp(18px,7vw,100px);margin:clamp(14px,3vh,36px) 0}
+body.clock-only-mode .blind-clock-blind strong{font-size:clamp(30px,6vw,64px)}
+body.clock-only-mode .blind-clock-next-step{font-size:clamp(13px,2vw,20px)}
+@media(max-width:700px){
+  body.clock-only-mode .blind-clock-hero{padding:10px 8px}
+  body.clock-only-mode .blind-clock-time{font-size:clamp(76px,22vw,150px)}
+  body.clock-only-mode .blind-clock-blinds{gap:12px;margin:18px 0}
+  body.clock-only-mode .blind-clock-blind{min-width:78px}
+  body.clock-only-mode .blind-clock-blind strong{font-size:clamp(25px,8vw,42px)}
+}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2314,15 +2387,10 @@ body.clock-only-mode #blind-clock-time-admin:not(.hidden){max-width:720px;width:
   <div class="blind-clock-wrap" id="blind-clock-container">
     <h2 class="section-title">RELÓGIO DE BLINDS</h2>
     <div class="blind-clock-admin hidden" id="blind-clock-admin">
-      <div class="blind-clock-admin-grid">
-        <label>Estrutura do clube
-          <select id="blind-clock-structure-select">
-            <option value="">Carregando estruturas...</option>
-          </select>
-        </label>
-        <button class="btn" id="blind-clock-load-structure" type="button">Carregar estrutura</button>
-      </div>
-      <p id="blind-clock-admin-message" class="season-info" style="margin-top:10px">Selecione uma estrutura salva pelo clube para iniciar o relógio.</p>
+      <select id="blind-clock-structure-select" aria-label="Selecione a estrutura">
+        <option value="">Selecione a estrutura</option>
+      </select>
+      <p id="blind-clock-admin-message" class="season-info hidden" style="margin-top:10px"></p>
     </div>
     <div class="blind-clock-hero">
       <div class="blind-clock-kicker" id="blind-clock-tournament-name">POKERZONE • TORNEIO</div>
@@ -3191,7 +3259,7 @@ function exitBlindClockFullscreen() {
   el.classList.remove("blind-clock-fullscreen");
 }
 
-$("blind-clock-load-structure").addEventListener("click", loadSelectedBlindStructure);
+$("blind-clock-structure-select").addEventListener("change", loadSelectedBlindStructure);
 $("blind-clock-start").addEventListener("click", startOrResumeBlindClock);
 $("blind-clock-pause").addEventListener("click", pauseBlindClock);
 $("blind-clock-prev").addEventListener("click", () => moveBlindClock(-1));
