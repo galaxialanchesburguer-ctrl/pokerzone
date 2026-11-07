@@ -3335,18 +3335,19 @@ body.clock-only-mode .blind-clock-ante{
  <button class="tab" data-tab="tournament-info-view">Informações</button>
  <button class="tab admin-only" data-tab="tournament-entries-view">Conferência</button>
  <button class="tab" data-tab="stages-view">Etapas</button>
-  <button class="tab active" data-tab="ranking-view">Ranking geral</button>
+  <button class="tab active" data-tab="tournament-ranking-view">Ranking geral</button>
   <button class="tab" data-tab="final-ranking-view">Ranking final</button>
 </nav>
 
 
 
- <h2 class="section-title">Classificação completa</h2>
- <section class="box"><div class="box-head"><h2>RANKING DA TEMPORADA</h2>
-  <input class="search" id="search" type="search" placeholder="Pesquisar jogador..." autocomplete="off">
- </div>
-
+ <section id="tournament-ranking-view">
+  <h2 class="section-title">Classificação completa</h2>
+  <section class="box"><div class="box-head"><h2>RANKING DA TEMPORADA</h2>
+   <input class="search" id="search" type="search" placeholder="Pesquisar jogador..." autocomplete="off">
+  </div>
   <div class="table-wrap"><table><thead><tr><th>POS.</th><th>JOGADOR</th><th>PONTOS</th><th>ETAPAS</th></tr></thead><tbody id="ranking"><tr><td colspan="4" class="empty">Carregando...</td></tr></tbody></table></div></section>
+ </section>
 </section>
  
 
@@ -3610,7 +3611,7 @@ function showTab(id){
     b.classList.toggle("active",b.dataset.tab===id);
   });
 
-  $("ranking-view").classList.toggle("hidden",id!=="ranking-view");
+  $("tournament-ranking-view").classList.toggle("hidden",id!=="tournament-ranking-view");
   $("final-ranking-view").classList.toggle("hidden",id!=="final-ranking-view");
   $("player-profile-view").classList.toggle("hidden",id!=="player-profile-view");
   $("stages-view").classList.toggle("hidden",id!=="stages-view");
@@ -4293,7 +4294,7 @@ $("final-ranking").addEventListener("click", event => {
 });
 
 $("back-to-ranking").addEventListener("click", () => {
-  showTab("ranking-view");
+  showTab("tournament-ranking-view");
 });
 
  async function openPlayerProfile(playerId){
