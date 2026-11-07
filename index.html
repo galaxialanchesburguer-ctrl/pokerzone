@@ -2240,6 +2240,9 @@ body.clock-only-mode .blind-clock-controls .btn{
   }
 }
 
+/* ANTE ZERO COM DESTAQUE MAIS DISCRETO */
+body.clock-only-mode .blind-clock-ante.ante-zero{font-size:15px!important}
+@media(max-width:700px){body.clock-only-mode .blind-clock-ante.ante-zero{font-size:14px!important}}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3257,6 +3260,7 @@ function renderBlindClock() {
     $("blind-clock-sb").textContent = Number(step.small_blind || 0).toLocaleString("pt-BR") + " / " + Number(step.big_blind || 0).toLocaleString("pt-BR");
     $("blind-clock-ante").textContent = "ANTE " + Number(step.ante || 0).toLocaleString("pt-BR");
   }
+  $("blind-clock-ante").classList.toggle("ante-zero", !!step && step.type === "level" && Number(step.ante || 0) === 0);
   const statusLabels = {
     running: "● RELÓGIO EM ANDAMENTO",
     paused: "Ⅱ RELÓGIO PAUSADO",
