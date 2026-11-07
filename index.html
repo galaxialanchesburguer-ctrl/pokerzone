@@ -4177,6 +4177,15 @@ let currentTournamentDetails = null;
  let recentTournamentsStorageKey = "pokerzone_recent_tournaments_public";
  
 async function openTournament(selectedTournament) {
+  if (blindClockTick) {
+    clearInterval(blindClockTick);
+    blindClockTick = null;
+  }
+  if (blindClockChannel) {
+    db.removeChannel(blindClockChannel);
+    blindClockChannel = null;
+  }
+  blindClockState = null;
   tournament = selectedTournament;
   currentStage = null;
   editorResults = [];
