@@ -4077,7 +4077,11 @@ $("add-tournament-placement").addEventListener("click", () => {
 
  $("save-new-tournament").addEventListener("click", createTournament);
 $("login-open").addEventListener("click",()=>$("login-box").classList.remove("hidden"));
-$("login-close").addEventListener("click",()=>$("login-box").classList.add("hidden"));
+if ($("login-close")) {
+  $("login-close").addEventListener("click", () => {
+    $("login-box").classList.add("hidden");
+  });
+}
 $("login-btn").addEventListener("click",async()=>{const {error}=await db.auth.signInWithPassword({email:$("email").value,password:$("password").value});if(error){$("login-message").textContent=error.message;return} $("login-box").classList.add("hidden");await checkSession();await refreshAll()});
 $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await checkSession();await refreshAll()});
 
