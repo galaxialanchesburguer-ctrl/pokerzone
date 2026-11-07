@@ -5693,7 +5693,6 @@ async function loadStageCommandCards() {
     const commandNumber=playerPosition||command.command_number;
     return '<article class="stage-command-card"><h4>Comanda '+esc(commandNumber)+'</h4>'+
       (customerName?'<div class="stage-command-player-name">'+esc(customerName)+'</div>':'<div class="command-meta"><span>'+(customerId?'Cliente vinculado':'Aguardando cliente')+'</span></div>')+
-      '<div class="command-total">Total: '+clubMoney(total)+'</div>'+
       '<div class="command-meta"><span>Consumos: '+charges.length+'</span><span>Pagamentos: '+clubMoney(paid)+'</span></div>'+
       '<button type="button" class="btn secondary command-open" data-command-open="'+esc(command.id)+'">Abrir comanda</button></article>';
   }).join("")+(!stagePlayers.length?'<button type="button" class="stage-command-add" id="stage-command-add"><span>+</span><small>Adicionar comanda</small></button>':'');
@@ -5891,6 +5890,8 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
   const selected=stageCommandSelectedCustomer;
   const player=stageCommandSelectedPlayer;
   if(!content||!player)return;
+  const commandTotal=history.filter(row=>row.entry_type==="charge").reduce((sum,row)=>sum+Number(row.amount||0),0);
+  const commandPaid=history.filter(row=>row.entry_type==="payment").reduce((sum,row)=>sum+Number(row.amount||0),0);
   const historyHtml=history.length?history.map(row=>'<div class="stage-command-history-item"><span><b>'+esc(row.description||row.category||"Lançamento")+'</b><br><small>'+esc(row.category||"")+'</small></span><span style="display:flex;align-items:center;gap:9px;white-space:nowrap">'+(row.entry_type==="payment"?"− ":"+ ")+clubMoney(row.amount)+' <button type="button" class="btn danger" data-remove-ledger="'+esc(row.id)+'" title="Desfazer lançamento" aria-label="Desfazer lançamento" style="padding:3px 9px;min-width:28px;line-height:1">−</button></span></div>').join(""):'<div class="empty">Nenhum lançamento nesta comanda.</div>';
   const normalize=value=>(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim();
   const term=normalize(searchTerm);
@@ -5914,7 +5915,7 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
       '<label>Preço unitário (R$)<input id="stage-command-product-price" type="number" min="0.01" step="0.01" placeholder="10,00"></label>'+
       '<label>Categoria<select id="stage-command-product-category"><option value="Bebidas">Bebidas</option><option value="Alimentação">Alimentação</option><option value="Fichas">Fichas</option><option value="Outros">Outros</option></select></label>'+
       '<div><button type="button" class="btn" id="stage-command-product-save">Salvar produto</button> <span id="stage-command-product-message" class="season-info"></span></div></div>'+
-      '<div id="stage-command-quick-products" class="club-haver-quick-products">'+(stageCommandQuickProducts.length?stageCommandQuickProducts.filter(product=>/heineken/i.test(product.name||"")).map(product=>'<button type="button" class="club-haver-quick-product" data-stage-quick-product="'+esc(product.id)+'"><span><strong>'+esc(product.name)+'</strong><small>'+esc(product.category||"Outros")+' • '+clubMoney(product.unit_price)+'</small></span><span class="club-haver-quick-quantity">+</span></button>').join(""):'<div class="empty">Heineken ainda não está cadastrada no bar.</div>')+'</div></div></div>':'<div class="notice">Selecione um cliente para continuar o atendimento.</div>')+    '<div class="stage-command-modal-section"><h4>HISTÓRICO DESTA COMANDA</h4><div class="stage-command-modal-history">'+historyHtml+'</div></div>';
+      '<div id="stage-command-quick-products" class="club-haver-quick-products">'+(stageCommandQuickProducts.length?stageCommandQuickProducts.filter(product=>/heineken/i.test(product.name||"")).map(product=>'<button type="button" class="club-haver-quick-product" data-stage-quick-product="'+esc(product.id)+'"><span><strong>'+esc(product.name)+'</strong><small>'+esc(product.category||"Outros")+' • '+clubMoney(product.unit_price)+'</small></span><span class="club-haver-quick-quantity">+</span></button>').join(""):'<div class="empty">Heineken ainda não está cadastrada no bar.</div>')+'</div></div></div>':'<div class="notice">Selecione um cliente para continuar o atendimento.</div>')+    '<div class="stage-command-modal-section"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h4>HISTÓRICO DESTA COMANDA</h4><div style="text-align:right"><strong style="display:block;font-size:20px;color:#fff">Total: '+clubMoney(commandTotal)+'</strong><small class="command-meta">Pagamentos: '+clubMoney(commandPaid)+'</small></div></div><div class="stage-command-modal-history">'+historyHtml+'</div></div>';
   content.querySelector("#stage-command-delete")?.addEventListener("click",async()=>{
     if(!isStaff||!stageCommandSelectedPlayer)return;
     const confirmed=confirm("Excluir esta comanda? Todos os lançamentos e o histórico vinculados a ela também serão excluídos. Esta ação não pode ser desfeita.");
