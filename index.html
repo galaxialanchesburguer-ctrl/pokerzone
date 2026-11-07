@@ -2584,6 +2584,28 @@ body.clock-only-mode .blind-clock-ante{
 @media(max-width:600px){.stage-command-modal{padding:8px;align-items:flex-start}.stage-command-modal-panel{max-height:96vh;padding:14px;margin:auto 0}.stage-command-modal-head h3{font-size:17px}.stage-command-modal-grid{grid-template-columns:1fr}}
 
 
+/* ===== SUBMENU LATERAL DE ETAPAS ===== */
+#stage-sidebar{position:fixed;z-index:29;left:248px;top:0;bottom:0;width:250px;padding:22px 13px;background:#100d0e;border-right:1px solid #382326;overflow-y:auto;display:none;flex-direction:column;gap:14px}
+#stage-sidebar.visible{display:flex}
+#stage-sidebar .stage-sidebar-title{font-size:12px;font-weight:900;letter-spacing:1.2px;padding:4px 8px 12px;border-bottom:1px solid #352426}
+#stage-sidebar-list{display:grid;gap:6px}
+.stage-sidebar-item{width:100%;display:flex;flex-direction:column;gap:4px;text-align:left;padding:11px 10px;border:1px solid #342729;border-radius:7px;background:#1a1516;color:#eee;cursor:pointer}
+.stage-sidebar-item:hover,.stage-sidebar-item.active{border-color:#a83b43;background:#321c20}
+.stage-sidebar-item small{color:#aaa;font-size:10px}
+#stage-sidebar-create{margin-top:auto;width:100%}
+body.stage-sidebar-active main,body.stage-sidebar-active header,body.stage-sidebar-active footer{margin-left:498px}
+body.stage-sidebar-active main{width:calc(100% - 498px)}
+@media(max-width:760px){
+ #stage-sidebar{left:68px;width:205px;padding:14px 9px}
+ body.stage-sidebar-active main,body.stage-sidebar-active header,body.stage-sidebar-active footer{margin-left:273px}
+ body.stage-sidebar-active main{width:calc(100% - 273px);padding-left:10px;padding-right:10px}
+}
+@media(max-width:520px){
+ #stage-sidebar{left:68px;width:170px}
+ body.stage-sidebar-active main,body.stage-sidebar-active header,body.stage-sidebar-active footer{margin-left:238px}
+ body.stage-sidebar-active main{width:calc(100% - 238px)}
+}
+
 /* ===== NAVEGAÇÃO LATERAL ADMINISTRATIVA ===== */
 .admin-sidebar{position:fixed;z-index:30;left:0;top:0;bottom:0;width:248px;padding:24px 15px;background:linear-gradient(180deg,#151010,#090909 72%);border-right:1px solid #3b2022;overflow-y:auto;display:flex;flex-direction:column;gap:22px}
 .admin-sidebar.hidden{display:none!important}
@@ -2646,6 +2668,12 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     </nav>
   </div>
   <div class="admin-sidebar-foot">ÁREA ADMINISTRATIVA<br>POKERZONE</div>
+</aside>
+
+<aside id="stage-sidebar" aria-label="Navegação das etapas">
+  <div class="stage-sidebar-title">ETAPAS DO TORNEIO</div>
+  <div id="stage-sidebar-list"><div class="empty">Carregando etapas...</div></div>
+  <button type="button" class="btn" id="stage-sidebar-create">+ Criar etapa</button>
 </aside>
 
 <header><div class="logo">POKER<span>ZONE</span></div><div class="header-right"><div class="header-tag">RANKING OFICIAL</div><button class="btn secondary header-logout hidden" id="logout-btn">↪ Sair da conta</button></div></header>
@@ -3714,6 +3742,9 @@ const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function msg(text){$("connection-status").textContent=text}
 function showTab(id){
+  const stageSidebarActive = isStaff && id === "stages-view";
+  $("stage-sidebar").classList.toggle("visible", stageSidebarActive);
+  document.body.classList.toggle("stage-sidebar-active", stageSidebarActive);
   $("home-tournaments").classList.add("hidden");
    if (id !== "stages-view") {
     $("stage-editor").classList.add("hidden");
@@ -5101,6 +5132,22 @@ async function loadStages() {
 
     stages = data || [];
 
+    const stageSidebarList = $("stage-sidebar-list");
+    if (stageSidebarList) {
+      stageSidebarList.innerHTML = stages.length
+        ? stages.map(stage => `
+          <button type="button" class="stage-sidebar-item ${currentStage?.id === stage.id ? "active" : ""}" data-sidebar-stage="${stage.id}">
+            <strong>ETAPA ${String(stage.stage_number).padStart(2,"0")} · ${esc(stage.name || "Etapa " + stage.stage_number)}</strong>
+            <small>${new Date(stage.played_at + "T12:00:00").toLocaleDateString("pt-BR")} · ${stage.participant_count || 0} participantes</small>
+          </button>`).join("")
+        : '<div class="empty">Nenhuma etapa cadastrada.</div>';
+      stageSidebarList.querySelectorAll("[data-sidebar-stage]").forEach(button => {
+        button.addEventListener("click", () => openStage(button.dataset.sidebarStage));
+      });
+    }
+    const stageListBox = $("stage-list-box");
+    if (stageListBox) stageListBox.classList.toggle("hidden", isStaff);
+
    $("stage-list").innerHTML = stages.length
   ? stages.map(s => `
      <div class="stage-item" data-stage-card="${s.id}">
@@ -5386,7 +5433,11 @@ resultsContent.innerHTML =
   currentStage = stages.find(s => s.id === id);
   if (!currentStage) return;
 
+  $("stage-list-box").classList.add("hidden");
   $("stage-editor").classList.remove("hidden");
+  $("stage-sidebar-list")?.querySelectorAll("[data-sidebar-stage]").forEach(button => {
+    button.classList.toggle("active", button.dataset.sidebarStage === id);
+  });
   $("editor-title").textContent = currentStage.name;
 
   $("stage-number").value = currentStage.stage_number;
@@ -5878,6 +5929,8 @@ $("calculate-points").addEventListener("click", () => {
 });
 $("new-stage").addEventListener("click", () => {
   if (!isStaff) return;
+  $("stage-list-box").classList.add("hidden");
+  $("stage-sidebar-list")?.querySelectorAll("[data-sidebar-stage]").forEach(button => button.classList.remove("active"));
   currentStage = null;
   editorResults = [];
 
@@ -5985,9 +6038,12 @@ async function saveStage() {
  $("save-stage").addEventListener("click", saveStage);
  $("close-editor").addEventListener("click", () => {
   $("stage-editor").classList.add("hidden");
+  $("stage-list-box").classList.toggle("hidden", isStaff);
+  $("stage-sidebar-list")?.querySelectorAll("[data-sidebar-stage]").forEach(button => button.classList.remove("active"));
   currentStage = null;
   editorResults = [];
 });
+$("stage-sidebar-create").addEventListener("click", () => $("new-stage").click());
  
 async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){console.error(e);msg("Erro: "+e.message)}}
  
@@ -7101,6 +7157,8 @@ $("delete-tournament-btn").addEventListener("click", deleteCurrentTournament);
 });
 
 $("back-to-tournaments").addEventListener("click", () => {
+  $("stage-sidebar").classList.remove("visible");
+  document.body.classList.remove("stage-sidebar-active");
   tournament = null;
   season = null;
     currentStage = null;
