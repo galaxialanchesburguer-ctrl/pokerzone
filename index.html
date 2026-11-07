@@ -2547,7 +2547,7 @@ body.clock-only-mode .blind-clock-ante{
 .stage-editor-tabs{display:flex;gap:8px;padding:14px 20px 0;border-bottom:1px solid #342629}
 .stage-editor-tab{appearance:none;border:0;border-bottom:3px solid transparent;background:transparent;color:#aaa;padding:11px 16px;font:inherit;font-weight:800;cursor:pointer}
 .stage-editor-tab.active{color:#ff858b;border-bottom-color:#f5443b}
-.stage-editor-panel.hidden{display:none!important}
+.stage-editor-panel{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;position:relative;clear:both}.stage-editor-panel.hidden{display:none!important}#stage-data-panel,#stage-commands-panel{width:100%;max-width:100%;box-sizing:border-box}
 @media(max-width:600px){.stage-editor-tabs{padding:10px 12px 0}.stage-editor-tab{flex:1;padding:11px 8px}}
 /* COMANDAS INDIVIDUAIS POR ETAPA */
 .stage-command-area{padding:20px;border-top:1px solid #342629;margin-top:8px}
@@ -3693,18 +3693,19 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <div id="stage-command-grid" class="stage-command-grid"><div class="empty">Abra ou salve uma etapa para carregar as comandas.</div></div>
     </div>
   </div>
+</div>
+
+</div>
+</section>
+
+</section>
   <div id="stage-command-modal" class="stage-command-modal hidden" role="dialog" aria-modal="true" aria-labelledby="stage-command-modal-title">
     <div class="stage-command-modal-panel">
       <div class="stage-command-modal-head"><div><span>COMANDA INDIVIDUAL</span><h3 id="stage-command-modal-title">Jogador</h3></div><button type="button" class="btn secondary" id="stage-command-modal-close">Fechar ✕</button></div>
       <div id="stage-command-modal-content"></div>
     </div>
   </div>
- </div>
-
-</div>
-</section>
-
-</section>
+ 
 <div id="login-box" class="box">
   <div class="box-head">
     <h2>ACESSO DO ADMINISTRADOR</h2>
@@ -5652,8 +5653,6 @@ async function addStageCommand(){
   if(editorResults?.length){alert("Nesta etapa, cada jogador já possui sua própria comanda.");return;}
   const modal=$("stage-command-modal"),content=$("stage-command-modal-content");
   if(!modal||!content){alert("Não foi possível abrir a janela de comandas. Atualize a página e tente novamente.");return;}
-  // O modal precisa ficar fora do editor para não ser recortado pelo layout das abas.
-  if(modal.parentElement!==document.body)document.body.appendChild(modal);
   $("stage-command-modal-title").textContent="Adicionar comanda";
   content.innerHTML='<div class="empty">Identificando clube e carregando clientes...</div>';
   modal.classList.remove("hidden");
