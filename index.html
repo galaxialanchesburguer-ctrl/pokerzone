@@ -2572,7 +2572,7 @@ body.clock-only-mode .blind-clock-ante{
 .stage-command-detail{border-top:1px solid #393030;margin-top:13px;padding-top:12px}
 .stage-command-detail label{display:grid;gap:5px;color:#aaa;font-size:11px;margin:9px 0}
 .stage-command-detail input,.stage-command-detail select{width:100%}
-.stage-command-history{max-height:180px;overflow:auto;margin:10px 0}
+.stage-command-history{margin:10px 0}
 .stage-command-history-item{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #2b2525;font-size:11px}
 .stage-command-history-item span:last-child{white-space:nowrap;color:#ff858b}
 @media(max-width:600px){.stage-command-area{padding:15px 10px}.stage-command-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stage-command-card{padding:11px}.stage-command-card h4{font-size:13px}.stage-command-card .command-total{font-size:17px}}
@@ -2601,7 +2601,7 @@ body.clock-only-mode .blind-clock-ante{
 .stage-command-customer-option{width:100%;text-align:left;padding:10px 12px;border-radius:8px;border:1px solid #493638;background:#171515;color:#fff;cursor:pointer}
 .stage-command-customer-option.selected{border-color:#ff747c;background:#351c20}
 .stage-command-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stage-command-modal-history{max-height:190px;overflow:auto}
+.stage-command-modal-history{max-height:none;overflow:visible}
 .stage-command-modal-history .stage-command-history-item{padding:9px 0}
 @media(max-width:600px){.stage-command-modal{padding:8px;align-items:flex-start}.stage-command-modal-panel{max-height:96vh;padding:14px;margin:auto 0}.stage-command-modal-head h3{font-size:17px}.stage-command-modal-grid{grid-template-columns:1fr}}
 
@@ -5892,7 +5892,17 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
   if(!content||!player)return;
   const commandTotal=history.filter(row=>row.entry_type==="charge").reduce((sum,row)=>sum+Number(row.amount||0),0);
   const commandPaid=history.filter(row=>row.entry_type==="payment").reduce((sum,row)=>sum+Number(row.amount||0),0);
-  const historyHtml=history.length?history.map(row=>'<div class="stage-command-history-item"><span><b>'+esc(row.description||row.category||"Lançamento")+'</b><br><small>'+esc(row.category||"")+'</small></span><span style="display:flex;align-items:center;gap:9px;white-space:nowrap">'+(row.entry_type==="payment"?"− ":"+ ")+clubMoney(row.amount)+' <button type="button" class="btn danger" data-remove-ledger="'+esc(row.id)+'" title="Desfazer lançamento" aria-label="Desfazer lançamento" style="padding:3px 9px;min-width:28px;line-height:1">−</button></span></div>').join(""):'<div class="empty">Nenhum lançamento nesta comanda.</div>';
+  const groupedHistory=new Map();
+  history.forEach(row=>{
+    const key=JSON.stringify([row.entry_type,row.category||"",row.description||"",Number(row.amount||0)]);
+    if(!groupedHistory.has(key))groupedHistory.set(key,[]);
+    groupedHistory.get(key).push(row);
+  });
+  const historyGroups=[...groupedHistory.values()];
+  const historyHtml=historyGroups.length?historyGroups.map(rows=>{
+    const row=rows[0],quantity=rows.length,total=rows.reduce((sum,item)=>sum+Number(item.amount||0),0);
+    return '<div class="stage-command-history-item"><span><b>'+esc(row.description||row.category||"Lançamento")+'</b><br><small>'+esc(row.category||"")+'</small></span><span style="display:flex;align-items:center;gap:7px;white-space:nowrap">'+(row.entry_type==="payment"?"− ":"+ ")+clubMoney(total)+' <small style="color:#fff;background:#493034;border-radius:10px;padding:3px 7px;font-weight:800">x'+quantity+'</small> <button type="button" class="btn danger" data-remove-ledger="'+esc(rows[0].id)+'" title="Remover uma unidade" aria-label="Remover uma unidade" style="padding:3px 9px;min-width:28px;line-height:1">−</button></span></div>';
+  }).join(""):'<div class="empty">Nenhum lançamento nesta comanda.</div>';
   const normalize=value=>(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim();
   const term=normalize(searchTerm);
   const found=stageCommandCustomers.filter(customer=>normalize(customer.name).includes(term));
@@ -5934,7 +5944,7 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
     const ledgerId=removeButton.dataset.removeLedger;
     const row=history.find(item=>String(item.id)===String(ledgerId));
     if(!row)return;
-    if(!confirm("Desfazer este lançamento? Ele será removido do histórico e, se for Buy-in, Rebuy ou Add-on, também da conferência do torneio."))return;
+    if(!confirm("Remover uma unidade deste item? O histórico e, se aplicável, a conferência do torneio serão atualizados."))return;
     removeButton.disabled=true;
     const {data:linkedEntries,error:linkedError}=await db.from("tournament_entries").select("id").eq("ledger_entry_id",ledgerId);
     if(linkedError){alert("Não foi possível localizar o lançamento na conferência: "+linkedError.message);removeButton.disabled=false;return;}
