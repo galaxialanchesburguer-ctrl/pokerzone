@@ -5856,10 +5856,9 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
   const customerOptions=found.map(customer=>'<button type="button" class="stage-command-customer-option '+(selected?.id===customer.id?'selected':'')+'" data-select-customer="'+esc(customer.id)+'"><strong>'+esc(customer.name)+'</strong>'+(customer.phone?'<small style="display:block;color:#999;margin-top:3px">'+esc(customer.phone)+'</small>':'')+'</button>').join("");
   content.innerHTML=
     '<div class="stage-command-modal-section"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><h4>'+(player.player_id?'JOGADOR DA COMANDA':'1. CLIENTE DA COMANDA')+'</h4><button type="button" class="btn danger" id="stage-command-delete" style="padding:7px 10px;font-size:11px">Excluir comanda</button></div>'+
-      (player.player_id?'<p class="command-meta" style="margin-top:10px">Jogador: <b>'+esc(player.name)+'</b></p>':
+      (selected?'<p class="command-meta" style="margin-top:10px">'+(player.player_id?'Jogador':'Cliente')+': <b>'+esc(player.player_id?player.name:selected.name)+'</b></p>':
         '<label>Buscar cliente ou jogador<input id="stage-command-customer-search" type="search" value="'+esc(searchTerm)+'" placeholder="Digite o nome..." autocomplete="off"></label>'+
-        '<div class="stage-command-customer-results" id="stage-command-customer-results">'+(found.length?customerOptions:'<div class="empty">Nenhum cliente encontrado.</div>')+'</div>'+
-        (selected?'<p class="command-meta" style="margin-top:10px">Cliente selecionado: <b>'+esc(selected.name)+'</b></p>':''))+
+        '<div class="stage-command-customer-results" id="stage-command-customer-results">'+(found.length?customerOptions:'<div class="empty">Nenhum cliente encontrado.</div>')+'</div>')+
     '</div>'+
     (selected?'<div class="stage-command-modal-section"><h4>2. ATENDIMENTO</h4>'+
       '<label>Atendente<input id="stage-command-attendant" type="text" placeholder="Nome de quem está atendendo"></label>'+
