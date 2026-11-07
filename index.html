@@ -2556,7 +2556,8 @@ body.clock-only-mode .blind-clock-ante{
 .stage-command-heading p{color:#999;font-size:12px;margin-top:5px}
 .stage-command-heading>span{font-size:11px;color:#ff858b;background:#35191c;border:1px solid #713036;padding:7px 10px;border-radius:20px}
 .stage-command-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-.stage-command-add{min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1px dashed #704047;border-radius:12px;background:transparent;color:#f08b90;cursor:pointer}.stage-command-add span{font-size:42px;line-height:1}.stage-command-add small{font-size:12px;font-weight:800}.stage-command-card{background:linear-gradient(145deg,#222,#121212);border:1px solid #3a3030;border-radius:12px;padding:15px;min-width:0}
+.stage-command-add{min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1px dashed #704047;border-radius:12px;background:transparent;color:#f08b90;cursor:pointer}.stage-command-add span{font-size:42px;line-height:1}.stage-command-add small{font-size:12px;font-weight:800}.stage-command-player-name{display:flex;align-items:center;justify-content:center;text-align:center;min-height:62px;padding:8px 4px;font-size:18px;font-weight:800;color:#fff;letter-spacing:.2px}
+.stage-command-card{background:linear-gradient(145deg,#222,#121212);border:1px solid #3a3030;border-radius:12px;padding:15px;min-width:0}
 .stage-command-card h4{font-size:15px;overflow-wrap:anywhere;margin-bottom:8px}
 .stage-command-card .command-total{font-size:23px;font-weight:900;color:#fff;margin:8px 0}
 .stage-command-card .command-meta{font-size:11px;color:#aaa;display:flex;gap:8px;flex-wrap:wrap}
@@ -5662,9 +5663,12 @@ async function loadStageCommandCards() {
     const total=charges.reduce((sum,row)=>sum+Number(row.amount||0),0);
     const player=stagePlayers.find(item=>item.player_id===command.tournament_player_id);
     const customer=history.find(row=>row.club_player_id)?.club_player_id||command.club_player_id;
-    const title=player?player.name:"Comanda "+command.command_number;
-    const subtitle=player?"Jogador da etapa":(customer?'Cliente vinculado':'Aguardando cliente');
-    return '<article class="stage-command-card"><h4>'+esc(title)+'</h4><div class="command-meta"><span>'+subtitle+'</span></div><div class="command-total">'+clubMoney(total)+'</div><div class="command-meta"><span>Consumos: '+charges.length+'</span><span>Pagamentos: '+clubMoney(paid)+'</span></div><button type="button" class="btn secondary command-open" data-command-open="'+esc(command.id)+'">Abrir comanda</button></article>';
+    const commandNumber=player?.position||command.command_number;
+    const customerName=player?.name||"";
+    return '<article class="stage-command-card"><h4>Comanda '+esc(commandNumber)+'</h4>'+
+      (player?'<div class="stage-command-player-name">'+esc(customerName)+'</div>':
+        '<div class="command-meta"><span>'+(customer?'Cliente vinculado':'Aguardando cliente')+'</span></div><div class="command-total">'+clubMoney(total)+'</div><div class="command-meta"><span>Consumos: '+charges.length+'</span><span>Pagamentos: '+clubMoney(paid)+'</span></div>')+
+      '<button type="button" class="btn secondary command-open" data-command-open="'+esc(command.id)+'">Abrir comanda</button></article>';
   }).join("")+(!stagePlayers.length?'<button type="button" class="stage-command-add" id="stage-command-add"><span>+</span><small>Adicionar comanda</small></button>':'');
   grid.querySelectorAll("[data-command-open]").forEach(button=>button.addEventListener("click",()=>openStagePlayerCommand(button.dataset.commandOpen)));
   $("stage-command-add")?.addEventListener("click",addStageCommand);
