@@ -4687,12 +4687,13 @@ $("new-club-btn").addEventListener("click", () => {
 });
 $("save-new-club").addEventListener("click", createClub);
 
-$("close-club-details").addEventListener("click", () => {
+$("close-club-details").addEventListener("click", async () => {
   $("club-details-area").classList.add("hidden");
   $("manage-clubs-area").classList.remove("hidden");
   $("recent-tournaments-list").parentElement.classList.remove("hidden");
   $("tournament-search-area").classList.add("hidden");
   selectedClubId = null;
+  await loadClubs();
 });
 
 $("club-tournaments-btn").addEventListener("click", async () => {
@@ -5543,41 +5544,43 @@ async function loadClubTournaments() {
 }
  async function loadClubs() {
   const list = $("clubs-list");
+  if (!list) return;
 
   list.textContent = "Carregando clubes...";
 
-  const { data: clubs, error } = await db
-    .from("clubs")
-    .select("id, name, city, state, description")
-    .order("name");
+  try {
+    const { data: clubs, error } = await db
+      .from("clubs")
+      .select("id, name, city, state, description")
+      .order("name");
 
-  if (error) {
-    console.error("Erro ao carregar clubes:", error);
-    list.textContent = "Erro ao carregar clubes: " + error.message;
-    return;
-  }
+    if (error) throw error;
 
-  if (!clubs || clubs.length === 0) {
-    list.textContent = "Nenhum clube cadastrado.";
-    return;
-  }
+    if (!clubs || clubs.length === 0) {
+      list.textContent = "Nenhum clube cadastrado.";
+      return;
+    }
 
-  list.innerHTML = clubs.map(club => `
-    <div class="box" style="margin-top:12px;">
-  <h3>${escapeHtml(club.name)}</h3>
-  <p>${escapeHtml(club.city || "")} - ${escapeHtml(club.state || "")}</p>
-  <p>${escapeHtml(club.description || "")}</p>
+    list.innerHTML = clubs.map(club => `
+      <div class="box" style="margin-top:12px;">
+        <h3>${escapeHtml(club.name)}</h3>
+        <p>${escapeHtml(club.city || "")} - ${escapeHtml(club.state || "")}</p>
+        <p>${escapeHtml(club.description || "")}</p>
+        <button class="btn open-club-btn" data-club-id="${club.id}">
+          Abrir clube
+        </button>
+      </div>
+    `).join("");
 
-  <button class="btn open-club-btn" data-club-id="${club.id}">
-    Abrir clube
-  </button>
-</div>
-  `).join("");
     list.querySelectorAll(".open-club-btn").forEach(button => {
-    button.addEventListener("click", () => {
-      openClub(button.dataset.clubId);
+      button.addEventListener("click", () => {
+        openClub(button.dataset.clubId);
+      });
     });
-  });
+  } catch (error) {
+    console.error("Erro ao carregar clubes:", error);
+    list.textContent = "Não foi possível carregar os clubes. " + (error?.message || "Tente novamente.");
+  }
 }
 
  
