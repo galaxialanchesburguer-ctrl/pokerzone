@@ -5844,6 +5844,7 @@ async function openStagePlayerCommand(commandId){
   if(!isStaff||!currentStage?.id)return;
   const {data:command,error:commandError}=await db.from("stage_commands").select("id,command_number,club_id,club_player_id,tournament_player_id").eq("id",commandId).eq("stage_id",currentStage.id).single();
   if(commandError){alert("Não foi possível abrir a comanda: "+commandError.message);return;}
+  stageCommandClubId=command.club_id;
   const linkedPlayer=editorResults.find(item=>item.player_id===command.tournament_player_id);
   stageCommandSelectedPlayer={id:command.id,player_id:command.tournament_player_id||null,name:linkedPlayer?.name||"Comanda "+command.command_number,command_number:command.command_number};
   stageCommandSelectedCustomer=null;
