@@ -1813,10 +1813,12 @@ input:focus,select:focus {
 }
 
 body.clock-only-mode header,
-body.clock-only-mode main > *:not(#club-clock-area),
+body.clock-only-mode main > *:not(#club-details-area),
 body.clock-only-mode footer,
 body.clock-only-mode .connection-status{display:none!important}
 body.clock-only-mode main{max-width:none;width:100%;min-height:100vh;margin:0;padding:0}
+body.clock-only-mode #club-details-area{display:block!important;width:100%;min-height:100vh;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+body.clock-only-mode #club-details-area > *:not(#club-clock-area){display:none!important}
 body.clock-only-mode #club-clock-area{display:block!important;width:100%;min-height:100vh;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 body.clock-only-mode #blind-clock-container{width:100%;min-height:100vh;max-width:none;margin:0;border:0;border-radius:0}
 body.clock-only-mode .blind-clock-hero{width:100%;max-width:1500px;margin:auto}
