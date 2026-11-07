@@ -5647,9 +5647,11 @@ async function loadStageCommandCards() {
       let command=rows.find(item=>item.tournament_player_id===player.player_id);
       if(!command) command=rows.find(item=>!item.tournament_player_id&&Number(item.command_number)===i+1);
       if(command){
-        const {error}=await db.from("stage_commands").update({tournament_player_id:player.player_id}).eq("id",command.id);
-        if(error){grid.innerHTML='<div class="notice">Não foi possível vincular a comanda de '+esc(player.name)+': '+esc(error.message)+'</div>';return;}
-        command.tournament_player_id=player.player_id;
+        if(command.tournament_player_id!==player.player_id){
+          const {error}=await db.from("stage_commands").update({tournament_player_id:player.player_id}).eq("id",command.id);
+          if(error){grid.innerHTML='<div class="notice">Não foi possível vincular a comanda de '+esc(player.name)+': '+esc(error.message)+'</div>';return;}
+          command.tournament_player_id=player.player_id;
+        }
       }else{
         const {data:newCommand,error}=await db.from("stage_commands").insert({stage_id:currentStage.id,club_id:clubId,command_number:i+1,tournament_player_id:player.player_id}).select("id,command_number,club_player_id,club_id,tournament_player_id").single();
         if(error){grid.innerHTML='<div class="notice">Não foi possível criar a comanda de '+esc(player.name)+': '+esc(error.message)+'</div>';return;}
@@ -5660,19 +5662,31 @@ async function loadStageCommandCards() {
   }else{
     rows=rows.sort((a,b)=>a.command_number-b.command_number);
   }
+  const linkedCustomerIds=[...new Set(rows.map(command=>command.club_player_id).filter(Boolean).concat((ledgerRows||[]).map(row=>row.club_player_id).filter(Boolean)))];
+  const linkedPlayerIds=[...new Set(rows.map(command=>command.tournament_player_id).filter(Boolean))];
+  const [customerResult,playerResult]=await Promise.all([
+    linkedCustomerIds.length?db.from("club_players").select("id,name").in("id",linkedCustomerIds):Promise.resolve({data:[],error:null}),
+    linkedPlayerIds.length?db.from("players").select("id,display_name").in("id",linkedPlayerIds):Promise.resolve({data:[],error:null})
+  ]);
+  if(customerResult.error||playerResult.error){grid.innerHTML='<div class="notice">Não foi possível carregar os nomes das comandas: '+esc((customerResult.error||playerResult.error).message)+'</div>';return;}
+  const customersById=new Map((customerResult.data||[]).map(item=>[item.id,item]));
+  const playersById=new Map((playerResult.data||[]).map(item=>[item.id,item]));
   count.textContent=rows.length+" comandas";
   grid.innerHTML=rows.map(command=>{
     const history=(ledgerRows||[]).filter(row=>row.stage_command_id===command.id);
     const charges=history.filter(row=>row.entry_type==="charge");
     const paid=history.filter(row=>row.entry_type==="payment").reduce((sum,row)=>sum+Number(row.amount||0),0);
     const total=charges.reduce((sum,row)=>sum+Number(row.amount||0),0);
-    const player=stagePlayers.find(item=>item.player_id===command.tournament_player_id);
-    const customer=history.find(row=>row.club_player_id)?.club_player_id||command.club_player_id;
-    const commandNumber=player?.position||command.command_number;
-    const customerName=player?.name||"";
+    const stagePlayer=stagePlayers.find(item=>item.player_id===command.tournament_player_id);
+    const linkedPlayer=playersById.get(command.tournament_player_id);
+    const customerId=history.find(row=>row.club_player_id)?.club_player_id||command.club_player_id;
+    const customer=customersById.get(customerId);
+    const customerName=customer?.name||stagePlayer?.name||linkedPlayer?.display_name||"";
+    const playerPosition=stagePlayer?.position;
+    const commandNumber=playerPosition||command.command_number;
     return '<article class="stage-command-card"><h4>Comanda '+esc(commandNumber)+'</h4>'+
-      (player?'<div class="stage-command-player-name">'+esc(customerName)+'</div>':
-        '<div class="command-meta"><span>'+(customer?'Cliente vinculado':'Aguardando cliente')+'</span></div><div class="command-total">'+clubMoney(total)+'</div><div class="command-meta"><span>Consumos: '+charges.length+'</span><span>Pagamentos: '+clubMoney(paid)+'</span></div>')+
+      (customerName?'<div class="stage-command-player-name">'+esc(customerName)+'</div>':
+        '<div class="command-meta"><span>'+(customerId?'Cliente vinculado':'Aguardando cliente')+'</span></div><div class="command-total">'+clubMoney(total)+'</div><div class="command-meta"><span>Consumos: '+charges.length+'</span><span>Pagamentos: '+clubMoney(paid)+'</span></div>')+
       '<button type="button" class="btn secondary command-open" data-command-open="'+esc(command.id)+'">Abrir comanda</button></article>';
   }).join("")+(!stagePlayers.length?'<button type="button" class="stage-command-add" id="stage-command-add"><span>+</span><small>Adicionar comanda</small></button>':'');
   grid.querySelectorAll("[data-command-open]").forEach(button=>button.addEventListener("click",()=>openStagePlayerCommand(button.dataset.commandOpen)));
