@@ -1724,6 +1724,8 @@ input:focus,select:focus {
 .blind-step-header{margin:22px 0 12px}
 .blind-step-actions{display:flex;gap:8px;flex-wrap:wrap}
 .blind-step-card{background:#111;border:1px solid #333;border-radius:8px;padding:13px;margin:10px 0;display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;align-items:start}
+.blind-step-index{font-size:10px;font-weight:800;letter-spacing:.4px;color:#ff8a82;padding-top:3px;white-space:nowrap}
+.blind-step-card.break-step .blind-step-index{color:#e8bd70}
 .blind-step-fields{display:grid;grid-template-columns:repeat(4,minmax(90px,1fr));gap:9px}
 .blind-step-fields label{margin:0;font-size:11px}
 .blind-step-fields input{margin-top:5px}
@@ -4932,8 +4934,11 @@ function renderBlindEditorSteps() {
 
   container.innerHTML = blindStructureSteps.map((step, index) => {
     const isBreak = step.type === "break";
+    const levelNumber = blindStructureSteps.slice(0, index + 1).filter(item => item.type === "level").length;
+    const stepLabel = isBreak ? "PAUSA" : "NÍVEL " + levelNumber;
     return `
       <div class="blind-step-card ${isBreak ? "break-step" : ""}" data-step-card="${index}">
+        <div class="blind-step-index">${stepLabel}</div>
         <div class="blind-step-fields">
           ${isBreak ? `
             <label>Intervalo
