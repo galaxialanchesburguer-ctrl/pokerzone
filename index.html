@@ -2548,7 +2548,7 @@ body.clock-only-mode .blind-clock-ante{
 .stage-editor-tab{appearance:none;border:0;border-bottom:3px solid transparent;background:transparent;color:#aaa;padding:11px 16px;font:inherit;font-weight:800;cursor:pointer}
 .stage-editor-tab.active{color:#ff858b;border-bottom-color:#f5443b}
 .stage-editor-panel{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;position:relative;clear:both}.stage-editor-panel.hidden{display:none!important}#stage-data-panel,#stage-commands-panel{width:100%;max-width:100%;box-sizing:border-box}
-/* Correção de largura do editor e das comandas */ #stage-editor{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;float:none!important;position:relative!important} #stage-editor>.stage-editor-panel{display:block;width:100%!important;max-width:100%!important;min-width:0!important;float:none!important;clear:both!important;grid-column:1/-1!important;justify-self:stretch!important} #stage-commands-panel .stage-command-area{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;float:none!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important} #stage-command-grid{display:grid!important;width:100%!important;max-width:100%!important;min-width:0!important;grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr))!important;justify-items:stretch!important;justify-content:stretch!important;box-sizing:border-box!important} #stage-command-grid>.stage-command-card,#stage-command-grid>.stage-command-add{width:100%!important;max-width:none!important;min-width:0!important;justify-self:stretch!important;box-sizing:border-box!important} @media(max-width:600px){.stage-editor-tabs{padding:10px 12px 0}.stage-editor-tab{flex:1;padding:11px 8px}}
+/* Correção de largura do editor e das comandas */ #stage-editor{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;float:none!important;position:relative!important} /* O app usa a classe .season em flex; aqui as seções devem ocupar a largura inteira. */ #tournament-app{display:block!important;width:100%;min-width:0} #stages-view{display:block!important;width:100%;min-width:0} #stage-editor{margin-left:0!important;margin-right:0!important;align-self:stretch!important} #stage-editor>.stage-editor-panel{display:block;width:100%!important;max-width:100%!important;min-width:0!important;float:none!important;clear:both!important;grid-column:1/-1!important;justify-self:stretch!important} #stage-commands-panel .stage-command-area{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;float:none!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important} #stage-command-grid{display:grid!important;width:100%!important;max-width:100%!important;min-width:0!important;grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr))!important;justify-items:stretch!important;justify-content:stretch!important;box-sizing:border-box!important} #stage-command-grid>.stage-command-card,#stage-command-grid>.stage-command-add{width:100%!important;max-width:none!important;min-width:0!important;justify-self:stretch!important;box-sizing:border-box!important} @media(max-width:600px){.stage-editor-tabs{padding:10px 12px 0}.stage-editor-tab{flex:1;padding:11px 8px}}
 /* COMANDAS INDIVIDUAIS POR ETAPA */
 .stage-command-area{padding:20px;border-top:1px solid #342629;margin-top:8px}
 .stage-command-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
@@ -5060,10 +5060,10 @@ async function openSidebarTournamentStages(selected, tournamentList) {
   stages=rows||[];
   const list=$("tournament-tree-list");
   list.innerHTML=stages.length?stages.map(st=>`<button type="button" class="tournament-tree-item" data-tree-stage="${st.id}">${esc(st.name||"Etapa "+st.stage_number)}</button>`).join(""):'<div class="empty">Nenhuma etapa cadastrada.</div>';
-  list.querySelectorAll("[data-tree-stage]").forEach(sb=>sb.addEventListener("click",()=>{
+  list.querySelectorAll("[data-tree-stage]").forEach(sb=>sb.addEventListener("click",async()=>{
     list.querySelectorAll("[data-tree-stage]").forEach(x=>x.classList.toggle("active",x===sb));
     showTab("stages-view");
-    openStage(sb.dataset.treeStage);
+    await openStage(sb.dataset.treeStage);
   }));
   const create=document.createElement("button");
   create.type="button";create.className="tournament-tree-create";create.textContent="+ Criar etapa";
@@ -5525,77 +5525,79 @@ document.querySelectorAll("[data-stage-editor-tab]").forEach(button => {
   button.addEventListener("click", () => setStageEditorTab(button.dataset.stageEditorTab));
 });
 
+let stageLoadRequestId = 0;
 async function openStage(id) {
-  if (!isStaff) return;
-  // Sempre resolve a etapa com os dados completos, inclusive quando o clique
-  // veio da árvore lateral que pode ter sido carregada antes da temporada.
-  let selectedStage = stages.find(s => s.id === id);
-  if (!selectedStage || !selectedStage.played_at || !selectedStage.status || !selectedStage.club_id) {
-    const {data:stageData,error:stageError}=await db.from("stages")
-      .select("id,season_id,stage_number,name,played_at,participant_count,status,is_open,tournament_id,club_id")
-      .eq("id",id).maybeSingle();
-    if(stageError){alert("Não foi possível carregar os dados da etapa: "+stageError.message);return;}
-    if(!stageData){alert("Etapa não encontrada.");return;}
-    selectedStage=stageData;
-    stages=[...stages.filter(item=>item.id!==id),selectedStage].sort((a,b)=>Number(a.stage_number)-Number(b.stage_number));
-  }
-  currentStage = selectedStage;
-  updateDeleteActionButton();
+  if (!isStaff || !id) return;
+  const requestId = ++stageLoadRequestId;
 
   $("stage-list-box").classList.add("hidden");
   $("stage-editor").classList.remove("hidden");
-  $("editor-title").textContent = currentStage.name;
+  $("editor-title").textContent = "Carregando etapa...";
+  $("result-rows").innerHTML = '<tr><td colspan="4" class="empty">Carregando jogadores e resultados...</td></tr>';
+  $("stage-command-grid").innerHTML = '<div class="empty">Carregando comandas...</div>';
   setStageEditorTab("data");
 
-  $("stage-number").value = currentStage.stage_number;
-  $("stage-name").value = currentStage.name;
-  $("stage-date").value = currentStage.played_at;
-  $("stage-status").value = currentStage.status;
+  // Busca sempre a etapa clicada no banco, sem depender de dados antigos da barra lateral.
+  const { data: selectedStage, error: stageError } = await db
+    .from("stages")
+    .select("id,season_id,stage_number,name,played_at,participant_count,status,is_open,tournament_id,club_id")
+    .eq("id", id)
+    .maybeSingle();
 
-  [
-    "stage-number",
-    "stage-name",
-    "stage-date",
-    "stage-status",
-    "add-player",
-    "calculate-points",
-    "save-stage"
-  ].forEach(id => {
-    $(id).disabled = !isStaff;
-  });
+  if (requestId !== stageLoadRequestId) return;
+  if (stageError) {
+    alert("Não foi possível carregar os dados da etapa: " + stageError.message);
+    return;
+  }
+  if (!selectedStage) {
+    alert("Etapa não encontrada.");
+    return;
+  }
+
+  currentStage = selectedStage;
+  stages = [...stages.filter(item => item.id !== id), selectedStage]
+    .sort((a,b) => Number(a.stage_number)-Number(b.stage_number));
+  updateDeleteActionButton();
+  $("editor-title").textContent = selectedStage.name || "ETAPA " + selectedStage.stage_number;
+  $("stage-number").value = selectedStage.stage_number ?? "";
+  $("stage-name").value = selectedStage.name || "";
+  $("stage-date").value = selectedStage.played_at || "";
+  $("stage-status").value = selectedStage.status || "draft";
+
+  ["stage-number","stage-name","stage-date","stage-status","add-player","calculate-points","save-stage"]
+    .forEach(fieldId => { $(fieldId).disabled = !isStaff; });
 
   const { data, error } = await db
     .from("results")
     .select("id,player_id,position,points,player:players(id,display_name)")
-    .eq("stage_id", id)
+    .eq("stage_id", selectedStage.id)
     .order("position");
 
+  if (requestId !== stageLoadRequestId) return;
   if (error) {
+    $("result-rows").innerHTML = '<tr><td colspan="4" class="empty">Erro ao carregar resultados: ' + esc(error.message) + '</td></tr>';
     alert("Erro ao carregar resultados: " + error.message);
     return;
   }
 
-  editorResults = (data || []).map(r => ({
-    id: r.id,
-    player_id: r.player_id,
-    name: r.player?.display_name || "Jogador",
-    position: r.position,
-    points: r.points
+  editorResults = (data || []).map(row => ({
+    id: row.id,
+    player_id: row.player_id,
+    name: row.player?.display_name || "Jogador",
+    position: row.position,
+    points: row.points
   }));
 
-  // Atualiza as sugestões de jogadores cadastrados.
   updatePlayerSuggestions();
-
   $("player-search").value = "";
   $("player-feedback").classList.add("hidden");
-
   renderResultRows();
-  await loadStageCommandCards();
 
-  $("stage-editor").scrollIntoView({
-    behavior: "smooth",
-    block: "start"
-  });
+  await loadStageCommandCards();
+  if (requestId !== stageLoadRequestId) return;
+
+  setStageEditorTab("data");
+  $("stage-editor").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 let stageCommandCustomers = [];
 let stageCommandSelectedCustomer = null;
