@@ -2861,6 +2861,9 @@ function renderBlindClock() {
 
   const hasStructure = !!blindClockState?.structure_snapshot?.length;
   const canControl = isStaff && hasStructure;
+  // Antes de carregar uma estrutura, manter a tela limpa e mostrar apenas os seletores.
+  $("blind-clock-container").querySelector(".blind-clock-hero").classList.toggle("hidden", !hasStructure);
+  $("blind-clock-container").querySelector(".blind-clock-structure-list").classList.toggle("hidden", !hasStructure);
   $("blind-clock-start").classList.toggle("hidden", !canControl || pos.status === "running" || pos.status === "finished");
   $("blind-clock-pause").classList.toggle("hidden", !canControl || pos.status !== "running");
   $("blind-clock-prev").classList.toggle("hidden", !canControl || pos.index <= 0 || pos.status === "finished");
