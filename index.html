@@ -3620,6 +3620,8 @@ function renderTournamentDetails(details) {
 
   if (isEditingTournamentInfo) {
     $("info-registration").innerHTML =
+      field("edit-tournament-name", "Nome do torneio", tournament.name || "", "text") +
+      `<label>Descrição do torneio</label><textarea id="edit-tournament-description" rows="3">${esc(tournament.description || "")}</textarea>` +
       field("edit-tournament-buy-in", "Buy-in (R$)", details.buy_in) +
       field("edit-tournament-rebuy", "Rebuy (R$)", details.rebuy_amount) +
       field("edit-tournament-rebuy-limit", "Limite de rebuys", details.rebuy_limit) +
@@ -3670,6 +3672,8 @@ function renderTournamentDetails(details) {
   }
 
   $("info-registration").innerHTML =
+    row("Nome do torneio", esc(tournament.name || "Não informado")) +
+    row("Descrição", esc(tournament.description || "Não informada")) +
     row("Buy-in", money(details.buy_in)) +
     row("Rebuy", money(details.rebuy_amount)) +
     row("Limite de rebuys", details.rebuy_limit ?? "Não informado") +
@@ -3772,6 +3776,16 @@ async function saveTournamentInfo() {
     return;
   }
 
+  const updatedTournament = {
+    name: value("edit-tournament-name"),
+    description: value("edit-tournament-description") || null
+  };
+
+  if (!updatedTournament.name) {
+    alert("Informe o nome do torneio.");
+    return;
+  }
+
   const details = {
     tournament_id: tournament.id,
     buy_in: optionalNumber("edit-tournament-buy-in"),
@@ -3794,6 +3808,29 @@ async function saveTournamentInfo() {
   };
 
   try {
+    const { data: savedTournament, error: tournamentError } = await db
+      .from("tournaments")
+      .update(updatedTournament)
+      .eq("id", tournament.id)
+      .select("id, name, description")
+      .single();
+
+    if (tournamentError) throw tournamentError;
+
+    tournament = { ...tournament, ...savedTournament };
+
+    const recentTournaments = JSON.parse(
+      localStorage.getItem("pokerzone_recent_tournaments") || "[]"
+    );
+    localStorage.setItem(
+      "pokerzone_recent_tournaments",
+      JSON.stringify(recentTournaments.map(item =>
+        item.id === tournament.id
+          ? { ...item, name: tournament.name, description: tournament.description }
+          : item
+      ))
+    );
+
     const { data, error } = await db
       .from("tournament_details")
       .upsert(details, { onConflict: "tournament_id" })
