@@ -5646,14 +5646,19 @@ async function loadStageCommandCards() {
   grid.querySelectorAll("[data-command-open]").forEach(button=>button.addEventListener("click",()=>openStagePlayerCommand(button.dataset.commandOpen)));
   $("stage-command-add")?.addEventListener("click",addStageCommand);
 }
+let stageCommandClubId=null;
 async function addStageCommand(){
   if(!isStaff||!currentStage?.id)return;
   if(editorResults?.length){alert("Nesta etapa, cada jogador já possui sua própria comanda.");return;}
   const modal=$("stage-command-modal"),content=$("stage-command-modal-content");
   $("stage-command-modal-title").textContent="Adicionar comanda";
-  content.innerHTML='<div class="empty">Carregando clientes...</div>';
+  content.innerHTML='<div class="empty">Identificando clube e carregando clientes...</div>';
   modal.classList.remove("hidden");
-  const {data:customers,error}=await db.from("club_players").select("id,name,phone,notes").eq("club_id",tournament.club_id||selectedClubId).order("name");
+  const {data:stageInfo,error:stageInfoError}=await db.from("stages").select("club_id").eq("id",currentStage.id).single();
+  if(stageInfoError){content.innerHTML='<div class="notice">Não foi possível identificar o clube desta etapa: '+esc(stageInfoError.message)+'</div>';return;}
+  stageCommandClubId=stageInfo?.club_id||tournament?.club_id||selectedClubId||managedClubId||null;
+  if(!stageCommandClubId){content.innerHTML='<div class="notice">Não foi possível identificar o clube desta etapa.</div>';return;}
+  const {data:customers,error}=await db.from("club_players").select("id,name,phone,notes").eq("club_id",stageCommandClubId).order("name");
   if(error){content.innerHTML='<div class="notice">Não foi possível carregar os clientes: '+esc(error.message)+'</div>';return;}
   stageCommandCustomers=customers||[];
   renderStageCommandCreation();
@@ -5706,7 +5711,7 @@ function renderStageCommandNewCustomer(initialName=""){
     const button=content.querySelector("#stage-command-create-customer");button.disabled=true;
     const {data:userData}=await db.auth.getUser();
     const {data:newCustomer,error}=await db.from("club_players").insert({
-      club_id:tournament.club_id||selectedClubId,name,phone:phone||null,notes:notes||null,created_by:userData?.user?.id||null
+      club_id:stageCommandClubId||tournament?.club_id||selectedClubId||managedClubId,name,phone:phone||null,notes:notes||null,created_by:userData?.user?.id||null
     }).select("id,name,phone,notes").single();
     if(error){alert("Não foi possível cadastrar o cliente: "+error.message);button.disabled=false;return;}
     stageCommandCustomers.push(newCustomer);
@@ -5721,7 +5726,7 @@ async function createStageCommandForCustomer(customer){
   if(loadError){content.innerHTML='<div class="notice">Não foi possível criar comanda: '+esc(loadError.message)+'</div>';return;}
   const next=Number(rows?.[0]?.command_number||0)+1;
   const {data:command,error}=await db.from("stage_commands").insert({
-    stage_id:currentStage.id,club_id:tournament.club_id||selectedClubId,command_number:next,club_player_id:customer.id
+    stage_id:currentStage.id,club_id:stageCommandClubId||tournament?.club_id||selectedClubId||managedClubId,command_number:next,club_player_id:customer.id
   }).select("id").single();
   if(error){content.innerHTML='<div class="notice">Não foi possível criar comanda: '+esc(error.message)+'</div>';return;}
   await loadStageCommandCards();
