@@ -5701,7 +5701,7 @@ async function loadStageCommandCards() {
     const commandNumber=playerPosition||command.command_number;
     return '<article class="stage-command-card"><h4>Comanda '+esc(commandNumber)+'</h4>'+
       (customerName?'<div class="stage-command-player-name">'+esc(customerName)+'</div>':'<div class="command-meta"><span>'+(customerId?'Cliente vinculado':'Aguardando cliente')+'</span></div>')+
-      '<div class="command-meta"><span>Consumos: '+charges.length+'</span><span>Pagamentos: '+clubMoney(paid)+'</span></div>'+
+      
       '<button type="button" class="btn secondary command-open" data-command-open="'+esc(command.id)+'">Abrir comanda</button></article>';
   }).join("")+(!stagePlayers.length?'<button type="button" class="stage-command-add" id="stage-command-add"><span>+</span><small>Adicionar comanda</small></button>':'');
   grid.querySelectorAll("[data-command-open]").forEach(button=>button.addEventListener("click",()=>openStagePlayerCommand(button.dataset.commandOpen)));
