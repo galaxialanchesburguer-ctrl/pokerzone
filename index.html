@@ -3708,6 +3708,7 @@ const SUPABASE_URL="https://fwwkmpnwsyppctxgetkj.supabase.co";
 const SUPABASE_KEY="sb_publishable_SlbpXf6oi5Bw70ABeYp0Eg_nrZ9bQqm";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let tournament=null, season=null, players=[], stages=[], currentStage=null, editorResults=[], isStaff=false, isAdmin=false, selectedClubId=null;
+let managedClubId=null, isClubManager=false;
 let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}, activeTournamentStage=null;
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
@@ -4872,6 +4873,8 @@ async function checkSession() {
 
   isStaff = false;
   isAdmin = false;
+  isClubManager = false;
+  managedClubId = null;
 
   // Mantém a lista de torneios recentes separada por conta do navegador.
   recentTournamentsStorageKey = session?.user?.id
@@ -4890,8 +4893,26 @@ async function checkSession() {
       .eq("id", session.user.id)
       .maybeSingle();
 
-    isStaff = !!profile && ["admin", "organizer"].includes(profile.role);
     isAdmin = !!profile && profile.role === "admin";
+    isClubManager = !isAdmin;
+
+    if (isAdmin || (!!profile && profile.role === "organizer")) {
+      isStaff = true;
+      isClubManager = false;
+    } else {
+      const { data: memberships, error: membershipError } = await db
+        .from("club_members")
+        .select("club_id, role")
+        .eq("user_id", session.user.id);
+
+      if (membershipError) {
+        console.error("Erro ao consultar vínculo do clube:", membershipError);
+      } else if (memberships && memberships.length) {
+        managedClubId = memberships[0].club_id;
+        isStaff = true;
+        isClubManager = true;
+      }
+    }
   }
 
 
@@ -4935,6 +4956,11 @@ function showAdminHome() {
 }
 function openAdminClubs() {
   if (!isStaff) return;
+  if (isClubManager && managedClubId) {
+    openClub(managedClubId);
+    setAdminSidebarActive("clubs");
+    return;
+  }
   $("tournament-app").classList.add("hidden");
   $("nearby-tournaments-screen").classList.add("hidden");
   $("home-tournaments").classList.remove("hidden");
@@ -7075,6 +7101,10 @@ $("back-to-tournaments").addEventListener("click", () => {
  
 async function createClub() {
   if (!isAdmin) {
+    alert("Somente administradores gerais podem cadastrar clubes.");
+    return;
+  }
+  if (!isAdmin) {
     alert("Somente o administrador pode cadastrar clubes.");
     return;
   }
@@ -7144,6 +7174,10 @@ async function createClub() {
 }
 
 async function openClub(clubId) {
+  if (isClubManager && managedClubId && clubId !== managedClubId) {
+    alert("Sua conta tem acesso somente ao clube vinculado.");
+    return;
+  }
   if (blindClockTick) { clearInterval(blindClockTick); blindClockTick = null; }
   if (blindClockChannel) { db.removeChannel(blindClockChannel); blindClockChannel = null; }
   blindClockState = null;
@@ -7574,10 +7608,16 @@ async function loadClubTournaments() {
   list.textContent = "Carregando clubes...";
 
   try {
-    const { data: clubs, error } = await db
+    let clubsQuery = db
       .from("clubs")
       .select("id, name, city, state, description")
       .order("name");
+
+    if (isClubManager && managedClubId) {
+      clubsQuery = clubsQuery.eq("id", managedClubId);
+    }
+
+    const { data: clubs, error } = await clubsQuery;
 
     if (error) throw error;
 
@@ -7842,11 +7882,17 @@ if (detailsError) throw detailsError;
   resultsBox.innerHTML =
     '<div class="empty">Buscando clubes...</div>';
 
-  const { data, error } = await db
+  let clubsQuery = db
     .from("clubs")
     .select("id, name, city, state, description")
     .ilike("name", "%" + term + "%")
     .order("name");
+
+  if (isClubManager && managedClubId) {
+    clubsQuery = clubsQuery.eq("id", managedClubId);
+  }
+
+  const { data, error } = await clubsQuery;
 
   if (error) {
     resultsBox.innerHTML =
