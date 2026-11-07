@@ -5876,7 +5876,7 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
   const selected=stageCommandSelectedCustomer;
   const player=stageCommandSelectedPlayer;
   if(!content||!player)return;
-  const historyHtml=history.length?history.map(row=>'<div class="stage-command-history-item"><span><b>'+esc(row.description||row.category||"Lançamento")+'</b><br><small>'+esc(row.attendant_name||"Atendente não informado")+' · '+esc(row.category||"")+'</small></span><span>'+(row.entry_type==="payment"?"− ":"+ ")+clubMoney(row.amount)+'</span></div>').join(""):'<div class="empty">Nenhum lançamento nesta comanda.</div>';
+  const historyHtml=history.length?history.map(row=>'<div class="stage-command-history-item"><span><b>'+esc(row.description||row.category||"Lançamento")+'</b><br><small>'+esc(row.category||"")+'</small></span><span>'+(row.entry_type==="payment"?"− ":"+ ")+clubMoney(row.amount)+'</span></div>').join(""):'<div class="empty">Nenhum lançamento nesta comanda.</div>';
   const normalize=value=>(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().trim();
   const term=normalize(searchTerm);
   const found=stageCommandCustomers.filter(customer=>normalize(customer.name).includes(term));
