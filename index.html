@@ -4942,11 +4942,21 @@ async function loadNearbyClubs() {
   ],
   {
     icon: L.divIcon({
-      className: "",
-      html: '<div style="width:20px;height:20px;background:#f5443b;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px #000;"></div>',
-      iconSize: [26, 26],
-      iconAnchor: [13, 13]
-    })
+  className: "",
+  html: `
+    <div style="
+      width: 22px;
+      height: 22px;
+      background: #f5443b;
+      border: 2px solid white;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      box-shadow: 0 2px 8px #000;
+    "></div>
+  `,
+  iconSize: [26, 26],
+  iconAnchor: [13, 26]
+})
   }
 )
       .addTo(nearbyMap)
