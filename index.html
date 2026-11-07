@@ -5601,7 +5601,7 @@ async function loadStageCommandCards() {
         rows.push(newCommand);
       }
     }
-    rows=rows.filter(command=>stagePlayers.some(player=>player.player_id===command.tournament_player_id)).sort((a,b)=>a.command_number-b.command_number);
+    rows=rows.filter(command=>stagePlayers.some(player=>player.player_id===command.tournament_player_id)||(ledgerRows||[]).some(row=>row.stage_command_id===command.id)).sort((a,b)=>a.command_number-b.command_number);
   }else{
     rows=rows.sort((a,b)=>a.command_number-b.command_number);
   }
