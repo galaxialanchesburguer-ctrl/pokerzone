@@ -2583,11 +2583,71 @@ body.clock-only-mode .blind-clock-ante{
 .stage-command-modal-history .stage-command-history-item{padding:9px 0}
 @media(max-width:600px){.stage-command-modal{padding:8px;align-items:flex-start}.stage-command-modal-panel{max-height:96vh;padding:14px;margin:auto 0}.stage-command-modal-head h3{font-size:17px}.stage-command-modal-grid{grid-template-columns:1fr}}
 
+
+/* ===== NAVEGAÇÃO LATERAL ADMINISTRATIVA ===== */
+.admin-sidebar{position:fixed;z-index:30;left:0;top:0;bottom:0;width:248px;padding:24px 15px;background:linear-gradient(180deg,#151010,#090909 72%);border-right:1px solid #3b2022;overflow-y:auto;display:flex;flex-direction:column;gap:22px}
+.admin-sidebar.hidden{display:none!important}
+.admin-sidebar-brand{font-size:21px;font-weight:900;font-style:italic;letter-spacing:-1px;padding:2px 10px 16px;border-bottom:1px solid #352426}
+.admin-sidebar-brand span{color:#ed3038}
+.admin-sidebar-label{color:#777;font-size:9px;font-weight:800;letter-spacing:1.8px;padding:0 11px 7px}
+.admin-sidebar-nav{display:grid;gap:5px}
+.admin-sidebar-link{width:100%;display:flex;align-items:center;gap:12px;text-align:left;background:transparent;border:1px solid transparent;color:#bbb;border-radius:8px;padding:12px 11px;font-size:13px;font-weight:700;cursor:pointer;transition:.18s}
+.admin-sidebar-link:hover{background:#251719;color:#fff;border-color:#472326}
+.admin-sidebar-link.active{background:linear-gradient(110deg,rgba(237,48,56,.23),rgba(237,48,56,.06));border-color:#713036;color:#fff}
+.admin-sidebar-icon{width:20px;text-align:center;font-size:16px;flex-shrink:0}
+.admin-sidebar-foot{margin-top:auto;padding:12px 10px;color:#777;font-size:10px;line-height:1.6;border-top:1px solid #302426}
+body.admin-sidebar-active header,body.admin-sidebar-active main,body.admin-sidebar-active footer{margin-left:248px}
+body.admin-sidebar-active header{padding-left:4%;padding-right:4%}
+body.admin-sidebar-active main{max-width:none;width:calc(100% - 248px);padding-left:clamp(18px,3vw,44px);padding-right:clamp(18px,3vw,44px)}
+body.admin-sidebar-active footer{width:calc(100% - 248px)}
+@media(max-width:760px){
+ .admin-sidebar{width:68px;padding:16px 7px;gap:16px}
+ .admin-sidebar-brand{font-size:0;text-align:center;padding:4px 0 14px}
+ .admin-sidebar-brand:before{content:"PZ";font-size:18px}
+ .admin-sidebar-brand span{display:none}
+ .admin-sidebar-label,.admin-sidebar-text,.admin-sidebar-foot{display:none}
+ .admin-sidebar-link{justify-content:center;padding:12px 5px}
+ .admin-sidebar-icon{font-size:18px}
+ body.admin-sidebar-active header,body.admin-sidebar-active main,body.admin-sidebar-active footer{margin-left:68px}
+ body.admin-sidebar-active main{width:calc(100% - 68px);padding-left:12px;padding-right:12px}
+ body.admin-sidebar-active footer{width:calc(100% - 68px)}
+}
+@media(max-width:420px){
+ body.admin-sidebar-active header{padding-left:10px;padding-right:10px}
+ body.admin-sidebar-active .header-tag{display:none}
+}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
+
+<aside id="admin-sidebar" class="admin-sidebar hidden" aria-label="Navegação administrativa">
+  <div class="admin-sidebar-brand">POKER<span>ZONE</span></div>
+  <div>
+    <div class="admin-sidebar-label">PAINEL</div>
+    <nav class="admin-sidebar-nav">
+      <button type="button" class="admin-sidebar-link active" data-admin-nav="home" title="Visão geral"><span class="admin-sidebar-icon">⌂</span><span class="admin-sidebar-text">Visão geral</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="tournaments" title="Torneios"><span class="admin-sidebar-icon">♛</span><span class="admin-sidebar-text">Torneios</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="clubs" title="Meu clube"><span class="admin-sidebar-icon">♣</span><span class="admin-sidebar-text">Meu clube / Clubes</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="clients" title="Clientes"><span class="admin-sidebar-icon">♙</span><span class="admin-sidebar-text">Clientes</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="settings" title="Configurações"><span class="admin-sidebar-icon">⚙</span><span class="admin-sidebar-text">Configurações</span></button>
+    </nav>
+  </div>
+  <div id="admin-sidebar-tournament-group">
+    <div class="admin-sidebar-label">TORNEIO ABERTO</div>
+    <nav class="admin-sidebar-nav">
+      <button type="button" class="admin-sidebar-link" data-admin-nav="stages" title="Etapas"><span class="admin-sidebar-icon">▦</span><span class="admin-sidebar-text">Etapas</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="ranking" title="Ranking geral"><span class="admin-sidebar-icon">♜</span><span class="admin-sidebar-text">Ranking geral</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="final-ranking" title="Ranking final"><span class="admin-sidebar-icon">🏆</span><span class="admin-sidebar-text">Ranking final</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="conference" title="Conferência"><span class="admin-sidebar-icon">▤</span><span class="admin-sidebar-text">Conferência</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="tournament-info" title="Informações"><span class="admin-sidebar-icon">ⓘ</span><span class="admin-sidebar-text">Informações</span></button>
+    </nav>
+  </div>
+  <div class="admin-sidebar-foot">ÁREA ADMINISTRATIVA<br>POKERZONE</div>
+</aside>
+
 <header><div class="logo">POKER<span>ZONE</span></div><div class="header-right"><div class="header-tag">RANKING OFICIAL</div><button class="btn secondary header-logout hidden" id="logout-btn">↪ Sair da conta</button></div></header>
 <main>
  <!-- TELA INICIAL DOS TORNEIOS -->
@@ -3664,6 +3724,14 @@ function showTab(id){
   document.querySelectorAll(".tab").forEach(b=>{
     b.classList.toggle("active",b.dataset.tab===id);
   });
+  const sidebarTabKeys = {
+    "stages-view":"stages",
+    "tournament-ranking-view":"ranking",
+    "final-ranking-view":"final-ranking",
+    "tournament-entries-view":"conference",
+    "tournament-info-view":"tournament-info"
+  };
+  if (sidebarTabKeys[id]) setAdminSidebarActive(sidebarTabKeys[id]);
 
   $("tournament-ranking-view").classList.toggle("hidden",id!=="tournament-ranking-view");
   $("final-ranking-view").classList.toggle("hidden",id!=="final-ranking-view");
@@ -4839,6 +4907,9 @@ if (manageClubsButton) {
 });
   $("login-box").classList.toggle("hidden", isStaff);
   $("logout-btn").classList.toggle("hidden", !isStaff);
+  $("admin-sidebar").classList.toggle("hidden", !isStaff);
+  document.body.classList.toggle("admin-sidebar-active", isStaff);
+  $("admin-sidebar-tournament-group").classList.toggle("hidden", !tournament || !season);
 
   if (isStaff) {
     msg("● Acesso administrativo");
@@ -4846,6 +4917,100 @@ if (manageClubsButton) {
     msg("● Consulta pública");
   }
 }
+
+function setAdminSidebarActive(key) {
+  document.querySelectorAll("[data-admin-nav]").forEach(button => {
+    button.classList.toggle("active", button.dataset.adminNav === key);
+  });
+}
+function showAdminHome() {
+  $("tournament-app").classList.add("hidden");
+  $("nearby-tournaments-screen").classList.add("hidden");
+  $("home-tournaments").classList.remove("hidden");
+  ["manage-clubs-area","club-details-area","create-tournament-area","tournament-search-area","public-tournament-search","public-player-search"].forEach(id => {
+    const el = $(id);
+    if (el) el.classList.add("hidden");
+  });
+  setAdminSidebarActive("home");
+}
+function openAdminClubs() {
+  if (!isStaff) return;
+  $("tournament-app").classList.add("hidden");
+  $("nearby-tournaments-screen").classList.add("hidden");
+  $("home-tournaments").classList.remove("hidden");
+  ["club-details-area","create-tournament-area","tournament-search-area","public-tournament-search","public-player-search"].forEach(id => {
+    const el = $(id);
+    if (el) el.classList.add("hidden");
+  });
+  $("manage-clubs-area").classList.remove("hidden");
+  loadClubs();
+  setAdminSidebarActive("clubs");
+}
+function openAdminTournamentSection(tabId, navKey) {
+  if (!isStaff) return;
+  if (!tournament || !season) {
+    showAdminHome();
+    $("search-tournament-btn").click();
+    alert("Escolha um torneio para acessar esta área.");
+    return;
+  }
+  showTab(tabId);
+  setAdminSidebarActive(navKey);
+}
+function handleAdminSidebarNavigation(key) {
+  if (!isStaff) return;
+  if (key === "home") {
+    showAdminHome();
+    return;
+  }
+  if (key === "tournaments") {
+    if (tournament && season) {
+      showTab("tournament-ranking-view");
+      setAdminSidebarActive("tournaments");
+    } else {
+      showAdminHome();
+      $("search-tournament-btn").click();
+      setAdminSidebarActive("tournaments");
+    }
+    return;
+  }
+  if (key === "clubs") {
+    openAdminClubs();
+    return;
+  }
+  if (key === "clients") {
+    if (selectedClubId && !$("club-details-area").classList.contains("hidden")) {
+      $("club-haver-btn").click();
+      setAdminSidebarActive("clients");
+    } else {
+      openAdminClubs();
+      alert("Abra o clube desejado para acessar o cadastro e as contas dos clientes.");
+    }
+    return;
+  }
+  if (key === "settings") {
+    if (selectedClubId && !$("club-details-area").classList.contains("hidden")) {
+      $("club-settings-btn").click();
+      setAdminSidebarActive("settings");
+    } else {
+      openAdminClubs();
+      alert("Selecione um clube para abrir as configurações.");
+    }
+    return;
+  }
+  const sections = {
+    stages: ["stages-view","stages"],
+    ranking: ["tournament-ranking-view","ranking"],
+    "final-ranking": ["final-ranking-view","final-ranking"],
+    conference: ["tournament-entries-view","conference"],
+    "tournament-info": ["tournament-info-view","tournament-info"]
+  };
+  if (sections[key]) openAdminTournamentSection(...sections[key]);
+}
+document.querySelectorAll("[data-admin-nav]").forEach(button => {
+  button.addEventListener("click", () => handleAdminSidebarNavigation(button.dataset.adminNav));
+});
+
 async function setActiveTournamentStage(stageId) {
   if (!isStaff || !tournament || !season) return;
   const stage = stages.find(item => item.id === stageId);
