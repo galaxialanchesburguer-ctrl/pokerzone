@@ -6648,6 +6648,10 @@ async function init(){
 
     const clockOnlyTournamentId = new URLSearchParams(window.location.search).get("clock");
     if (clockOnlyTournamentId) {
+      // Move o relógio para ser filho direto de <main>, isolando-o da estrutura normal do clube.
+      // Assim, as regras da tela exclusiva não escondem o próprio relógio junto com o restante do perfil.
+      const standaloneClockArea = $("club-clock-area");
+      $("club-clock-area").parentElement && document.querySelector("main").appendChild(standaloneClockArea);
       document.body.classList.add("clock-only-mode");
       $("club-clock-area").classList.remove("hidden");
       $("club-clock-area").classList.add("clock-only-area");
