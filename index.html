@@ -4989,6 +4989,12 @@ function hideStageSidebar() {
   $("stage-sidebar")?.classList.remove("visible");
   document.body.classList.remove("stage-sidebar-active");
 }
+function setPublicHomeChrome(visible) {
+  const header = document.querySelector("#home-tournaments > .home-header");
+  const actions = document.querySelector("#home-tournaments > .home-actions");
+  if (header) header.classList.toggle("hidden", !visible);
+  if (actions) actions.classList.toggle("hidden", !visible);
+}
 function setAdminSidebarActive(key) {
   document.querySelectorAll("[data-admin-nav]").forEach(button => {
     button.classList.toggle("active", button.dataset.adminNav === key);
@@ -4996,6 +5002,7 @@ function setAdminSidebarActive(key) {
 }
 function showAdminHome() {
   hideStageSidebar();
+  setPublicHomeChrome(true);
   if (isClubManager && managedClubId) {
     openClub(managedClubId);
     setAdminSidebarActive("clubs");
@@ -5012,6 +5019,7 @@ function showAdminHome() {
 }
 function openAdminClubs() {
   hideStageSidebar();
+  setPublicHomeChrome(false);
   if (!isStaff) return;
   if (isClubManager && managedClubId) {
     openClub(managedClubId);
@@ -5033,10 +5041,11 @@ function openAdminTournamentSection(tabId, navKey) {
   if (!isStaff) return;
   if (!tournament || !season) {
     showAdminHome();
-    $("search-tournament-btn").click();
-    alert("Escolha um torneio para acessar esta área.");
+    setPublicHomeChrome(false);
+    alert("Abra um torneio para acessar esta área.");
     return;
   }
+  setPublicHomeChrome(false);
   showTab(tabId);
   setAdminSidebarActive(navKey);
 }
@@ -5049,12 +5058,14 @@ function handleAdminSidebarNavigation(key) {
   }
   if (key === "tournaments") {
     if (tournament && season) {
+      setPublicHomeChrome(false);
       showTab("stages-view");
       setAdminSidebarActive("tournaments");
     } else {
       showAdminHome();
-      $("search-tournament-btn").click();
+      setPublicHomeChrome(false);
       setAdminSidebarActive("tournaments");
+      alert("Abra um torneio para visualizar suas etapas.");
     }
     return;
   }
@@ -7265,6 +7276,8 @@ async function createClub() {
 }
 
 async function openClub(clubId) {
+  setPublicHomeChrome(false);
+  hideStageSidebar();
   if (isClubManager && managedClubId && clubId !== managedClubId) {
     alert("Sua conta tem acesso somente ao clube vinculado.");
     return;
