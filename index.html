@@ -2736,8 +2736,12 @@ async function checkSession() {
   }
 
 
-   $("manage-clubs-btn").style.display =
+   const manageClubsButton = $("manage-clubs-btn");
+
+if (manageClubsButton) {
+  manageClubsButton.style.display =
     isAdmin ? "inline-block" : "none";
+}
 
   document.querySelectorAll(".admin-only").forEach(el => {
   el.classList.toggle("admin-visible", isStaff);
