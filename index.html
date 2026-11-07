@@ -5011,17 +5011,39 @@ function showSidebarTournamentList() {
   },'<div class="empty">Carregando torneios...</div>');
   loadSidebarTournaments();
 }
+let creatingTournamentFromSidebar = false;
+function openSidebarTournamentCreation() {
+  if (!isAdmin && !(isClubManager && managedClubId && selectedClubId === managedClubId)) {
+    alert("Você não tem permissão para criar torneios neste clube.");
+    return;
+  }
+  $("tournament-tree").classList.add("hidden");
+  $("home-tournaments").classList.remove("hidden");
+  $("tournament-app").classList.add("hidden");
+  ["manage-clubs-area","club-details-area","club-tournaments-area","club-settings-area","club-clock-area","create-tournament-area","tournament-search-area","public-tournament-search","public-player-search"].forEach(id => $(id)?.classList.add("hidden"));
+  $("create-tournament-area").classList.remove("hidden");
+  setPublicHomeChrome(false);
+  creatingTournamentFromSidebar = true;
+  const heading=$("create-tournament-area").querySelector(".box-head h2");
+  if(heading)heading.textContent="CRIAR TORNEIO";
+}
+function renderSidebarTournamentList(data, emptyMessage="") {
+  const items=(data||[]).map(t=>'<button type="button" class="tournament-tree-item" data-sidebar-tournament="'+esc(t.id)+'">'+esc(t.name)+'</button>').join("");
+  const createButton='<button type="button" class="tournament-tree-create" id="sidebar-create-tournament">+ Criar torneio</button>';
+  renderTournamentTreePanel("TORNEIOS DO CLUBE","Voltar",()=>{
+    $("tournament-tree").classList.add("hidden");
+    showAdminHome();
+  },(items||emptyMessage?items+(emptyMessage?'<div class="empty">'+esc(emptyMessage)+'</div>':""):'<div class="empty">Nenhum torneio cadastrado.</div>')+createButton);
+  $("tournament-tree-list").querySelectorAll("[data-sidebar-tournament]").forEach(button=>button.addEventListener("click",()=>openSidebarTournamentStages((data||[]).find(t=>t.id===button.dataset.sidebarTournament),data||[])));
+  $("sidebar-create-tournament")?.addEventListener("click",openSidebarTournamentCreation);
+}
 async function loadSidebarTournaments() {
   const { data, error } = await db.from("tournaments").select("id,name").eq("club_id",selectedClubId).order("name");
   if (error) {
-    renderTournamentTreePanel("TORNEIOS DO CLUBE","Voltar",()=>{$("tournament-tree").classList.add("hidden");showAdminHome();},'<div class="empty">Erro ao carregar torneios.</div>');
+    renderSidebarTournamentList([], "Erro ao carregar torneios.");
     return;
   }
-  if (!data?.length) {
-    renderTournamentTreePanel("TORNEIOS DO CLUBE","Voltar",()=>{$("tournament-tree").classList.add("hidden");showAdminHome();},'<div class="empty">Nenhum torneio cadastrado.</div>');
-    return;
-  }
-  loadSidebarTournamentListFromData(data);
+  renderSidebarTournamentList(data||[], !(data||[]).length ? "Nenhum torneio cadastrado." : "");
 }
 async function openSidebarTournamentStages(selected, tournamentList) {
   if (!selected) return;
@@ -5049,11 +5071,7 @@ async function openSidebarTournamentStages(selected, tournamentList) {
   list.appendChild(create);
 }
 function loadSidebarTournamentListFromData(data) {
-  renderTournamentTreePanel("TORNEIOS DO CLUBE","Voltar",()=>{
-    $("tournament-tree").classList.add("hidden");
-    showAdminHome();
-  },data.map(t=>`<button type="button" class="tournament-tree-item" data-sidebar-tournament="${t.id}">${esc(t.name)}</button>`).join(""));
-  $("tournament-tree-list").querySelectorAll("[data-sidebar-tournament]").forEach(button=>button.addEventListener("click",()=>openSidebarTournamentStages(data.find(t=>t.id===button.dataset.sidebarTournament),data)));
+  renderSidebarTournamentList(data||[]);
 }
 function setPublicHomeChrome(visible) {
   const header = document.querySelector("#home-tournaments > .home-header");
@@ -7175,6 +7193,13 @@ $("club-create-tournament-btn").addEventListener("click", () => {
 
 $("close-create-tournament").addEventListener("click", () => {
   $("create-tournament-area").classList.add("hidden");
+  if (creatingTournamentFromSidebar) {
+    creatingTournamentFromSidebar = false;
+    $("tournament-tree").classList.remove("hidden");
+    setPublicHomeChrome(false);
+    loadSidebarTournaments();
+    return;
+  }
   $("club-management-area").classList.remove("hidden");
 });
 $("new-tournament-mode").addEventListener("change", () => {
@@ -8241,7 +8266,13 @@ if (detailsError) throw detailsError;
     $("new-tournament-end").value = "";
     message.textContent = "";
 
-    if (selectedClubId) {
+    if (creatingTournamentFromSidebar) {
+      creatingTournamentFromSidebar = false;
+      $("create-tournament-area").classList.add("hidden");
+      $("tournament-tree").classList.remove("hidden");
+      setPublicHomeChrome(false);
+      await loadSidebarTournaments();
+    } else if (selectedClubId) {
       $("club-tournaments-area").classList.remove("hidden");
       await loadClubTournaments();
     } else {
