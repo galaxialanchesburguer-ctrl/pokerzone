@@ -5921,15 +5921,20 @@ function openStageCommandPayment(history=[]){
       button.disabled=true;button.textContent="Registrando...";
       const {data:userData}=await db.auth.getUser();
       const change=method==="Dinheiro"?cashReceived-due:0;
-      const description=method==="Dinheiro"?"Pagamento em dinheiro"+(change>0.009?" (recebido "+money(cashReceived)+"; troco "+money(change)+")":""):"Pagamento via "+method;
-      const {error}=await db.from("club_player_ledger").insert({
+      const description=method==="Dinheiro"?"Pagamento em dinheiro"+(change>0.009?" (recebido "+money(cashReceived)+"; troco "+money(change)+")":""):method==="Caderno"?"Conta transferida para o caderno":"Pagamento via "+method;
+      const commonLedgerData={
         club_player_id:stageCommandSelectedCustomer.id,
-        stage_command_id:stageCommandSelectedPlayer.id,
-        attendant_name:null,entry_type:"payment",category:"Pagamento",
-        description,amount:due,payment_method:method,
-        tournament_id:tournament?.id||null,stage_id:currentStage.id,
+        attendant_name:null,tournament_id:tournament?.id||null,stage_id:currentStage.id,
         created_by:userData?.user?.id||null
-      });
+      };
+      const ledgerRows=method==="Caderno"?[
+        {...commonLedgerData,entry_type:"charge",category:"Caderno",description:"Débito da comanda "+(stageCommandSelectedPlayer.command_number||""),amount:due,payment_method:"Caderno"},
+        {...commonLedgerData,stage_command_id:stageCommandSelectedPlayer.id,entry_type:"payment",category:"Pagamento",description,amount:due,payment_method:"Caderno"}
+      ]:[{
+        ...commonLedgerData,stage_command_id:stageCommandSelectedPlayer.id,
+        entry_type:"payment",category:"Pagamento",description,amount:due,payment_method:method
+      }];
+      const {error}=await db.from("club_player_ledger").insert(ledgerRows);
       if(error){alert("Não foi possível registrar o pagamento: "+error.message);button.disabled=false;button.textContent="Confirmar pagamento";return;}
       const {data:updatedHistory,error:historyError}=await db.from("club_player_ledger").select("id,club_player_id,stage_command_id,attendant_name,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).eq("stage_command_id",stageCommandSelectedPlayer.id).order("created_at",{ascending:false});
       if(historyError){alert("Pagamento registrado, mas não foi possível atualizar a comanda: "+historyError.message);return;}
