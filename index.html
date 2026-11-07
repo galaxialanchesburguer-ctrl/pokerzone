@@ -4985,12 +4985,17 @@ if (manageClubsButton) {
   }
 }
 
+function hideStageSidebar() {
+  $("stage-sidebar")?.classList.remove("visible");
+  document.body.classList.remove("stage-sidebar-active");
+}
 function setAdminSidebarActive(key) {
   document.querySelectorAll("[data-admin-nav]").forEach(button => {
     button.classList.toggle("active", button.dataset.adminNav === key);
   });
 }
 function showAdminHome() {
+  hideStageSidebar();
   if (isClubManager && managedClubId) {
     openClub(managedClubId);
     setAdminSidebarActive("clubs");
@@ -5006,6 +5011,7 @@ function showAdminHome() {
   setAdminSidebarActive("home");
 }
 function openAdminClubs() {
+  hideStageSidebar();
   if (!isStaff) return;
   if (isClubManager && managedClubId) {
     openClub(managedClubId);
@@ -5036,6 +5042,7 @@ function openAdminTournamentSection(tabId, navKey) {
 }
 function handleAdminSidebarNavigation(key) {
   if (!isStaff) return;
+  if (["home","clubs","clients","settings"].includes(key)) hideStageSidebar();
   if (key === "home") {
     showAdminHome();
     return;
