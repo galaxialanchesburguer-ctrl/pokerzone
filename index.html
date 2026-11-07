@@ -5376,6 +5376,10 @@ async function createClub() {
 }
 
 async function openClub(clubId) {
+  if (blindClockTick) { clearInterval(blindClockTick); blindClockTick = null; }
+  if (blindClockChannel) { db.removeChannel(blindClockChannel); blindClockChannel = null; }
+  blindClockState = null;
+  blindClockTournament = null;
   const { data: club, error } = await db
     .from("clubs")
     .select("id, name, city, state, address, latitude, longitude, description, logo_url")
