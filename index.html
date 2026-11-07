@@ -5901,15 +5901,19 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
         '<label>Buscar cliente ou jogador<input id="stage-command-customer-search" type="search" value="'+esc(searchTerm)+'" placeholder="Digite o nome..." autocomplete="off"></label>'+
         '<div class="stage-command-customer-results" id="stage-command-customer-results">'+(found.length?customerOptions:'<div class="empty">Nenhum cliente encontrado.</div>')+'</div>')+
     '</div>'+
-    (selected?'<div class="stage-command-modal-section"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><h4>2. CONSUMO RÁPIDO</h4><button type="button" class="btn secondary" id="stage-command-add-product-toggle">+ Cadastrar produto</button></div>'+
-      '<p class="season-info">Toque em um produto para lançar diretamente na comanda.</p>'+
+    (selected?'<div class="stage-command-modal-section"><h4>2. CONSUMO RÁPIDO</h4><p class="season-info">Valores do torneio carregados automaticamente.</p>'+
+      '<div class="club-haver-quick-products stage-command-tournament-products">'+[
+        {id:"__t_buyin",name:"Buy-in",category:"Inscrição",unit_price:Number(stageCommandTournamentDetails.buy_in)||0},
+        {id:"__t_rebuy",name:"Rebuy",category:"Rebuy",unit_price:Number(stageCommandTournamentDetails.rebuy_amount)||0},
+        {id:"__t_addon",name:"Add-on",category:"Add-on",unit_price:Number(stageCommandTournamentDetails.addon_amount)||0}
+      ].map(product=>{const type=product.id==="__t_buyin"?"buyin":product.id==="__t_rebuy"?"rebuy":"addon";const already=history.some(row=>type==="buyin"?row.category==="Inscrição"&&/buy.?in/i.test(row.description||""):type==="addon"&&row.category==="Add-on"&&/add.?on/i.test(row.description||""));const locked=already||product.unit_price<=0;return '<button type="button" class="club-haver-quick-product '+(locked?"is-locked":"")+'" data-stage-quick-product="'+product.id+'" '+(locked?'disabled aria-disabled="true"':'')+'><span><strong>'+product.name+'</strong><small>'+clubMoney(product.unit_price)+'</small></span><span class="club-haver-quick-quantity">'+(already?"1":"+")+'</span></button>';}).join("")+'</div>'+
+      '<div class="stage-command-bar-products"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:18px"><h4>BAR</h4><button type="button" class="btn secondary" id="stage-command-add-product-toggle">+ Cadastrar produto</button></div>'+
       '<div id="stage-command-product-form" class="club-haver-form hidden" style="margin-top:12px">'+
       '<label>Nome do produto<input id="stage-command-product-name" maxlength="100" placeholder="Ex.: Água"></label>'+
       '<label>Preço unitário (R$)<input id="stage-command-product-price" type="number" min="0.01" step="0.01" placeholder="10,00"></label>'+
-      '<label>Categoria<select id="stage-command-product-category"><option value="Bebidas">Bebidas</option><option value="Alimentação">Alimentação</option><option value="Fichas">Fichas</option><option value="Inscrição">Inscrição</option><option value="Rebuy">Rebuy</option><option value="Add-on">Add-on</option><option value="Outros">Outros</option></select></label>'+
+      '<label>Categoria<select id="stage-command-product-category"><option value="Bebidas">Bebidas</option><option value="Alimentação">Alimentação</option><option value="Fichas">Fichas</option><option value="Outros">Outros</option></select></label>'+
       '<div><button type="button" class="btn" id="stage-command-product-save">Salvar produto</button> <span id="stage-command-product-message" class="season-info"></span></div></div>'+
-      '<div id="stage-command-quick-products" class="club-haver-quick-products">'+(stageCommandQuickProducts.length?stageCommandQuickProducts.map(product=>{const isBuyin=(product.category||"")==="Inscrição";const alreadyBought=isBuyin&&history.some(row=>(row.category||"")==="Inscrição"&&/buy.?in/i.test(row.description||""));return '<button type="button" class="club-haver-quick-product '+(alreadyBought?'is-locked':'')+'" data-stage-quick-product="'+esc(product.id)+'" '+(alreadyBought?'disabled aria-disabled="true" title="Buy-in já registrado nesta comanda"':'')+'><span><strong>'+esc(product.name)+'</strong><small>'+esc(product.category||"Outros")+' • '+clubMoney(product.unit_price)+'</small></span><span class="club-haver-quick-quantity">'+(alreadyBought?'1':'+')+'</span></button>';}).join(""):'<div class="empty">Nenhum produto cadastrado para este clube. Use “Cadastrar produto”.</div>')+'</div></div>':'<div class="notice">Selecione um cliente para continuar o atendimento.</div>')+
-    '<div class="stage-command-modal-section"><h4>HISTÓRICO DESTA COMANDA</h4><div class="stage-command-modal-history">'+historyHtml+'</div></div>';
+      '<div id="stage-command-quick-products" class="club-haver-quick-products">'+(stageCommandQuickProducts.length?stageCommandQuickProducts.map(product=>'<button type="button" class="club-haver-quick-product" data-stage-quick-product="'+esc(product.id)+'"><span><strong>'+esc(product.name)+'</strong><small>'+esc(product.category||"Outros")+' • '+clubMoney(product.unit_price)+'</small></span><span class="club-haver-quick-quantity">+</span></button>').join(""):'<div class="empty">Nenhum produto cadastrado no bar.</div>')+'</div></div></div>':'<div class="notice">Selecione um cliente para continuar o atendimento.</div>')+    '<div class="stage-command-modal-section"><h4>HISTÓRICO DESTA COMANDA</h4><div class="stage-command-modal-history">'+historyHtml+'</div></div>';
   content.querySelector("#stage-command-delete")?.addEventListener("click",async()=>{
     if(!isStaff||!stageCommandSelectedPlayer)return;
     const confirmed=confirm("Excluir esta comanda? Todos os lançamentos e o histórico vinculados a ela também serão excluídos. Esta ação não pode ser desfeita.");
@@ -5950,7 +5954,9 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
     renderStagePlayerCommand(updatedHistory||[]);
   });
   content.querySelectorAll("[data-stage-quick-product]").forEach(button=>button.addEventListener("click",async()=>{
-    const product=stageCommandQuickProducts.find(item=>item.id===button.dataset.stageQuickProduct);
+    const actionId=button.dataset.stageQuickProduct;
+    const fixedActions={"__t_buyin":{id:"__t_buyin",name:"Buy-in",category:"Inscrição"},"__t_rebuy":{id:"__t_rebuy",name:"Rebuy",category:"Rebuy"},"__t_addon":{id:"__t_addon",name:"Add-on",category:"Add-on"}};
+    const product=fixedActions[actionId]||stageCommandQuickProducts.find(item=>item.id===actionId);
     if(!product||!stageCommandSelectedCustomer||!stageCommandSelectedPlayer)return;
     button.disabled=true;
     const category=product.category||"Outros";
@@ -5969,18 +5975,18 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
         tournamentPlayerId=found.id;
       }
       const [{data:details,error:detailsError},{data:entries,error:entriesError}]=await Promise.all([
-        db.from("tournament_details").select("buy_in,tournament_fee,club_fee_type,ranking_contribution,rebuy_limit").eq("tournament_id",stageInfo.tournament_id).maybeSingle(),
+        db.from("tournament_details").select("buy_in,tournament_fee,club_fee_type,ranking_contribution,rebuy_amount,addon_amount").eq("tournament_id",stageInfo.tournament_id).maybeSingle(),
         db.from("tournament_entries").select("id,entry_type").eq("tournament_id",stageInfo.tournament_id).eq("stage_id",currentStage.id).eq("player_id",tournamentPlayerId)
       ]);
       if(detailsError||entriesError){alert((detailsError||entriesError).message);button.disabled=false;return;}
-      tournamentDetails=details||{};
+      tournamentDetails=details||stageCommandTournamentDetails||{};
       const count=(entries||[]).filter(e=>e.entry_type===tournamentType).length;
       if(tournamentType==="buyin"&&count>=1){alert("Este jogador já possui inscrição nesta etapa.");button.disabled=false;return;}
       if(tournamentType==="addon"&&count>=1){alert("Este jogador já possui Add-on nesta etapa.");button.disabled=false;return;}
       if(tournamentType!=="buyin"&&!(entries||[]).some(e=>e.entry_type==="buyin")){alert("Registre a inscrição antes da recompra ou do Add-on.");button.disabled=false;return;}
       // Rebuy pode ser lançado várias vezes durante a etapa.
     }
-    const baseAmount=Number(product.unit_price);
+    const baseAmount=tournamentType==="buyin"?Number(tournamentDetails?.buy_in)||0:tournamentType==="rebuy"?Number(tournamentDetails?.rebuy_amount)||0:tournamentType==="addon"?Number(tournamentDetails?.addon_amount)||0:Number(product.unit_price);
     const rankingAmount=tournamentType?Math.min(baseAmount,Number(tournamentDetails?.ranking_contribution)||0):0;
     const feeValue=Number(tournamentDetails?.tournament_fee)||0;
     const fee=tournamentType?(tournamentDetails?.club_fee_type==="percent"?baseAmount*feeValue/100:(tournamentType==="buyin"?feeValue:0)):0;
