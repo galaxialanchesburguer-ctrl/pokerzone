@@ -3277,6 +3277,7 @@ let blindClockAudioContext = null;
 let blindClockLastBeepSecond = null;
 let blindClockLastRenderedIndex = null;
 let blindClockLastRenderedStatus = null;
+let blindClockSliderInteracting = false;
 
 function unlockBlindClockAudio() {
   try {
@@ -3391,7 +3392,7 @@ function renderBlindClock() {
     const sliderMax = Math.max(1, clockDurationSeconds(step));
     timeSlider.min = "0";
     timeSlider.max = String(sliderMax);
-    if (document.activeElement !== timeSlider) {
+    if (document.activeElement !== timeSlider && !blindClockSliderInteracting) {
       const elapsed = Math.max(0, Math.min(sliderMax, sliderMax - (Number(pos.remaining) || 0)));
       timeSlider.value = String(elapsed);
     }
@@ -3399,7 +3400,7 @@ function renderBlindClock() {
   }
 
   const levelDuration = step ? clockDurationSeconds(step) : 0;
-  const displayedRemaining = timeSlider && document.activeElement === timeSlider
+  const displayedRemaining = timeSlider && (document.activeElement === timeSlider || blindClockSliderInteracting)
     ? Math.max(0, levelDuration - (Number(timeSlider.value) || 0))
     : pos.remaining;
   const progress = levelDuration > 0 ? (pos.status === "finished" ? 100 : Math.max(0, Math.min(100, ((levelDuration - displayedRemaining) / levelDuration) * 100))) : 0;
@@ -3840,6 +3841,8 @@ $("blind-clock-pause").addEventListener("click", pauseBlindClock);
 $("blind-clock-prev").addEventListener("click", () => moveBlindClock(-1));
 $("blind-clock-next").addEventListener("click", () => moveBlindClock(1));
 $("blind-clock-add-time").addEventListener("click", addBlindClockTime);
+$("blind-clock-time-slider").addEventListener("pointerdown", () => { blindClockSliderInteracting = true; });
+$("blind-clock-time-slider").addEventListener("pointercancel", () => { blindClockSliderInteracting = false; });
 $("blind-clock-time-slider").addEventListener("input", event => {
   const step = getBlindClockPosition(blindClockState).step;
   const duration = Math.max(1, clockDurationSeconds(step));
@@ -3854,12 +3857,17 @@ $("blind-clock-time-slider").addEventListener("change", async event => {
   const duration = Math.max(1, clockDurationSeconds(pos.step));
   const elapsed = Math.max(0, Math.min(duration, Number(event.target.value) || 0));
   const seconds = Math.max(0, duration - elapsed);
-  await saveBlindClock({
-    current_step_index: pos.index,
-    status: pos.status === "running" ? "running" : pos.status,
-    remaining_seconds: pos.status === "running" ? null : seconds,
-    ends_at: pos.status === "running" ? new Date(Date.now() + seconds * 1000).toISOString() : null
-  });
+  try {
+    await saveBlindClock({
+      current_step_index: pos.index,
+      status: pos.status === "running" ? "running" : pos.status,
+      remaining_seconds: pos.status === "running" ? null : seconds,
+      ends_at: pos.status === "running" ? new Date(Date.now() + seconds * 1000).toISOString() : null
+    });
+  } finally {
+    blindClockSliderInteracting = false;
+    renderBlindClock();
+  }
 });
 $("blind-clock-end").addEventListener("click", endBlindClock);
 $("blind-clock-fullscreen").addEventListener("click", enterBlindClockFullscreen);
