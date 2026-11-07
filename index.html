@@ -2581,8 +2581,8 @@ body.clock-only-mode .blind-clock-ante{
 .stage-command-modal-section label{display:grid;gap:6px;color:#aaa;font-size:11px;margin:10px 0}
 .stage-command-modal-section input,.stage-command-modal-section select{width:100%;min-height:42px}
 .stage-command-customer-results{display:grid;gap:7px;margin-top:8px}
-.stage-command-buyin-switch{display:flex!important;flex-direction:row!important;align-items:center;justify-content:space-between;gap:14px;padding:12px 13px;margin:14px 0 8px!important;border:1px solid #493638;border-radius:10px;background:#171515;cursor:pointer}
-.stage-command-buyin-copy{display:grid;gap:3px}.stage-command-buyin-copy strong{color:#fff;font-size:12px}.stage-command-buyin-copy small{color:#999;font-size:10px}
+.stage-command-buyin-switch{display:flex!important;flex-direction:row!important;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;margin:8px 0 6px!important;border:1px solid #493638;border-radius:9px;background:#171515;cursor:pointer}
+.stage-command-buyin-copy{display:flex;align-items:center;min-width:0}.stage-command-buyin-copy strong{color:#fff;font-size:11px;font-weight:700}
 .stage-command-buyin-switch input{position:absolute;opacity:0;width:1px!important;height:1px!important;pointer-events:none}
 .stage-command-switch-track{position:relative;flex:0 0 46px;width:46px;height:26px;border-radius:20px;background:#555;transition:background .18s}
 .stage-command-switch-track:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .18s}
@@ -5711,7 +5711,7 @@ function renderStageCommandCreation(searchTerm="",buyinEnabled=true){
     '<div class="stage-command-modal-section"><h4>1. ESCOLHA O CLIENTE DA NOVA COMANDA</h4>'+
       '<label>Buscar cliente ou jogador<input id="stage-command-create-search" type="search" value="'+esc(searchTerm)+'" placeholder="Digite o nome ou telefone..." autocomplete="off"></label>'+
       '<div class="stage-command-customer-results" id="stage-command-create-results"></div>'+
-      '<label class="stage-command-buyin-switch" for="stage-command-buyin-toggle"><span class="stage-command-buyin-copy"><strong>Já entra com buy-in</strong><small>Registrar a inscrição automaticamente nesta etapa</small></span><input id="stage-command-buyin-toggle" type="checkbox" '+(buyinEnabled?'checked':'')+'><span class="stage-command-switch-track" aria-hidden="true"></span></label>'+
+      '<label class="stage-command-buyin-switch" for="stage-command-buyin-toggle"><span class="stage-command-buyin-copy"><strong>Já entra com buy-in</strong></span><input id="stage-command-buyin-toggle" type="checkbox" '+(buyinEnabled?'checked':'')+'><span class="stage-command-switch-track" aria-hidden="true"></span></label>'+
       '<button type="button" class="btn secondary" id="stage-command-create-new-customer" style="width:100%;margin-top:12px">+ Novo cliente</button>'+
     '</div>';
   const search=content.querySelector("#stage-command-create-search");
@@ -5729,7 +5729,7 @@ function renderStageCommandNewCustomer(initialName="",buyinEnabled=true){
       '<label>Nome<input id="stage-command-new-customer-name" type="text" maxlength="120" value="'+esc(initialName)+'" placeholder="Nome do cliente" autocomplete="name"></label>'+
       '<label>Telefone<input id="stage-command-new-customer-phone" type="tel" maxlength="30" placeholder="(00) 00000-0000" autocomplete="tel"></label>'+
       '<label>Anotações<textarea id="stage-command-new-customer-notes" rows="4" maxlength="1000" placeholder="Informações adicionais (opcional)"></textarea></label>'+
-      '<label class="stage-command-buyin-switch" for="stage-command-new-buyin-toggle"><span class="stage-command-buyin-copy"><strong>Já entra com buy-in</strong><small>Registrar a inscrição automaticamente nesta etapa</small></span><input id="stage-command-new-buyin-toggle" type="checkbox" '+(buyinEnabled?'checked':'')+'><span class="stage-command-switch-track" aria-hidden="true"></span></label>'+
+      '<label class="stage-command-buyin-switch" for="stage-command-new-buyin-toggle"><span class="stage-command-buyin-copy"><strong>Já entra com buy-in</strong></span><input id="stage-command-new-buyin-toggle" type="checkbox" '+(buyinEnabled?'checked':'')+'><span class="stage-command-switch-track" aria-hidden="true"></span></label>'+
       '<button type="button" class="btn" id="stage-command-create-customer" style="width:100%">Cadastrar e criar comanda</button>'+
     '</div>';
   content.querySelector("#stage-command-back-create").addEventListener("click",()=>renderStageCommandCreation(initialName,buyinEnabled));
