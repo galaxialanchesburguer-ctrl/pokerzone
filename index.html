@@ -5578,25 +5578,51 @@ async function loadStageCommandCards() {
   if (!currentStage?.id) { count.textContent="10 comandas"; grid.innerHTML='<div class="notice">Salve a etapa para carregar as 10 comandas.</div>'; return; }
   if (!isStaff) { grid.innerHTML='<div class="empty">As comandas são restritas à equipe do clube.</div>'; return; }
   grid.innerHTML='<div class="empty">Carregando comandas...</div>';
-  const [{data:commands,error:commandsError},{data:ledgerRows,error:ledgerError}] = await Promise.all([
-    db.from("stage_commands").select("id,command_number,club_player_id,club_id").eq("stage_id",currentStage.id).order("command_number"),
+  const [{data:initialCommands,error:commandsError},{data:ledgerRows,error:ledgerError}] = await Promise.all([
+    db.from("stage_commands").select("id,command_number,club_player_id,club_id,tournament_player_id").eq("stage_id",currentStage.id).order("command_number"),
     db.from("club_player_ledger").select("id,stage_command_id,club_player_id,attendant_name,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).not("stage_command_id","is",null).order("created_at",{ascending:false})
   ]);
-  if(commandsError||ledgerError){grid.innerHTML='<div class="notice">Não foi possível carregar as comandas. Execute a atualização do Supabase. '+esc((commandsError||ledgerError).message)+'</div>';return;}
-  const rows=commands||[]; count.textContent=rows.length+" comandas";
+  if(commandsError||ledgerError){grid.innerHTML='<div class="notice">Não foi possível carregar as comandas. '+esc((commandsError||ledgerError).message)+'</div>';return;}
+  let rows=initialCommands||[];
+  const stagePlayers=[...(editorResults||[])].sort((a,b)=>Number(a.position||0)-Number(b.position||0));
+  if(stagePlayers.length){
+    const clubId=tournament.club_id||selectedClubId;
+    for(let i=0;i<stagePlayers.length;i++){
+      const player=stagePlayers[i];
+      let command=rows.find(item=>item.tournament_player_id===player.player_id);
+      if(!command) command=rows.find(item=>!item.tournament_player_id&&Number(item.command_number)===i+1);
+      if(command){
+        const {error}=await db.from("stage_commands").update({tournament_player_id:player.player_id,command_number:i+1}).eq("id",command.id);
+        if(error){grid.innerHTML='<div class="notice">Não foi possível vincular a comanda de '+esc(player.name)+': '+esc(error.message)+'</div>';return;}
+        command.tournament_player_id=player.player_id; command.command_number=i+1;
+      }else{
+        const {data:newCommand,error}=await db.from("stage_commands").insert({stage_id:currentStage.id,club_id:clubId,command_number:i+1,tournament_player_id:player.player_id}).select("id,command_number,club_player_id,club_id,tournament_player_id").single();
+        if(error){grid.innerHTML='<div class="notice">Não foi possível criar a comanda de '+esc(player.name)+': '+esc(error.message)+'</div>';return;}
+        rows.push(newCommand);
+      }
+    }
+    rows=rows.filter(command=>stagePlayers.some(player=>player.player_id===command.tournament_player_id)).sort((a,b)=>a.command_number-b.command_number);
+  }else{
+    rows=rows.sort((a,b)=>a.command_number-b.command_number);
+  }
+  count.textContent=rows.length+" comandas";
   grid.innerHTML=rows.map(command=>{
     const history=(ledgerRows||[]).filter(row=>row.stage_command_id===command.id);
     const charges=history.filter(row=>row.entry_type==="charge");
     const paid=history.filter(row=>row.entry_type==="payment").reduce((sum,row)=>sum+Number(row.amount||0),0);
     const total=charges.reduce((sum,row)=>sum+Number(row.amount||0),0);
-    const customer=history.find(row=>row.club_player_id)?.club_player_id;
-    return '<article class="stage-command-card"><h4>Comanda '+command.command_number+'</h4><div class="command-meta"><span>'+(customer?'Cliente vinculado':'Aguardando cliente')+'</span></div><div class="command-total">'+clubMoney(total)+'</div><div class="command-meta"><span>Consumos: '+charges.length+'</span><span>Pagamentos: '+clubMoney(paid)+'</span></div><button type="button" class="btn secondary command-open" data-command-open="'+esc(command.id)+'">Abrir comanda</button></article>';
-  }).join("")+'<button type="button" class="stage-command-add" id="stage-command-add"><span>+</span><small>Adicionar comanda</small></button>';
+    const player=stagePlayers.find(item=>item.player_id===command.tournament_player_id);
+    const customer=history.find(row=>row.club_player_id)?.club_player_id||command.club_player_id;
+    const title=player?player.name:"Comanda "+command.command_number;
+    const subtitle=player?"Jogador da etapa":(customer?'Cliente vinculado':'Aguardando cliente');
+    return '<article class="stage-command-card"><h4>'+esc(title)+'</h4><div class="command-meta"><span>'+subtitle+'</span></div><div class="command-total">'+clubMoney(total)+'</div><div class="command-meta"><span>Consumos: '+charges.length+'</span><span>Pagamentos: '+clubMoney(paid)+'</span></div><button type="button" class="btn secondary command-open" data-command-open="'+esc(command.id)+'">Abrir comanda</button></article>';
+  }).join("")+(!stagePlayers.length?'<button type="button" class="stage-command-add" id="stage-command-add"><span>+</span><small>Adicionar comanda</small></button>':'');
   grid.querySelectorAll("[data-command-open]").forEach(button=>button.addEventListener("click",()=>openStagePlayerCommand(button.dataset.commandOpen)));
   $("stage-command-add")?.addEventListener("click",addStageCommand);
 }
 async function addStageCommand(){
   if(!isStaff||!currentStage?.id)return;
+  if(editorResults?.length){alert("Nesta etapa, cada jogador já possui sua própria comanda.");return;}
   const {data:rows,error:loadError}=await db.from("stage_commands").select("command_number").eq("stage_id",currentStage.id).order("command_number",{ascending:false}).limit(1);
   if(loadError){alert("Não foi possível adicionar comanda: "+loadError.message);return;}
   const next=Number(rows?.[0]?.command_number||0)+1;
@@ -5606,12 +5632,13 @@ async function addStageCommand(){
 }
 async function openStagePlayerCommand(commandId){
   if(!isStaff||!currentStage?.id)return;
-  const {data:command,error:commandError}=await db.from("stage_commands").select("id,command_number,club_id,club_player_id").eq("id",commandId).eq("stage_id",currentStage.id).single();
+  const {data:command,error:commandError}=await db.from("stage_commands").select("id,command_number,club_id,club_player_id,tournament_player_id").eq("id",commandId).eq("stage_id",currentStage.id).single();
   if(commandError){alert("Não foi possível abrir a comanda: "+commandError.message);return;}
-  stageCommandSelectedPlayer={id:command.id,player_id:null,name:"Comanda "+command.command_number,command_number:command.command_number};
+  const linkedPlayer=editorResults.find(item=>item.player_id===command.tournament_player_id);
+  stageCommandSelectedPlayer={id:command.id,player_id:command.tournament_player_id||null,name:linkedPlayer?.name||"Comanda "+command.command_number,command_number:command.command_number};
   stageCommandSelectedCustomer=null;
   const modal=$("stage-command-modal"),content=$("stage-command-modal-content");
-  $("stage-command-modal-title").textContent="Comanda "+command.command_number;
+  $("stage-command-modal-title").textContent=linkedPlayer?"Comanda — "+linkedPlayer.name:"Comanda "+command.command_number;
   content.innerHTML='<div class="empty">Carregando clientes e histórico...</div>'; modal.classList.remove("hidden");
   const [{data:customers,error:customersError},{data:history,error:historyError}]=await Promise.all([
     db.from("club_players").select("id,name").eq("club_id",command.club_id).order("name"),
