@@ -5589,7 +5589,8 @@ let stageCommandCustomers = [];
 let stageCommandSelectedCustomer = null;
 let stageCommandSelectedPlayer = null;
 function closeStageCommandModal(){
-  $("stage-command-modal")?.classList.add("hidden");
+  const modal=$("stage-command-modal");
+  if(modal){modal.classList.add("hidden");modal.style.display="";}
   stageCommandSelectedCustomer = null;
   stageCommandSelectedPlayer = null;
 }
@@ -5650,9 +5651,13 @@ async function addStageCommand(){
   if(!isStaff||!currentStage?.id)return;
   if(editorResults?.length){alert("Nesta etapa, cada jogador já possui sua própria comanda.");return;}
   const modal=$("stage-command-modal"),content=$("stage-command-modal-content");
+  if(!modal||!content){alert("Não foi possível abrir a janela de comandas. Atualize a página e tente novamente.");return;}
+  // O modal precisa ficar fora do editor para não ser recortado pelo layout das abas.
+  if(modal.parentElement!==document.body)document.body.appendChild(modal);
   $("stage-command-modal-title").textContent="Adicionar comanda";
   content.innerHTML='<div class="empty">Identificando clube e carregando clientes...</div>';
   modal.classList.remove("hidden");
+  modal.style.display="flex";
   const {data:stageInfo,error:stageInfoError}=await db.from("stages").select("club_id").eq("id",currentStage.id).single();
   if(stageInfoError){content.innerHTML='<div class="notice">Não foi possível identificar o clube desta etapa: '+esc(stageInfoError.message)+'</div>';return;}
   stageCommandClubId=stageInfo?.club_id||tournament?.club_id||selectedClubId||managedClubId||null;
