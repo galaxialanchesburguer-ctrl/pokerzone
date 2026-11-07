@@ -112,6 +112,25 @@ header {
   min-height: 82px;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-logout {
+  white-space: nowrap;
+  border-color: #713036 !important;
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  header { padding: 12px 4%; }
+  .header-tag { font-size: 9px; letter-spacing: 1px; }
+  .header-right { gap: 8px; }
+  .header-logout { padding: 9px 10px; font-size: 11px; }
+}
+
 .logo {
   font-size: 30px;
   letter-spacing: -1.5px;
@@ -1559,7 +1578,7 @@ input:focus,select:focus {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-<header><div class="logo">POKER<span>ZONE</span></div><div class="header-tag">RANKING OFICIAL</div></header>
+<header><div class="logo">POKER<span>ZONE</span></div><div class="header-right"><div class="header-tag">RANKING OFICIAL</div><button class="btn secondary header-logout hidden" id="logout-btn">↪ Sair da conta</button></div></header>
 <main>
  <!-- TELA INICIAL DOS TORNEIOS -->
 <section id="home-tournaments">
@@ -2099,8 +2118,7 @@ input:focus,select:focus {
  </div>
  <div class="row">
   <div class="status" id="season-status"><span>●</span> Verificando</div>
-  <button class="btn secondary" id="login-open">Área administrativa</button>
-  <button class="btn secondary hidden" id="logout-btn">Sair</button>
+
  </div>
 
 
@@ -2295,7 +2313,7 @@ input:focus,select:focus {
 </section>
 
 </section>
-<div id="login-box" class="box">
+<div id="login-box" class="box hidden">
   <div class="box-head">
     <h2>ACESSO DO ADMINISTRADOR</h2>
   </div>
@@ -2763,7 +2781,7 @@ if (manageClubsButton) {
   document.querySelectorAll(".admin-only").forEach(el => {
   el.classList.toggle("admin-visible", isStaff);
 });
-  $("login-open").classList.toggle("hidden", isStaff);
+  $("login-box").classList.toggle("hidden", isStaff);
   $("logout-btn").classList.toggle("hidden", !isStaff);
 
   if (isStaff) {
@@ -4076,7 +4094,6 @@ $("add-tournament-placement").addEventListener("click", () => {
 });
 
  $("save-new-tournament").addEventListener("click", createTournament);
-$("login-open").addEventListener("click",()=>$("login-box").classList.remove("hidden"));
 if ($("login-close")) {
   $("login-close").addEventListener("click", () => {
     $("login-box").classList.add("hidden");
