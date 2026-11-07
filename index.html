@@ -4987,7 +4987,7 @@ if (manageClubsButton) {
   $("logout-btn").classList.toggle("hidden", !isStaff);
   $("admin-sidebar").classList.toggle("hidden", !isStaff);
   document.body.classList.toggle("admin-sidebar-active", isStaff);
-  $("admin-sidebar-tournament-group").classList.toggle("hidden", !tournament || !season);
+  $("admin-sidebar-tournament-group").classList.toggle("hidden", !isStaff || !tournament);
 
   if (isClubManager && managedClubId) {
     msg("● Gestão do clube vinculado");
@@ -6602,7 +6602,7 @@ async function openTournament(selectedTournament) {
  showTab("tournament-info-view");
 
   await refreshAll();
-  $("admin-sidebar-tournament-group").classList.toggle("hidden", !isStaff || !season);
+  $("admin-sidebar-tournament-group").classList.toggle("hidden", !isStaff || !tournament);
 
   // Carregar informações do torneio
   const { data: tournamentDetails, error: detailsError } = await db
