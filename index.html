@@ -1745,9 +1745,21 @@ input:focus,select:focus {
 
 /* ===== RELÓGIO DE BLINDS AO VIVO ===== */
 .blind-clock-next-step{display:inline-block;margin:10px auto 0;padding:10px 18px;border:1px solid #633037;border-radius:10px;background:rgba(237,48,56,.10);color:#ffb1b5;font-size:13px;font-weight:800;letter-spacing:.5px}
-#club-live-clock-btn{margin:12px 0}
 #club-clock-area{margin-top:14px}
 
+/* Perfil do clube */
+.club-profile-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 24px;border-bottom:1px solid #303030;flex-wrap:wrap}
+.club-profile-brand{display:flex;align-items:center;gap:17px;min-width:0}
+.club-profile-logo-frame{width:104px;height:104px;flex:0 0 104px;display:grid;place-items:center;overflow:hidden;border-radius:18px;background:linear-gradient(145deg,#242424,#111);border:1px solid #3b3b3b;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:10px}
+#club-details-logo{display:none;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center;transform:none!important;filter:none;flex:none}
+.club-profile-heading{min-width:0}
+.club-profile-heading h2{margin:0;overflow-wrap:anywhere}
+.club-profile-heading span{display:block;margin-top:6px;color:#999;font-size:10px;font-weight:800;letter-spacing:2px}
+.club-clock-launch{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:20px 0 24px;padding:18px 20px;border:1px solid #633037;border-radius:14px;background:linear-gradient(110deg,rgba(237,48,56,.13),rgba(24,24,24,.96))}
+.club-clock-launch strong,.club-clock-launch span{display:block}
+.club-clock-launch strong{font-size:13px;letter-spacing:1px}
+.club-clock-launch span{margin-top:5px;color:#aaa;font-size:12px;line-height:1.5}
+.club-clock-launch .btn{white-space:nowrap;min-width:175px}
 .blind-clock-wrap{max-width:1000px;margin:0 auto}
 .blind-clock-hero{background:radial-gradient(circle at 50% 0%,#4a151a 0%,#171111 58%,#101010 100%);border:1px solid #54252a;border-radius:18px;padding:clamp(22px,5vw,48px);text-align:center;margin:18px 0}
 .blind-clock-kicker{color:#ff737b;font-size:11px;font-weight:900;letter-spacing:3px}
@@ -1770,13 +1782,31 @@ input:focus,select:focus {
 .blind-clock-structure-list{margin-top:20px}
 .blind-clock-structure-list .current-clock-step td{background:rgba(237,48,56,.14);color:#fff}
 .blind-clock-structure-list .current-clock-step td:first-child{border-left:3px solid #ed3038}
-.blind-clock-fullscreen{position:fixed!important;inset:0!important;z-index:9999!important;background:#080808!important;overflow:auto!important;display:flex;flex-direction:column;justify-content:center;padding:20px!important}
-.blind-clock-fullscreen .blind-clock-hero{width:100%;max-width:1100px;margin:20px auto}
-.blind-clock-fullscreen .blind-clock-time{font-size:clamp(90px,22vw,190px)}
+.blind-clock-fullscreen{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;z-index:99999!important;background:radial-gradient(circle at 50% 15%,#251014 0%,#090909 58%)!important;overflow:auto!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;padding:clamp(12px,3vw,36px)!important;box-sizing:border-box!important}
+.blind-clock-fullscreen>.section-title{display:none!important}
+.blind-clock-fullscreen .blind-clock-hero{width:100%;max-width:1400px;box-sizing:border-box;margin:0 auto;padding:clamp(20px,5vh,58px) 16px;background:transparent;border:0;box-shadow:none}
+.blind-clock-fullscreen .blind-clock-time{font-size:clamp(96px,21vw,220px);line-height:.98;margin:clamp(12px,3vh,30px) 0}
+.blind-clock-fullscreen .blind-clock-step{font-size:clamp(22px,4vw,42px)}
+.blind-clock-fullscreen .blind-clock-blinds{gap:clamp(18px,7vw,100px);margin:clamp(18px,4vh,42px) 0}
+.blind-clock-fullscreen .blind-clock-blind strong{font-size:clamp(32px,6vw,62px)}
+.blind-clock-fullscreen .blind-clock-next-step{font-size:clamp(13px,2vw,19px);padding:12px 22px}
 .blind-clock-fullscreen .blind-clock-admin,.blind-clock-fullscreen .blind-clock-structure-list,.blind-clock-fullscreen .blind-clock-fullscreen-toggle{display:none!important}
+.blind-clock-fullscreen .blind-clock-controls{margin-top:clamp(12px,3vh,28px)}
 .blind-clock-fullscreen .blind-clock-exit{display:inline-flex!important}
 .blind-clock-exit{display:none!important}
-@media(max-width:600px){.blind-clock-admin-grid{grid-template-columns:1fr}.blind-clock-controls .btn{flex:1 1 42%;min-width:0}.blind-clock-hero{padding:25px 12px}.blind-clock-time{font-size:68px}}
+@media(max-width:700px){
+  .club-profile-header{padding:16px;align-items:flex-start}
+  .club-profile-logo-frame{width:78px;height:78px;flex-basis:78px;border-radius:14px}
+  .club-clock-launch{align-items:stretch;flex-direction:column}
+  .club-clock-launch .btn{width:100%}
+  .blind-clock-admin-grid{grid-template-columns:1fr}
+  .blind-clock-controls .btn{flex:1 1 42%;min-width:0}
+  .blind-clock-hero{padding:25px 12px}
+  .blind-clock-time{font-size:68px}
+  .blind-clock-fullscreen .blind-clock-time{font-size:clamp(76px,23vw,140px)}
+  .blind-clock-fullscreen .blind-clock-blinds{gap:16px;margin:18px 0}
+  .blind-clock-fullscreen .blind-clock-blind{min-width:80px}
+}
 
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -2142,26 +2172,30 @@ input:focus,select:focus {
 
  <!-- ÁREA INTERNA DO CLUBE -->
 <div id="club-details-area" class="box hidden">
-  <div class="box-head">
-    <h2 id="club-details-title">CLUBE</h2>
-
-    <img
-  id="club-details-logo"
-  src=""
-  alt="Logo do clube"
-  style="display:none; width:100px; height:100px; object-fit:contain; margin-bottom:12px;"
->
-
-    <button id="close-club-details" class="btn secondary">
-      Voltar
-    </button>
+  <div class="club-profile-header">
+    <div class="club-profile-brand">
+      <div class="club-profile-logo-frame">
+        <img id="club-details-logo" src="" alt="Logo do clube">
+      </div>
+      <div class="club-profile-heading">
+        <h2 id="club-details-title">CLUBE</h2>
+        <span>PERFIL DO CLUBE</span>
+      </div>
+    </div>
+    <button id="close-club-details" class="btn secondary">Voltar</button>
   </div>
 
   <div class="panel-pad">
   <p id="club-details-city"></p>
   <p id="club-details-address"></p>
   <p id="club-details-description"></p>
-  <button class="btn secondary" id="club-live-clock-btn" type="button">♠ Relógio ao vivo</button>
+  <div class="club-clock-launch">
+    <div>
+      <strong>RELÓGIO DE BLINDS</strong>
+      <span>Acompanhe os níveis e o tempo do torneio em uma tela exclusiva.</span>
+    </div>
+    <button class="btn" id="club-live-clock-btn" type="button">♠ ABRIR RELÓGIO</button>
+  </div>
 
 
   <div id="club-management-area">
@@ -5423,10 +5457,11 @@ if (isStaff) {
     const clubLogo = $("club-details-logo");
 
 if (club.logo_url) {
+  clubLogo.onload = () => { clubLogo.style.display = "block"; };
+  clubLogo.onerror = () => { clubLogo.style.display = "none"; };
   clubLogo.src = club.logo_url;
-  clubLogo.style.display = "block";
 } else {
-  clubLogo.src = "";
+  clubLogo.removeAttribute("src");
   clubLogo.style.display = "none";
 }
 
