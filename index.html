@@ -6379,6 +6379,12 @@ $("new-club-btn").addEventListener("click", () => {
 $("save-new-club").addEventListener("click", createClub);
 
 $("close-club-details").addEventListener("click", () => {
+  // Gestores vinculados permanecem dentro do próprio clube.
+  if (isClubManager && managedClubId) {
+    openClub(managedClubId);
+    setAdminSidebarActive("clubs");
+    return;
+  }
   // O botão Voltar do perfil retorna diretamente ao menu inicial.
   $("club-details-area").classList.add("hidden");
   $("manage-clubs-area").classList.add("hidden");
