@@ -2894,27 +2894,34 @@ function renderBlindClock() {
     : '<tr><td colspan="5" class="empty">Aguardando estrutura de blinds.</td></tr>';
 }
 
-async function loadBlindClockStructures() {
+async async function loadBlindClockStructures() {
   if (!blindClockTournament?.club_id) {
     const { data: tournamentData, error } = await db.from("tournaments").select("club_id").eq("id", blindClockTournament.id).maybeSingle();
     if (error) console.error("Erro ao localizar clube do torneio:", error);
     if (tournamentData?.club_id) blindClockTournament.club_id = tournamentData.club_id;
   }
   if (isStaff && blindClockTournament?.club_id) {
+    const { data: userData, error: userError } = await db.auth.getUser();
+    const userId = userData?.user?.id;
+    if (userError || !userId) {
+      $("blind-clock-admin-message").textContent = "Não foi possível identificar sua conta para carregar suas estruturas.";
+      return;
+    }
     const { data, error } = await db.from("club_blind_structures")
       .select("id, name, description, levels")
       .eq("club_id", blindClockTournament.club_id)
+      .eq("created_by", userId)
       .order("name");
     if (error) {
-      $("blind-clock-admin-message").textContent = "Erro ao carregar estruturas: " + error.message;
+      $("blind-clock-admin-message").textContent = "Erro ao carregar suas estruturas: " + error.message;
     } else {
       blindClockStructures = data || [];
       $("blind-clock-structure-select").innerHTML = blindClockStructures.length
         ? '<option value="">Selecione uma estrutura</option>' + blindClockStructures.map(item => `<option value="${item.id}">${esc(item.name)}</option>`).join("")
-        : '<option value="">Nenhuma estrutura salva neste clube</option>';
+        : '<option value="">Você ainda não criou estruturas</option>';
       $("blind-clock-admin-message").textContent = blindClockStructures.length
-        ? "Escolha uma estrutura salva pelo clube. O relógio ficará público para quem abrir este torneio."
-        : "Este clube ainda não possui estruturas salvas. Cadastre uma em Estruturas de Blinds.";
+        ? "Escolha uma das estruturas que você criou. O relógio ficará público para quem abrir este torneio."
+        : "Você ainda não criou estruturas neste clube. Cadastre uma em Estruturas de Blinds.";
     }
   } else if (isStaff) {
     $("blind-clock-admin-message").textContent = "Não foi possível identificar o clube deste torneio.";
