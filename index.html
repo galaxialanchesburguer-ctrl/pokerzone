@@ -2505,6 +2505,29 @@ body.clock-only-mode .blind-clock-ante{
   body.clock-only-mode .blind-clock-payout-item strong{font-size:13px!important;color:#fff!important}
   body.clock-only-mode .blind-clock-payout-total strong{color:#ffd34f!important}
 }
+
+/* ===== CADERNO DE HAVER DO CLUBE ===== */
+.club-haver-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.club-haver-stat{background:linear-gradient(145deg,#202020,#111);border:1px solid #393030;border-radius:11px;padding:17px}
+.club-haver-stat span{display:block;color:#999;font-size:10px;font-weight:800;letter-spacing:1px}
+.club-haver-stat strong{display:block;font-size:24px;margin-top:8px}
+.club-haver-stat.debt strong{color:#ff626b}.club-haver-stat.paid strong{color:#55d69a}
+.club-haver-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}
+.club-haver-toolbar input{flex:1;min-width:190px}
+.club-haver-player{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:15px 17px;border:1px solid #343030;background:#171717;border-radius:10px;margin:9px 0}
+.club-haver-player strong{display:block;font-size:14px}.club-haver-player small{display:block;color:#999;margin-top:5px}
+.club-haver-player .debt-value{font-size:16px;font-weight:900;color:#ff737b;white-space:nowrap}
+.club-haver-player .debt-value.zero{color:#55d69a}
+.club-haver-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:16px;background:#141414;border:1px solid #363030;border-radius:10px;margin:14px 0}
+.club-haver-form label{display:grid;gap:6px;color:#aaa;font-size:12px}.club-haver-form input,.club-haver-form select{width:100%}
+.club-haver-form .wide{grid-column:1/-1}
+.club-haver-detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:15px 0}
+.club-haver-balance{padding:18px;border:1px solid #713238;background:linear-gradient(120deg,rgba(237,48,56,.13),#171717);border-radius:11px;margin:12px 0 18px}
+.club-haver-balance span{display:block;color:#aaa;font-size:11px;letter-spacing:1px}.club-haver-balance strong{display:block;font-size:29px;margin-top:7px;color:#ff747b}
+.club-haver-entry{display:flex;justify-content:space-between;gap:12px;padding:13px 15px;border-top:1px solid #302a2a;align-items:center}
+.club-haver-entry small{display:block;color:#999;margin-top:4px}.club-haver-entry .charge{color:#ff737b;font-weight:800}.club-haver-entry .payment{color:#55d69a;font-weight:800}
+@media(max-width:650px){.club-haver-summary{grid-template-columns:1fr}.club-haver-stat{padding:13px}.club-haver-stat strong{font-size:21px}.club-haver-form{grid-template-columns:1fr}.club-haver-form .wide{grid-column:auto}.club-haver-player{padding:12px;align-items:flex-start}.club-haver-player .btn{padding:9px 10px;font-size:11px}}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2907,6 +2930,9 @@ body.clock-only-mode .blind-clock-ante{
         Organizadores
       </button>
 
+
+      <button class="btn secondary" id="club-haver-btn">📒 Caderno de Haver</button>
+
       <button class="btn secondary" id="club-settings-btn">
         Configurações
       </button>
@@ -2918,6 +2944,52 @@ body.clock-only-mode .blind-clock-ante{
 </div>
 
   
+
+
+  <div id="club-haver-area" class="club-tournaments-panel hidden">
+    <div class="club-haver-detail-head">
+      <div><h3>📒 CADERNO DE HAVER</h3><p class="season-info">Contas individuais dos jogadores. O saldo continua acumulado até o pagamento.</p></div>
+      <button class="btn secondary" id="club-haver-back">Voltar ao clube</button>
+    </div>
+    <div id="club-haver-overview">
+      <div class="club-haver-summary">
+        <div class="club-haver-stat"><span>TOTAL LANÇADO</span><strong id="club-haver-total-charged">R$ 0,00</strong></div>
+        <div class="club-haver-stat paid"><span>TOTAL RECEBIDO</span><strong id="club-haver-total-paid">R$ 0,00</strong></div>
+        <div class="club-haver-stat debt"><span>TOTAL EM HAVER</span><strong id="club-haver-total-open">R$ 0,00</strong></div>
+      </div>
+      <div class="club-haver-toolbar">
+        <input id="club-haver-search" type="search" placeholder="Buscar jogador...">
+        <button class="btn" id="club-haver-new-player-toggle">+ Cadastrar jogador</button>
+      </div>
+      <div id="club-haver-new-player" class="club-haver-form hidden">
+        <label class="wide">Nome do jogador<input id="club-haver-player-name" maxlength="100" placeholder="Nome completo"></label>
+        <div class="wide"><button class="btn" id="club-haver-save-player">Salvar jogador</button> <span id="club-haver-player-message" class="season-info"></span></div>
+      </div>
+      <div id="club-haver-player-list"><div class="empty">Carregando jogadores...</div></div>
+    </div>
+    <div id="club-haver-player-detail" class="hidden">
+      <div class="club-haver-detail-head">
+        <div><h3 id="club-haver-selected-name">JOGADOR</h3><p class="season-info">Extrato individual • histórico acumulado</p></div>
+        <button class="btn secondary" id="club-haver-back-list">← Lista de jogadores</button>
+      </div>
+      <div class="club-haver-summary">
+        <div class="club-haver-stat"><span>TOTAL CONSUMIDO</span><strong id="club-haver-player-charged">R$ 0,00</strong></div>
+        <div class="club-haver-stat paid"><span>TOTAL PAGO</span><strong id="club-haver-player-paid">R$ 0,00</strong></div>
+        <div class="club-haver-stat debt"><span>SALDO EM HAVER</span><strong id="club-haver-player-balance">R$ 0,00</strong></div>
+      </div>
+      <h4>Adicionar lançamento</h4>
+      <div class="club-haver-form">
+        <label>Tipo<select id="club-haver-entry-type"><option value="charge">Consumo / cobrança</option><option value="payment">Pagamento</option></select></label>
+        <label>Valor (R$)<input id="club-haver-entry-amount" type="number" min="0.01" step="0.01" placeholder="0,00"></label>
+        <label>Categoria<select id="club-haver-entry-category"><option value="Bebidas">Bebidas</option><option value="Alimentação">Alimentação</option><option value="Fichas">Fichas</option><option value="Inscrição">Inscrição</option><option value="Outros">Outros</option></select></label>
+        <label id="club-haver-payment-method-wrap" class="hidden">Forma de pagamento<select id="club-haver-payment-method"><option value="Pix">Pix</option><option value="Dinheiro">Dinheiro</option><option value="Cartão">Cartão</option><option value="Outro">Outro</option></select></label>
+        <label class="wide">Descrição<input id="club-haver-entry-description" maxlength="180" placeholder="Ex.: 2 refrigerantes, inscrição do torneio..."></label>
+        <div class="wide"><button class="btn" id="club-haver-save-entry">Registrar movimentação</button><span id="club-haver-entry-message" class="season-info"></span></div>
+      </div>
+      <h4>Histórico de movimentações</h4>
+      <div id="club-haver-history" class="box"><div class="empty">Nenhuma movimentação registrada.</div></div>
+    </div>
+  </div>
 
   <div id="club-tournaments-area" class="club-tournaments-panel hidden">
     <h3>TORNEIOS DO CLUBE</h3>
@@ -6531,6 +6603,160 @@ if (club.logo_url) {
 
 $("club-settings-logo").value = "";
 }
+
+/* ===== CADERNO DE HAVER ===== */
+let clubHaverPlayers = [];
+let clubHaverSelectedPlayer = null;
+let clubHaverTransactions = [];
+const clubMoney = value => Number(value || 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"});
+function clubHaverBalance(rows) {
+  return rows.reduce((sum,row) => sum + (row.entry_type === "payment" ? -Number(row.amount) : Number(row.amount)), 0);
+}
+async function loadClubHaver() {
+  if (!selectedClubId || !isStaff) return;
+  $("club-haver-player-list").innerHTML = '<div class="empty">Carregando jogadores...</div>';
+  const {data: playersData,error: playersError} = await db.from("club_players")
+    .select("id,name,created_at").eq("club_id",selectedClubId).order("name");
+  if (playersError) {
+    $("club-haver-player-list").innerHTML = '<div class="notice">Não foi possível carregar o caderno. Verifique se as tabelas do Caderno de Haver já foram criadas no Supabase. Detalhe: ' + esc(playersError.message) + '</div>';
+    return;
+  }
+  clubHaverPlayers = playersData || [];
+  const ids = clubHaverPlayers.map(p=>p.id);
+  let entries = [];
+  if (ids.length) {
+    const {data,error} = await db.from("club_player_ledger").select("id,club_player_id,entry_type,category,description,amount,payment_method,created_at").in("club_player_id",ids);
+    if (error) {
+      $("club-haver-player-list").innerHTML = '<div class="notice">Erro ao carregar movimentações: ' + esc(error.message) + '</div>';
+      return;
+    }
+    entries = data || [];
+  }
+  const totals = entries.reduce((acc,row) => {
+    if (row.entry_type === "payment") acc.paid += Number(row.amount);
+    else acc.charged += Number(row.amount);
+    return acc;
+  },{charged:0,paid:0});
+  $("club-haver-total-charged").textContent = clubMoney(totals.charged);
+  $("club-haver-total-paid").textContent = clubMoney(totals.paid);
+  $("club-haver-total-open").textContent = clubMoney(totals.charged-totals.paid);
+  renderClubHaverPlayers(entries);
+}
+function renderClubHaverPlayers(entries) {
+  const term = ($("club-haver-search").value || "").trim().toLowerCase();
+  const list = $("club-haver-player-list");
+  const visible = clubHaverPlayers.filter(p=>p.name.toLowerCase().includes(term));
+  if (!visible.length) {
+    list.innerHTML = '<div class="empty">' + (clubHaverPlayers.length ? "Nenhum jogador encontrado." : "Nenhum jogador cadastrado. Use “Cadastrar jogador” para começar.") + '</div>';
+    return;
+  }
+  list.innerHTML = visible.map(player => {
+    const rows = entries.filter(row=>row.club_player_id===player.id);
+    const balance = clubHaverBalance(rows);
+    return '<div class="club-haver-player"><div><strong>' + esc(player.name) + '</strong><small>' + rows.length + ' movimentação(ões)</small></div><div style="display:flex;align-items:center;gap:12px"><span class="debt-value ' + (balance<=0?'zero':'') + '">' + clubMoney(balance) + '</span><button class="btn secondary" data-haver-player="' + esc(player.id) + '">Abrir conta</button></div></div>';
+  }).join("");
+  list.querySelectorAll("[data-haver-player]").forEach(button=>button.addEventListener("click",()=>openClubHaverPlayer(button.dataset.haverPlayer)));
+}
+async function saveClubHaverPlayer() {
+  const name = $("club-haver-player-name").value.trim();
+  const message = $("club-haver-player-message");
+  if (!name) { message.textContent = "Informe o nome do jogador."; return; }
+  message.textContent = "Salvando...";
+  const {data:userData} = await db.auth.getUser();
+  const {error} = await db.from("club_players").insert({club_id:selectedClubId,name,created_by:userData?.user?.id || null});
+  if (error) { message.textContent = "Erro: " + error.message; return; }
+  $("club-haver-player-name").value = "";
+  message.textContent = "Jogador cadastrado!";
+  await loadClubHaver();
+}
+async function openClubHaverPlayer(playerId) {
+  clubHaverSelectedPlayer = clubHaverPlayers.find(p=>p.id===playerId);
+  if (!clubHaverSelectedPlayer) return;
+  $("club-haver-overview").classList.add("hidden");
+  $("club-haver-player-detail").classList.remove("hidden");
+  $("club-haver-selected-name").textContent = clubHaverSelectedPlayer.name;
+  await loadClubHaverLedger();
+}
+async function loadClubHaverLedger() {
+  if (!clubHaverSelectedPlayer) return;
+  $("club-haver-history").innerHTML = '<div class="empty">Carregando extrato...</div>';
+  const {data,error} = await db.from("club_player_ledger")
+    .select("id,entry_type,category,description,amount,payment_method,created_at")
+    .eq("club_player_id",clubHaverSelectedPlayer.id).order("created_at",{ascending:false});
+  if (error) {
+    $("club-haver-history").innerHTML = '<div class="notice">Erro ao carregar extrato: ' + esc(error.message) + '</div>';
+    return;
+  }
+  clubHaverTransactions = data || [];
+  const charged = clubHaverTransactions.filter(x=>x.entry_type==="charge").reduce((a,x)=>a+Number(x.amount),0);
+  const paid = clubHaverTransactions.filter(x=>x.entry_type==="payment").reduce((a,x)=>a+Number(x.amount),0);
+  $("club-haver-player-charged").textContent = clubMoney(charged);
+  $("club-haver-player-paid").textContent = clubMoney(paid);
+  $("club-haver-player-balance").textContent = clubMoney(charged-paid);
+  $("club-haver-history").innerHTML = clubHaverTransactions.length ? clubHaverTransactions.map(row => {
+    const date = new Date(row.created_at).toLocaleString("pt-BR");
+    const payment = row.entry_type==="payment";
+    return '<div class="club-haver-entry"><div><strong>' + esc(row.description) + '</strong><small>' + esc(row.category || (payment?"Pagamento":"Consumo")) + (row.payment_method ? ' • ' + esc(row.payment_method) : '') + ' • ' + date + '</small></div><span class="' + (payment?'payment':'charge') + '">' + (payment?'- ':'+ ') + clubMoney(row.amount) + '</span></div>';
+  }).join("") : '<div class="empty">Nenhuma movimentação registrada para este jogador.</div>';
+}
+async function saveClubHaverEntry() {
+  if (!clubHaverSelectedPlayer) return;
+  const type = $("club-haver-entry-type").value;
+  const amount = Number($("club-haver-entry-amount").value);
+  const description = $("club-haver-entry-description").value.trim();
+  const category = $("club-haver-entry-category").value;
+  const paymentMethod = type==="payment" ? $("club-haver-payment-method").value : null;
+  const message = $("club-haver-entry-message");
+  if (!Number.isFinite(amount) || amount<=0 || !description) { message.textContent = "Informe um valor maior que zero e uma descrição."; return; }
+  message.textContent = "Registrando...";
+  const {data:userData} = await db.auth.getUser();
+  const {error} = await db.from("club_player_ledger").insert({
+    club_player_id:clubHaverSelectedPlayer.id,
+    entry_type:type,
+    category:type==="payment" ? "Pagamento" : category,
+    description,
+    amount,
+    payment_method:paymentMethod,
+    created_by:userData?.user?.id || null
+  });
+  if (error) { message.textContent = "Erro: " + error.message; return; }
+  $("club-haver-entry-amount").value = "";
+  $("club-haver-entry-description").value = "";
+  message.textContent = "Movimentação registrada!";
+  await loadClubHaverLedger();
+  await loadClubHaver();
+}
+$("club-haver-btn").addEventListener("click",async()=>{
+  if (!isStaff || !selectedClubId) { alert("Acesso restrito à equipe do clube."); return; }
+  $("club-management-area").classList.add("hidden");
+  $("club-tournaments-area").classList.add("hidden");
+  $("club-settings-area").classList.add("hidden");
+  $("club-clock-area").classList.add("hidden");
+  $("club-blinds-area").classList.add("hidden");
+  $("club-haver-area").classList.remove("hidden");
+  $("club-haver-overview").classList.remove("hidden");
+  $("club-haver-player-detail").classList.add("hidden");
+  $("club-haver-new-player").classList.add("hidden");
+  await loadClubHaver();
+});
+$("club-haver-back").addEventListener("click",()=>{
+  $("club-haver-area").classList.add("hidden");
+  $("club-management-area").classList.remove("hidden");
+});
+$("club-haver-back-list").addEventListener("click",()=>{
+  $("club-haver-player-detail").classList.add("hidden");
+  $("club-haver-overview").classList.remove("hidden");
+});
+$("club-haver-new-player-toggle").addEventListener("click",()=>$("club-haver-new-player").classList.toggle("hidden"));
+$("club-haver-save-player").addEventListener("click",saveClubHaverPlayer);
+$("club-haver-search").addEventListener("input",()=>renderClubHaverPlayers([]));
+$("club-haver-entry-type").addEventListener("change",()=>{
+  const payment = $("club-haver-entry-type").value==="payment";
+  $("club-haver-payment-method-wrap").classList.toggle("hidden",!payment);
+  $("club-haver-entry-category").disabled = payment;
+});
+$("club-haver-save-entry").addEventListener("click",saveClubHaverEntry);
+
 async function loadClubTournaments() {
   const list = $("club-tournaments-list");
 
