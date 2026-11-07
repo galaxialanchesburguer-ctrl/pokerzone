@@ -2550,8 +2550,9 @@ body.clock-only-mode .blind-clock-ante{
 .stage-editor-panel{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;position:relative;clear:both}.stage-editor-panel.hidden{display:none!important}#stage-data-panel,#stage-commands-panel{width:100%;max-width:100%;box-sizing:border-box}
 /* Correção de largura do editor e das comandas */ #stage-editor{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;float:none!important;position:relative!important} /* Oculta o cabeçalho e a navegação duplicada do torneio na tela principal e visitante */
 #tournament-app>.tournament-heading,
-#tournament-app>.row:has(#season-status),
-#tournament-app>nav.tabs{display:none!important}
+#tournament-app>.row:has(#season-status){display:none!important}
+/* Mantém visíveis as abas principais dentro do torneio. */
+#tournament-app>nav.tabs{display:flex!important}
 #tournament-app{padding-top:0!important}
 /* Respeita a classe hidden nas telas de torneio e no editor, mesmo com regras de layout forçadas. */
 #tournament-app.hidden,#stages-view.hidden,#tournament-ranking-view.hidden,#stage-editor.hidden{display:none!important}
