@@ -1823,8 +1823,8 @@ body.clock-only-mode #club-clock-area{display:block!important;width:100%;min-hei
 body.clock-only-mode #blind-clock-container{width:100%;min-height:100vh;max-width:none;margin:0;border:0;border-radius:0}
 body.clock-only-mode .blind-clock-hero{width:100%;max-width:1500px;margin:auto}
 body.clock-only-mode .blind-clock-structure-list{display:none!important}
-body.clock-only-mode #blind-clock-admin{display:block!important;max-width:720px;width:calc(100% - 28px);margin:20px auto}
-body.clock-only-mode #blind-clock-time-admin{max-width:720px;width:calc(100% - 28px);margin:12px auto}
+body.clock-only-mode #blind-clock-admin:not(.hidden){max-width:720px;width:calc(100% - 28px);margin:20px auto}
+body.clock-only-mode #blind-clock-time-admin:not(.hidden){max-width:720px;width:calc(100% - 28px);margin:12px auto}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2832,7 +2832,7 @@ function renderBlindClock() {
     running: "● RELÓGIO EM ANDAMENTO",
     paused: "Ⅱ RELÓGIO PAUSADO",
     stopped: "RELÓGIO PARADO",
-    finished: "TORNEIO ENCERRADO"
+    finished: blindClockClubId ? "RELÓGIO ENCERRADO" : "TORNEIO ENCERRADO"
   };
   $("blind-clock-status").textContent = statusLabels[pos.status] || "RELÓGIO PARADO";
   const nextStep = blindClockState?.structure_snapshot?.[pos.index + 1];
@@ -3054,7 +3054,7 @@ async function addBlindClockTime() {
 
 async function endBlindClock() {
   if (!blindClockState) return;
-  if (!confirm("Deseja encerrar o relógio deste torneio?")) return;
+  if (!confirm("Deseja encerrar este relógio?")) return;
   const pos = getBlindClockPosition(blindClockState);
   await saveBlindClock({
     current_step_index: pos.index,
@@ -6631,6 +6631,7 @@ async function init(){
       standaloneClockArea.querySelector(".box-head").classList.add("hidden");
       standaloneClockArea.querySelector(".blind-clock-admin").classList.add("hidden");
       $("blind-clock-admin").classList.toggle("hidden", !isStaff);
+      if (isStaff) document.body.classList.add("clock-only-admin");
       $("blind-clock-container").classList.remove("blind-clock-fullscreen");
       blindClockClubId = clockOnlyClubId;
       const { data: clockClub, error: clubError } = await db.from("clubs")
