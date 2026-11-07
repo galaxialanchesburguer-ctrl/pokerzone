@@ -2543,6 +2543,27 @@ body.clock-only-mode .blind-clock-ante{
 .club-haver-quick-product small{opacity:.72}
 .club-haver-quick-quantity{display:grid;place-items:center;min-width:30px;height:30px;padding:0 8px;border-radius:20px;background:#f5443b;color:white;font-weight:800}
 
+
+/* COMANDAS INDIVIDUAIS POR ETAPA */
+.stage-command-area{padding:20px;border-top:1px solid #342629;margin-top:8px}
+.stage-command-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.stage-command-heading h3{font-size:16px;letter-spacing:.8px}
+.stage-command-heading p{color:#999;font-size:12px;margin-top:5px}
+.stage-command-heading>span{font-size:11px;color:#ff858b;background:#35191c;border:1px solid #713036;padding:7px 10px;border-radius:20px}
+.stage-command-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.stage-command-card{background:linear-gradient(145deg,#222,#121212);border:1px solid #3a3030;border-radius:12px;padding:15px;min-width:0}
+.stage-command-card h4{font-size:15px;overflow-wrap:anywhere;margin-bottom:8px}
+.stage-command-card .command-total{font-size:23px;font-weight:900;color:#fff;margin:8px 0}
+.stage-command-card .command-meta{font-size:11px;color:#aaa;display:flex;gap:8px;flex-wrap:wrap}
+.stage-command-card .command-open{width:100%;margin-top:13px}
+.stage-command-detail{border-top:1px solid #393030;margin-top:13px;padding-top:12px}
+.stage-command-detail label{display:grid;gap:5px;color:#aaa;font-size:11px;margin:9px 0}
+.stage-command-detail input,.stage-command-detail select{width:100%}
+.stage-command-history{max-height:180px;overflow:auto;margin:10px 0}
+.stage-command-history-item{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #2b2525;font-size:11px}
+.stage-command-history-item span:last-child{white-space:nowrap;color:#ff858b}
+@media(max-width:600px){.stage-command-area{padding:15px 10px}.stage-command-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stage-command-card{padding:11px}.stage-command-card h4{font-size:13px}.stage-command-card .command-total{font-size:17px}}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3567,6 +3588,10 @@ body.clock-only-mode .blind-clock-ante{
 <div id="player-feedback" class="notice hidden"></div>
   </div>
   <div class="table-wrap"><table class="editor-table"><thead><tr><th>JOGADOR</th><th>POSIÇÃO</th><th>PONTOS</th><th class="admin-only">AÇÃO</th></tr></thead><tbody id="result-rows"><tr><td colspan="4" class="empty">Selecione uma etapa.</td></tr></tbody></table></div>
+  <div class="stage-command-area admin-only">
+    <div class="stage-command-heading"><div><h3>COMANDAS INDIVIDUAIS</h3><p>Uma comanda para cada jogador participante desta etapa.</p></div><span id="stage-command-count">0 jogadores</span></div>
+    <div id="stage-command-grid" class="stage-command-grid"><div class="empty">Abra ou salve uma etapa para carregar as comandas.</div></div>
+  </div>
  </div>
 
 </div>
@@ -5171,12 +5196,124 @@ resultsContent.innerHTML =
   $("player-feedback").classList.add("hidden");
 
   renderResultRows();
+  await loadStageCommandCards();
 
   $("stage-editor").scrollIntoView({
     behavior: "smooth",
     block: "start"
   });
 }
+async function loadStageCommandCards() {
+  const grid = $("stage-command-grid");
+  const count = $("stage-command-count");
+  if (!grid) return;
+  count.textContent = editorResults.length + (editorResults.length === 1 ? " jogador" : " jogadores");
+  if (!editorResults.length) {
+    grid.innerHTML = '<div class="empty">Adicione jogadores à etapa para criar as comandas.</div>';
+    return;
+  }
+  if (!currentStage?.id) {
+    grid.innerHTML = '<div class="notice">Salve a etapa para liberar os lançamentos nas comandas.</div>';
+    return;
+  }
+  if (!isStaff) {
+    grid.innerHTML = '<div class="empty">As comandas são restritas à equipe do clube.</div>';
+    return;
+  }
+  grid.innerHTML = '<div class="empty">Carregando comandas...</div>';
+  const clubId = tournament.club_id || selectedClubId;
+  if (!clubId) {
+    grid.innerHTML = '<div class="notice">Não foi possível identificar o clube desta etapa.</div>';
+    return;
+  }
+  const [{data: entryRows,error:entryError},{data:clubPlayers,error:clubPlayersError},{data:ledgerRows,error:ledgerError}] = await Promise.all([
+    db.from("tournament_entries").select("id,player_id,entry_type,amount,created_at").eq("tournament_id",tournament.id).eq("stage_id",currentStage.id).order("created_at"),
+    db.from("club_players").select("id,name").eq("club_id",clubId).order("name"),
+    db.from("club_player_ledger").select("id,club_player_id,entry_type,category,description,amount,created_at").eq("stage_id",currentStage.id).order("created_at",{ascending:false})
+  ]);
+  const failed = entryError || clubPlayersError || ledgerError;
+  if (failed) {
+    grid.innerHTML = '<div class="notice">Não foi possível carregar as comandas: ' + esc(failed.message) + '</div>';
+    return;
+  }
+  const normalize = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+  const accounts = clubPlayers || [];
+  const entries = entryRows || [];
+  const ledger = ledgerRows || [];
+  grid.innerHTML = editorResults.map(player => {
+    const account = accounts.find(item => normalize(item.name) === normalize(player.name));
+    const accountRows = account ? ledger.filter(row => row.club_player_id === account.id) : [];
+    const charges = accountRows.filter(row => row.entry_type === "charge");
+    const paid = accountRows.filter(row => row.entry_type === "payment").reduce((sum,row) => sum + Number(row.amount || 0),0);
+    const consumption = charges.reduce((sum,row) => sum + Number(row.amount || 0),0);
+    const playerEntries = entries.filter(row => row.player_id === player.player_id);
+    const buyins = playerEntries.filter(row => row.entry_type === "buyin").length;
+    const rebuys = playerEntries.filter(row => row.entry_type === "rebuy").length;
+    const addons = playerEntries.filter(row => row.entry_type === "addon").length;
+    return '<article class="stage-command-card">' +
+      '<h4>' + esc(player.name) + '</h4>' +
+      '<div class="command-meta"><span>Buy-in: ' + buyins + '</span><span>Rebuy: ' + rebuys + '</span><span>Add-on: ' + addons + '</span></div>' +
+      '<div class="command-total">' + clubMoney(consumption) + '</div>' +
+      '<div class="command-meta"><span>Consumos: ' + charges.length + '</span><span>Pagamentos: ' + clubMoney(paid) + '</span></div>' +
+      '<button type="button" class="btn secondary command-open" data-command-open="' + esc(player.player_id) + '">Abrir comanda</button>' +
+      '<div class="stage-command-detail hidden" id="command-detail-' + esc(player.player_id) + '">' +
+        '<strong>Movimentações</strong>' +
+        '<div class="stage-command-history">' + (accountRows.length ? accountRows.map(row => '<div class="stage-command-history-item"><span>' + esc(row.description || row.category || "Movimentação") + '</span><span>' + (row.entry_type === "payment" ? "− " : "+ ") + clubMoney(row.amount) + '</span></div>').join("") : '<div class="empty">Nenhum consumo lançado.</div>') + '</div>' +
+        '<label>Descrição do consumo<input type="text" data-command-description="' + esc(player.player_id) + '" placeholder="Ex.: Água, refrigerante, lanche"></label>' +
+        '<label>Valor (R$)<input type="number" min="0.01" step="0.01" data-command-amount="' + esc(player.player_id) + '" placeholder="0,00"></label>' +
+        '<label>Categoria<select data-command-category="' + esc(player.player_id) + '"><option>Bebidas</option><option>Alimentação</option><option>Fichas</option><option>Outros</option></select></label>' +
+        '<button type="button" class="btn command-charge" data-command-charge="' + esc(player.player_id) + '">Lançar consumo</button>' +
+      '</div>' +
+    '</article>';
+  }).join("");
+  grid.querySelectorAll("[data-command-open]").forEach(button => button.addEventListener("click",() => {
+    const detail = $("command-detail-" + button.dataset.commandOpen);
+    detail.classList.toggle("hidden");
+    button.textContent = detail.classList.contains("hidden") ? "Abrir comanda" : "Fechar comanda";
+  }));
+  grid.querySelectorAll("[data-command-charge]").forEach(button => button.addEventListener("click",async() => {
+    if (!isStaff || !currentStage?.id) return;
+    const player = editorResults.find(item => item.player_id === button.dataset.commandCharge);
+    if (!player) return;
+    const playerId = button.dataset.commandCharge;
+    const description = grid.querySelector('[data-command-description="' + playerId + '"]').value.trim();
+    const amount = Number(grid.querySelector('[data-command-amount="' + playerId + '"]').value);
+    const category = grid.querySelector('[data-command-category="' + playerId + '"]').value;
+    if (!description || !Number.isFinite(amount) || amount <= 0) {
+      alert("Informe a descrição e um valor maior que zero.");
+      return;
+    }
+    button.disabled = true;
+    const clubId = tournament.club_id || selectedClubId;
+    let {data:account,error:accountError} = await db.from("club_players").select("id,name").eq("club_id",clubId).ilike("name",player.name).maybeSingle();
+    if (accountError) {
+      alert("Erro ao localizar a conta do jogador: " + accountError.message);
+      button.disabled = false;
+      return;
+    }
+    if (!account) {
+      const {data:newAccount,error:newAccountError} = await db.from("club_players").insert({club_id:clubId,name:player.name}).select("id,name").single();
+      if (newAccountError) {
+        alert("Não foi possível criar a conta individual: " + newAccountError.message);
+        button.disabled = false;
+        return;
+      }
+      account = newAccount;
+    }
+    const {data:userData} = await db.auth.getUser();
+    const {error} = await db.from("club_player_ledger").insert({
+      club_player_id:account.id,entry_type:"charge",category,description,amount,
+      tournament_id:tournament.id,stage_id:currentStage.id,created_by:userData?.user?.id || null
+    });
+    if (error) {
+      alert("Não foi possível registrar o consumo: " + error.message);
+      button.disabled = false;
+      return;
+    }
+    await loadStageCommandCards();
+  }));
+}
+
 function calculateStagePoints() {
   const totalPlayers = editorResults.length;
 
@@ -5442,6 +5579,7 @@ calculateStagePoints();
 input.value = "";
 feedback.classList.remove("hidden");
 renderResultRows();
+await loadStageCommandCards();
 });
 
 $("calculate-points").addEventListener("click", () => {
@@ -5470,6 +5608,8 @@ $("new-stage").addEventListener("click", () => {
 
   $("result-rows").innerHTML =
     '<tr><td colspan="4" class="empty">Adicione jogadores à etapa.</td></tr>';
+  $("stage-command-count").textContent = editorResults.length + " jogadores";
+  $("stage-command-grid").innerHTML = '<div class="empty">Salve a etapa para habilitar as comandas individuais.</div>';
 
   $("stage-editor").scrollIntoView({
     behavior: "smooth",
@@ -5547,9 +5687,10 @@ async function saveStage() {
     return;
   }
 
-  alert("Etapa salva com sucesso!");
-  $("stage-editor").classList.add("hidden");
+  alert("Etapa salva com sucesso! As comandas individuais estão disponíveis abaixo.");
   await refreshAll();
+  currentStage = stages.find(stage => stage.id === stageId) || { ...stageData, id: stageId };
+  await openStage(stageId);
 }
  $("save-stage").addEventListener("click", saveStage);
  $("close-editor").addEventListener("click", () => {
