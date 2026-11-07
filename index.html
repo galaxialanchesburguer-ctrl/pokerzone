@@ -2231,6 +2231,15 @@ body.clock-only-mode .blind-clock-controls .btn{
   }
 }
 
+
+/* DESTAQUE DO PRÓXIMO NÍVEL NO MONITOR */
+@media(min-width:901px){
+  body.clock-only-mode .blind-clock-next-step{
+    font-size:clamp(15px,1.25vw,18px);
+    padding:9px 16px;
+  }
+}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3265,7 +3274,7 @@ function renderBlindClock() {
     const nextSb = Number(nextStep.small_blind || 0).toLocaleString("pt-BR");
     const nextBb = Number(nextStep.big_blind || 0).toLocaleString("pt-BR");
     const nextAnte = Number(nextStep.ante || 0).toLocaleString("pt-BR");
-    $("blind-clock-next-step").textContent = "PRÓXIMO • NÍVEL " + nextLevelNumber + "  |  " + nextSb + " / " + nextBb + "  •  ANTE " + nextAnte;
+    $("blind-clock-next-step").textContent = "PRÓXIMO NÍVEL: " + nextSb + " / " + nextBb + "  •  ANTE " + nextAnte;
   }
 
   const hasStructure = !!blindClockState?.structure_snapshot?.length;
