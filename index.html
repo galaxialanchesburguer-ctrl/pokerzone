@@ -4679,7 +4679,20 @@ $("manage-clubs-btn")?.addEventListener("click", async () => {
 });
 
 $("close-manage-clubs").addEventListener("click", () => {
+  // Fecha completamente o gerenciamento e retorna ao menu inicial.
   $("manage-clubs-area").classList.add("hidden");
+  $("club-details-area").classList.add("hidden");
+  $("club-tournaments-area").classList.add("hidden");
+  $("club-settings-area").classList.add("hidden");
+  $("club-clock-area").classList.add("hidden");
+  $("club-blinds-area").classList.add("hidden");
+  $("create-tournament-area").classList.add("hidden");
+  $("tournament-search-area").classList.add("hidden");
+  $("recent-tournaments-list").parentElement.classList.remove("hidden");
+  $("home-tournaments").classList.remove("hidden");
+  $("nearby-tournaments-screen").classList.add("hidden");
+  $("clubs-list").innerHTML = "";
+  selectedClubId = null;
 });
 
 $("new-club-btn").addEventListener("click", () => {
