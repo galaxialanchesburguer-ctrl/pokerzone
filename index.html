@@ -5689,7 +5689,7 @@ async function addStageCommand(){
   stageCommandCustomers=[...new Map((customers||[]).map(customer=>[customer.id,customer])).values()];
   renderStageCommandCreation();
 }
-function renderStageCommandCreation(searchTerm=""){
+function renderStageCommandCreation(searchTerm="",buyinEnabled=true){
   const content=$("stage-command-modal-content");
   if(!content)return;
   const normalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
@@ -5698,7 +5698,8 @@ function renderStageCommandCreation(searchTerm=""){
     if(!results)return;
     const term=normalize(termValue);
     if(!term){results.innerHTML="";return;}
-    const found=stageCommandCustomers.filter(customer=>normalize(customer.name).includes(term)||String(customer.phone||"").replace(/\D/g,"").includes(String(termValue||"").replace(/\D/g,"")));
+    const phoneTerm=String(termValue||"").replace(/\D/g,"");
+    const found=stageCommandCustomers.filter(customer=>normalize(customer.name).includes(term)||(phoneTerm&&String(customer.phone||"").replace(/\D/g,"").includes(phoneTerm)));
     results.innerHTML=found.length?found.map(customer=>'<button type="button" class="stage-command-customer-option" data-create-command-customer="'+esc(customer.id)+'"><strong>'+esc(customer.name)+'</strong>'+(customer.phone?'<small style="display:block;color:#999;margin-top:3px">'+esc(customer.phone)+'</small>':'')+'</button>').join(""):'<div class="empty">Nenhum cliente encontrado entre os '+stageCommandCustomers.length+' clientes cadastrados.</div>';
     results.querySelectorAll("[data-create-command-customer]").forEach(button=>button.addEventListener("click",async()=>{
       const customer=stageCommandCustomers.find(item=>item.id===button.dataset.createCommandCustomer);
@@ -5710,7 +5711,7 @@ function renderStageCommandCreation(searchTerm=""){
     '<div class="stage-command-modal-section"><h4>1. ESCOLHA O CLIENTE DA NOVA COMANDA</h4>'+
       '<label>Buscar cliente ou jogador<input id="stage-command-create-search" type="search" value="'+esc(searchTerm)+'" placeholder="Digite o nome ou telefone..." autocomplete="off"></label>'+
       '<div class="stage-command-customer-results" id="stage-command-create-results"></div>'+
-      '<label class="stage-command-buyin-switch" for="stage-command-buyin-toggle"><span class="stage-command-buyin-copy"><strong>Já entra com buy-in</strong><small>Registrar a inscrição automaticamente nesta etapa</small></span><input id="stage-command-buyin-toggle" type="checkbox" checked><span class="stage-command-switch-track" aria-hidden="true"></span></label>'+
+      '<label class="stage-command-buyin-switch" for="stage-command-buyin-toggle"><span class="stage-command-buyin-copy"><strong>Já entra com buy-in</strong><small>Registrar a inscrição automaticamente nesta etapa</small></span><input id="stage-command-buyin-toggle" type="checkbox" '+(buyinEnabled?'checked':'')+'><span class="stage-command-switch-track" aria-hidden="true"></span></label>'+
       '<button type="button" class="btn secondary" id="stage-command-create-new-customer" style="width:100%;margin-top:12px">+ Novo cliente</button>'+
     '</div>';
   const search=content.querySelector("#stage-command-create-search");
@@ -5731,7 +5732,7 @@ function renderStageCommandNewCustomer(initialName="",buyinEnabled=true){
       '<label class="stage-command-buyin-switch" for="stage-command-new-buyin-toggle"><span class="stage-command-buyin-copy"><strong>Já entra com buy-in</strong><small>Registrar a inscrição automaticamente nesta etapa</small></span><input id="stage-command-new-buyin-toggle" type="checkbox" '+(buyinEnabled?'checked':'')+'><span class="stage-command-switch-track" aria-hidden="true"></span></label>'+
       '<button type="button" class="btn" id="stage-command-create-customer" style="width:100%">Cadastrar e criar comanda</button>'+
     '</div>';
-  content.querySelector("#stage-command-back-create").addEventListener("click",()=>renderStageCommandCreation(initialName));
+  content.querySelector("#stage-command-back-create").addEventListener("click",()=>renderStageCommandCreation(initialName,buyinEnabled));
   content.querySelector("#stage-command-create-customer").addEventListener("click",async()=>{
     const name=content.querySelector("#stage-command-new-customer-name").value.trim();
     const phone=content.querySelector("#stage-command-new-customer-phone").value.trim();
