@@ -2894,7 +2894,7 @@ function renderBlindClock() {
     : '<tr><td colspan="5" class="empty">Aguardando estrutura de blinds.</td></tr>';
 }
 
-async async function loadBlindClockStructures() {
+async function loadBlindClockStructures() {
   if (!blindClockTournament?.club_id) {
     const { data: tournamentData, error } = await db.from("tournaments").select("club_id").eq("id", blindClockTournament.id).maybeSingle();
     if (error) console.error("Erro ao localizar clube do torneio:", error);
