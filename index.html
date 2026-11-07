@@ -3760,6 +3760,7 @@ const SUPABASE_URL="https://fwwkmpnwsyppctxgetkj.supabase.co";
 const SUPABASE_KEY="sb_publishable_SlbpXf6oi5Bw70ABeYp0Eg_nrZ9bQqm";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let tournament=null, season=null, players=[], stages=[], currentStage=null, editorResults=[], isStaff=false, isAdmin=false, selectedClubId=null;
+let rankingThroughStageNumber = null;
 let managedClubId=null, isClubManager=false;
 let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}, activeTournamentStage=null;
 const $=id=>document.getElementById(id);
@@ -4657,6 +4658,10 @@ async function loadRanking(){
   return;
  }
 
+ const cutoffStageNumber = Number.isFinite(Number(rankingThroughStageNumber))
+   ? Number(rankingThroughStageNumber)
+   : null;
+
  const {data:s,error:se}=await db
   .from("seasons")
   .select("id,name")
@@ -4667,70 +4672,66 @@ async function loadRanking(){
  if(se)throw se;
  season=s;
 
+ const rankingTitle = cutoffStageNumber == null
+   ? "Classificação completa"
+   : "Classificação até a etapa " + cutoffStageNumber;
+ const finalTitle = cutoffStageNumber == null
+   ? "Pódio da temporada"
+   : "Pódio até a etapa " + cutoffStageNumber;
+ $("tournament-ranking-view").querySelector(".section-title").textContent=rankingTitle;
+ $("final-ranking-view").querySelector(".section-title").textContent=finalTitle;
+ $("tournament-ranking-view").querySelector(".box-head h2").textContent=
+   cutoffStageNumber == null ? "RANKING DA TEMPORADA" : "RANKING ATÉ A ETAPA " + cutoffStageNumber;
+ $("final-ranking-view").querySelector(".box-head h2").textContent=
+   cutoffStageNumber == null ? "RANKING FINAL DA TEMPORADA" : "RANKING FINAL ATÉ A ETAPA " + cutoffStageNumber;
+
  if(!s){
   $("season-name").textContent="Nenhuma temporada ativa";
   $("season-status").textContent="Temporada não iniciada";
-
   players = [];
   season = null;
- $("ranking").innerHTML =
-    '<tr><td colspan="4" class="empty">Nenhum resultado disponível.</td></tr>';
-  $("final-ranking").innerHTML =
-    '<tr><td colspan="5" class="empty">Nenhum resultado disponível.</td></tr>';
-
+  $("ranking").innerHTML='<tr><td colspan="4" class="empty">Nenhum resultado disponível.</td></tr>';
+  $("final-ranking").innerHTML='<tr><td colspan="5" class="empty">Nenhum resultado disponível.</td></tr>';
   renderPodium([]);
   renderFinalPodium([]);
-
   return;
-}
+ }
 
  $("season-name").textContent=s.name;
  $("season-status").innerHTML="<span>●</span> Temporada ativa";
 
- const [{data:ps,error:pe},{data:rs,error:re},{data:adj,error:ae},{data:st,error:ste}]=await Promise.all([
- db.from("players").select("id,display_name").eq("is_active",true).eq("tournament_id",tournament.id),
-  db.from("results").select("points,position,player:players(id,display_name),stage:stages!inner(id,season_id,status)").eq("stage.season_id",s.id).eq("stage.status","published"),
+ const [{data:ps,error:pe},{data:allResults,error:re},{data:adj,error:ae},{data:allStages,error:ste}]=await Promise.all([
+  db.from("players").select("id,display_name").eq("is_active",true).eq("tournament_id",tournament.id),
+  db.from("results").select("points,position,player:players(id,display_name),stage:stages!inner(id,season_id,stage_number,status)").eq("stage.season_id",s.id).eq("stage.status","published"),
   db.from("season_player_adjustments").select("player_id,points_adjustment").eq("season_id",s.id),
-  db.from("stages").select("id").eq("season_id",s.id).eq("status","published")
+  db.from("stages").select("id,stage_number").eq("season_id",s.id).eq("status","published").order("stage_number")
  ]);
-
  if(pe)throw pe;
  if(re)throw re;
  if(ae)throw ae;
  if(ste)throw ste;
 
- // RANKING GERAL
+ const includedStages=(allStages||[]).filter(stage=>
+  cutoffStageNumber==null || Number(stage.stage_number)<=cutoffStageNumber
+ );
+ const includedStageIds=includedStages.map(stage=>stage.id);
+ const includedResults=(allResults||[]).filter(result=>
+  result.stage && includedStageIds.includes(result.stage.id)
+ );
+
  const totals={};
-
- ps.forEach(p=>{
-  totals[p.id]={
-   id:p.id,
-   name:p.display_name,
-   points:0,
-   firstPlaces:0,
-   stagesPlayed:0,
-   adjustment:0
-  };
+ (ps||[]).forEach(p=>{
+  totals[p.id]={id:p.id,name:p.display_name,points:0,firstPlaces:0,stagesPlayed:0,adjustment:0};
  });
-
- rs.forEach(r=>{
+ includedResults.forEach(r=>{
   if(!r.player)return;
-
   const t=totals[r.player.id]||(totals[r.player.id]={
-   id:r.player.id,
-   name:r.player.display_name,
-   points:0,
-   firstPlaces:0,
-   stagesPlayed:0,
-   adjustment:0
+   id:r.player.id,name:r.player.display_name,points:0,firstPlaces:0,stagesPlayed:0,adjustment:0
   });
-
   t.points+=Number(r.points)||0;
   t.stagesPlayed++;
-
   if(Number(r.position)===1)t.firstPlaces++;
  });
-
  (adj||[]).forEach(a=>{
   if(totals[a.player_id]){
    totals[a.player_id].adjustment=Number(a.points_adjustment)||0;
@@ -4741,67 +4742,41 @@ async function loadRanking(){
  players=Object.values(totals)
   .filter(p=>p.points>0 && p.stagesPlayed>0)
   .sort((a,b)=>b.points-a.points||b.firstPlaces-a.firstPlaces||b.stagesPlayed-a.stagesPlayed||a.name.localeCompare(b.name,"pt-BR"));
-
  filterRanking();
  renderPodium(players);
 
- // RANKING FINAL: descarta os 3 piores resultados
- const stageIds=(st||[]).map(stage=>stage.id);
- const finalPlayers=ps.map(p=>{
-  const scores=stageIds.map(()=>0);
-
-  rs.forEach(r=>{
-   if(r.player && r.player.id===p.id && r.stage){
-    const index=stageIds.indexOf(r.stage.id);
-    if(index!==-1)scores[index]=Number(r.points)||0;
-   }
+ // Ranking final: recalcula os três piores resultados somente dentro do período selecionado.
+ const finalPlayers=(ps||[]).map(p=>{
+  const scores=includedStages.map(stage=>{
+   const result=includedResults.find(r=>r.player?.id===p.id && r.stage?.id===stage.id);
+   return result ? Number(result.points)||0 : 0;
   });
-
   const sorted=[...scores].sort((a,b)=>a-b);
   const discarded=sorted.slice(0,3);
   const discardedPoints=discarded.reduce((sum,n)=>sum+n,0);
   const adjustment=Number((adj||[]).find(a=>a.player_id===p.id)?.points_adjustment)||0;
-  const finalPoints=scores.reduce((sum,n)=>sum+n,0)-discardedPoints+adjustment;
-
+  const sumPoints=scores.reduce((sum,n)=>sum+n,0);
   return {
-   id:p.id,
-   name:p.display_name,
-   points:finalPoints,
-   sumPoints:scores.reduce((sum,n)=>sum+n,0),
-   discardedPoints,
-   stagesPlayed:rs.filter(r=>r.player && r.player.id===p.id).length
-};
+   id:p.id,name:p.display_name,
+   points:sumPoints-discardedPoints+adjustment,
+   sumPoints,discardedPoints,
+   stagesPlayed:includedResults.filter(r=>r.player?.id===p.id).length
+  };
  });
+ const finalSorted=finalPlayers
+  .filter(p=>p.points>0)
+  .sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,"pt-BR"));
 
-
-const finalSorted=finalPlayers
- .filter(p=>p.points>0)
- .sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,"pt-BR"));
-
-$("final-ranking").innerHTML=finalSorted
- .map((p,i)=>`
+ $("final-ranking").innerHTML=finalSorted.map((p,i)=>`
   <tr class="${i<10?"qualified-row":""}">
    <td>${i+1}º</td>
-   <td class="player-cell">
-  <button class="player-profile-link" data-player-id="${p.id}">
-    ${esc(p.name)}
-  </button>
-</td>
+   <td class="player-cell"><button class="player-profile-link" data-player-id="${p.id}">${esc(p.name)}</button></td>
    <td>${p.sumPoints.toLocaleString("pt-BR")}</td>
    <td>${p.discardedPoints.toLocaleString("pt-BR")}</td>
    <td><strong>${p.points.toLocaleString("pt-BR")}</strong></td>
   </tr>
  `).join("") || '<tr><td colspan="5" class="empty">Nenhum resultado disponível.</td></tr>';
-/*
-$("final-player-count").textContent = finalSorted.length;
-$("final-qualified-count").textContent = Math.min(finalSorted.length, 10) + "/10";
-$("final-summary").querySelector(".summary-card:first-child strong").textContent =
-  Math.max(0, 10 - finalSorted.length);
-*/
-
-const finalPodiumList=finalSorted;
-
- renderFinalPodium(finalPodiumList);
+ renderFinalPodium(finalSorted);
 }
  function renderFinalPodium(list){
  const positions=[{p:list[1],n:2},{p:list[0],n:1},{p:list[2],n:3}];
@@ -5409,6 +5384,9 @@ function updatePlayerSuggestions() {
  async function openStageResults(id) {
   const stage = stages.find(s => s.id === id);
 if (!stage) return;
+currentStage = stage;
+rankingThroughStageNumber = Number(stage.stage_number);
+await loadRanking();
 
 const resultsBox = $("stage-results-" + id);
 const resultsContent = $("stage-results-content-" + id);
@@ -5586,6 +5564,8 @@ async function openStage(id) {
   }
 
   currentStage = selectedStage;
+  rankingThroughStageNumber = Number(selectedStage.stage_number);
+  await loadRanking();
   stages = [...stages.filter(item => item.id !== id), selectedStage]
     .sort((a,b) => Number(a.stage_number)-Number(b.stage_number));
   updateDeleteActionButton();
@@ -6581,6 +6561,7 @@ async function openTournament(selectedTournament) {
   blindClockState = null;
   tournament = selectedTournament;
   currentStage = null;
+  rankingThroughStageNumber = null;
   editorResults = [];
   stageEditorReturnVisible = false;
   $("stage-editor").classList.add("hidden");
