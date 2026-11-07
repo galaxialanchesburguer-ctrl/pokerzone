@@ -1585,10 +1585,6 @@ input:focus,select:focus {
   <button id="nearby-tournaments-btn" class="btn secondary">
     📍 Torneios próximos de mim
   </button>
-
- <button id="home-login-open" class="btn secondary">
-  🔐 Área administrativa
-</button>
  
 </div>
 
@@ -2299,7 +2295,22 @@ input:focus,select:focus {
 </section>
 
 </section>
-<div id="login-box" class="box hidden"><div class="box-head"><h2>ACESSO ADMINISTRATIVO</h2><button class="btn secondary" id="login-close">Fechar</button></div><div class="form-grid"><label>Email<input id="email" type="email" autocomplete="username"></label><label>Senha<input id="password" type="password" autocomplete="current-password"></label><div class="actions"><button class="btn" id="login-btn">Entrar</button></div></div><div class="panel-pad" id="login-message"></div></div>
+<div id="login-box" class="box">
+  <div class="box-head">
+    <h2>ACESSO DO ADMINISTRADOR</h2>
+  </div>
+
+  <div class="panel-pad">
+    <label for="email">E-mail</label>
+    <input id="email" type="email" autocomplete="username" placeholder="Digite seu e-mail">
+
+    <label for="password">Senha</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="Digite sua senha">
+
+    <button class="btn" id="login-btn">Entrar</button>
+    <div id="login-message"></div>
+  </div>
+</div>
 </main>
 <footer>POKERZONE © 2026 • TODOS OS DIREITOS RESERVADOS</footer>
 <div id="connection-status" class="connection-status">Conectando ao Supabase...</div>
