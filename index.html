@@ -1416,6 +1416,10 @@ input:focus,select:focus {
     width: 100%;
   }
 }
+#edit-tournament-info-btn.admin-only:not(.admin-visible) {
+  display: none !important;
+}
+
 #edit-tournament-info-btn {
   grid-column: 1 / -1;
   justify-self: start;
@@ -3354,7 +3358,7 @@ body.clock-only-mode .blind-clock-ante{
 <section id="tournament-info-view" class="hidden">
   <h2 class="section-title">Informações do torneio</h2>
  
-<button class="btn" id="edit-tournament-info-btn"
+<button class="btn admin-only" id="edit-tournament-info-btn"
   style="width:auto; display:inline-block; padding:10px 18px;">
   Editar informações
 </button>
@@ -5117,6 +5121,7 @@ resultsContent.innerHTML =
   `;
 }
  async function openStage(id) {
+  if (!isStaff) return;
   currentStage = stages.find(s => s.id === id);
   if (!currentStage) return;
 
@@ -5444,6 +5449,7 @@ $("calculate-points").addEventListener("click", () => {
   renderResultRows();
 });
 $("new-stage").addEventListener("click", () => {
+  if (!isStaff) return;
   currentStage = null;
   editorResults = [];
 
@@ -6649,6 +6655,7 @@ async function deleteCurrentTournament() {
 $("delete-tournament-btn").addEventListener("click", deleteCurrentTournament);
  
  $("edit-tournament-info-btn").addEventListener("click", () => {
+  if (!isStaff) return;
   isEditingTournamentInfo = true;
   renderTournamentDetails(currentTournamentDetails);
 
