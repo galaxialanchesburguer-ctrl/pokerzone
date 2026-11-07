@@ -3133,7 +3133,10 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     <div id="club-haver-player-detail" class="hidden">
       <div class="club-haver-detail-head">
         <div><h3 id="club-haver-selected-name">JOGADOR</h3><p class="season-info">Extrato individual • histórico acumulado</p></div>
-        <button class="btn secondary" id="club-haver-back-list">← Lista de jogadores</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn danger" id="club-haver-delete-player" type="button">Remover cliente</button>
+          <button class="btn secondary" id="club-haver-back-list">← Lista de jogadores</button>
+        </div>
       </div>
       <div class="club-haver-summary">
         <div class="club-haver-stat"><span>TOTAL CONSUMIDO</span><strong id="club-haver-player-charged">R$ 0,00</strong></div>
@@ -5163,6 +5166,8 @@ function handleAdminSidebarNavigation(key) {
   }
   if (key === "clients") {
     $("tournament-tree")?.classList.add("hidden");
+    $("tournament-app")?.classList.add("hidden");
+    $("nearby-tournaments-screen")?.classList.add("hidden");
     if (selectedClubId && !$("club-details-area").classList.contains("hidden")) {
       $("club-haver-btn").click();
       setAdminSidebarActive("clients");
@@ -7836,6 +7841,35 @@ async function openClubHaverPlayer(playerId) {
   await loadClubHaverQuickProducts();
   await loadClubHaverLedger();
 }
+async function deleteClubHaverPlayer(){
+  if(!isStaff||!clubHaverSelectedPlayer||!selectedClubId)return;
+  const player=clubHaverSelectedPlayer;
+  const confirmed=confirm("Remover "+player.name+" da lista de clientes? Os consumos e pagamentos comuns vinculados a este cadastro também serão excluídos. Registros de buy-in/inscrição de torneios serão preservados e impedem a remoção.");
+  if(!confirmed)return;
+  const button=$("club-haver-delete-player");
+  if(button)button.disabled=true;
+  const {data:ledgerRows,error:ledgerError}=await db.from("club_player_ledger").select("id").eq("club_player_id",player.id);
+  if(ledgerError){alert("Não foi possível verificar o histórico do cliente: "+ledgerError.message);if(button)button.disabled=false;return;}
+  const ledgerIds=(ledgerRows||[]).map(row=>row.id);
+  if(ledgerIds.length){
+    const {data:tournamentEntries,error:entriesError}=await db.from("tournament_entries").select("id").in("ledger_entry_id",ledgerIds).limit(1);
+    if(entriesError){alert("Não foi possível verificar inscrições vinculadas: "+entriesError.message);if(button)button.disabled=false;return;}
+    if(tournamentEntries?.length){
+      alert("Este cliente possui buy-in ou inscrição vinculada a um torneio. Para preservar o histórico e a classificação, não é possível removê-lo.");
+      if(button)button.disabled=false;
+      return;
+    }
+    const {error:deleteLedgerError}=await db.from("club_player_ledger").delete().eq("club_player_id",player.id);
+    if(deleteLedgerError){alert("Não foi possível remover o histórico do cliente: "+deleteLedgerError.message);if(button)button.disabled=false;return;}
+  }
+  const {error:deletePlayerError}=await db.from("club_players").delete().eq("id",player.id).eq("club_id",selectedClubId);
+  if(deletePlayerError){alert("Não foi possível remover o cliente: "+deletePlayerError.message);if(button)button.disabled=false;return;}
+  clubHaverSelectedPlayer=null;
+  $("club-haver-player-detail").classList.add("hidden");
+  $("club-haver-overview").classList.remove("hidden");
+  await loadClubHaver();
+  alert("Cliente removido com sucesso.");
+}
 async function loadClubHaverLedger() {
   if (!clubHaverSelectedPlayer) return;
   $("club-haver-history").innerHTML = '<div class="empty">Carregando extrato...</div>';
@@ -7907,6 +7941,7 @@ $("club-haver-back").addEventListener("click",()=>{
   $("club-haver-area").classList.add("hidden");
   $("club-management-area").classList.remove("hidden");
 });
+$("club-haver-delete-player").addEventListener("click",deleteClubHaverPlayer);
 $("club-haver-back-list").addEventListener("click",()=>{
   $("club-haver-player-detail").classList.add("hidden");
   $("club-haver-overview").classList.remove("hidden");
