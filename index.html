@@ -1783,6 +1783,10 @@ input:focus,select:focus {
 .blind-clock-admin select{width:100%}
 .blind-clock-add-time{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
 .blind-clock-add-time input{width:100px}
+.blind-clock-live-adjust{margin:14px 0 18px;padding:14px;background:#101010;border:1px solid #383030;border-radius:10px}
+.blind-clock-live-adjust-label{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;color:#aaa;font-size:12px}
+.blind-clock-live-adjust-label strong{color:#ffd34f;font-size:18px;font-variant-numeric:tabular-nums}
+#blind-clock-time-slider{width:100%;height:9px;padding:0;accent-color:#ffd34f;cursor:pointer;touch-action:pan-y}
 .blind-clock-structure-list{margin-top:20px}
 .blind-clock-structure-list .current-clock-step td{background:rgba(237,48,56,.14);color:#fff}
 .blind-clock-structure-list .current-clock-step td:first-child{border-left:3px solid #ed3038}
@@ -1798,6 +1802,14 @@ input:focus,select:focus {
 .blind-clock-fullscreen .blind-clock-controls{margin-top:clamp(12px,3vh,28px)}
 .blind-clock-fullscreen .blind-clock-exit{display:inline-flex!important}
 .blind-clock-exit{display:none!important}
+@keyframes blindClockLevelFlash{
+  0%{filter:brightness(1);transform:scale(1)}
+  18%{filter:brightness(2.1);transform:scale(1.012);box-shadow:0 0 55px rgba(255,211,79,.55),inset 0 0 35px rgba(255,211,79,.18)}
+  100%{filter:brightness(1);transform:scale(1)}
+}
+.blind-clock-hero.level-changed{animation:blindClockLevelFlash 1.15s ease-out}
+.blind-clock-time.countdown-warning{color:#ffcf45!important;text-shadow:0 0 28px rgba(255,190,40,.7)!important;animation:blindClockUrgency .55s ease-in-out infinite alternate}
+@keyframes blindClockUrgency{from{transform:scale(1)}to{transform:scale(1.035)}}
 @media(max-width:700px){
   .club-profile-header{padding:16px;align-items:flex-start}
   .club-profile-logo-frame{width:78px;height:78px;flex-basis:78px;border-radius:14px}
@@ -2819,7 +2831,11 @@ body.clock-only-mode .blind-clock-ante{
       </div>
     </div>
     <div class="blind-clock-admin hidden" id="blind-clock-time-admin">
-      <strong>AJUSTAR TEMPO</strong>
+      <strong>AJUSTAR TEMPO AO VIVO</strong>
+      <div class="blind-clock-live-adjust">
+        <div class="blind-clock-live-adjust-label"><span>Tempo restante</span><strong id="blind-clock-slider-value">00:00</strong></div>
+        <input type="range" id="blind-clock-time-slider" min="1" max="3600" value="300" step="1" aria-label="Ajustar tempo restante ao vivo">
+      </div>
       <div class="blind-clock-add-time">
         <input type="number" id="blind-clock-add-minutes" min="1" max="180" value="5">
         <button class="btn secondary" id="blind-clock-add-time" type="button">+ Adicionar minutos</button>
@@ -3249,6 +3265,45 @@ let blindClockSelectedStructure = null;
 let blindClockTournament = null;
 let blindClockClubId = null;
 let blindClockClubName = "";
+let blindClockAudioContext = null;
+let blindClockLastBeepSecond = null;
+let blindClockLastRenderedIndex = null;
+let blindClockLastRenderedStatus = null;
+
+function unlockBlindClockAudio() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!blindClockAudioContext) blindClockAudioContext = new AudioContextClass();
+    if (blindClockAudioContext.state === "suspended") blindClockAudioContext.resume();
+  } catch (error) { console.warn("Áudio do relógio indisponível:", error); }
+}
+
+function playBlindClockTone(isLevelChange = false) {
+  try {
+    unlockBlindClockAudio();
+    if (!blindClockAudioContext || blindClockAudioContext.state !== "running") return;
+    const ctx = blindClockAudioContext;
+    const now = ctx.currentTime;
+    const frequencies = isLevelChange ? [880, 1175, 1480] : [740];
+    frequencies.forEach((frequency, index) => {
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = now + index * (isLevelChange ? .13 : 0);
+      oscillator.type = isLevelChange ? "sine" : "triangle";
+      oscillator.frequency.setValueAtTime(frequency, start);
+      gain.gain.setValueAtTime(.0001, start);
+      gain.gain.exponentialRampToValueAtTime(isLevelChange ? .22 : .12, start + .015);
+      gain.gain.exponentialRampToValueAtTime(.0001, start + (isLevelChange ? .22 : .13));
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+      oscillator.start(start);
+      oscillator.stop(start + (isLevelChange ? .24 : .15));
+    });
+  } catch (error) { console.warn("Não foi possível tocar o aviso sonoro:", error); }
+}
+
+document.addEventListener("pointerdown", unlockBlindClockAudio, { once: true });
 
 function clockDurationSeconds(step) {
   return Math.max(1, Number(step?.duration) || 1) * 60;
@@ -3298,7 +3353,40 @@ function renderBlindClock() {
   $("blind-clock-tournament-name").textContent = blindClockClubId ? (blindClockClubName || "POKERZONE • RELÓGIO DE BLINDS") : (blindClockTournament?.name || "POKERZONE • TORNEIO");
   const pos = getBlindClockPosition(blindClockState);
   const step = pos.step;
-  $("blind-clock-countdown").textContent = clockFormat(pos.remaining);
+  const countdownElement = $("blind-clock-countdown");
+  countdownElement.textContent = clockFormat(pos.remaining);
+  countdownElement.classList.toggle("countdown-warning", pos.status === "running" && pos.remaining <= 5 && pos.remaining > 0);
+
+  if (pos.status === "running" && pos.remaining >= 1 && pos.remaining <= 5 && blindClockLastBeepSecond !== pos.remaining) {
+    playBlindClockTone(false);
+    blindClockLastBeepSecond = pos.remaining;
+  } else if (pos.status !== "running" || pos.remaining > 5) {
+    blindClockLastBeepSecond = null;
+  }
+
+  if (blindClockLastRenderedIndex !== null && pos.status === "running" &&
+      blindClockLastRenderedStatus === "running" && pos.index !== blindClockLastRenderedIndex) {
+    playBlindClockTone(true);
+    const hero = document.querySelector(".blind-clock-hero");
+    hero?.classList.remove("level-changed");
+    if (hero) {
+      void hero.offsetWidth;
+      hero.classList.add("level-changed");
+    }
+    blindClockLastBeepSecond = null;
+  }
+  blindClockLastRenderedIndex = pos.index;
+  blindClockLastRenderedStatus = pos.status;
+
+  const timeSlider = $("blind-clock-time-slider");
+  const sliderValue = $("blind-clock-slider-value");
+  if (timeSlider && document.activeElement !== timeSlider) {
+    const sliderMax = Math.max(1, levelDuration || clockDurationSeconds(step));
+    timeSlider.max = String(sliderMax);
+    timeSlider.value = String(Math.max(1, Math.min(sliderMax, pos.remaining || 1)));
+  }
+  if (sliderValue) sliderValue.textContent = clockFormat(pos.remaining);
+
   const levelDuration = step ? clockDurationSeconds(step) : 0;
   const progress = levelDuration > 0 ? (pos.status === "finished" ? 100 : Math.max(0, Math.min(100, ((levelDuration - pos.remaining) / levelDuration) * 100))) : 0;
   $("blind-clock-progress-fill").style.width = progress + "%";
@@ -3715,6 +3803,20 @@ $("blind-clock-pause").addEventListener("click", pauseBlindClock);
 $("blind-clock-prev").addEventListener("click", () => moveBlindClock(-1));
 $("blind-clock-next").addEventListener("click", () => moveBlindClock(1));
 $("blind-clock-add-time").addEventListener("click", addBlindClockTime);
+$("blind-clock-time-slider").addEventListener("input", event => {
+  $("blind-clock-slider-value").textContent = clockFormat(Number(event.target.value));
+});
+$("blind-clock-time-slider").addEventListener("change", async event => {
+  if (!isStaff || !blindClockState?.structure_snapshot?.length) return;
+  const pos = getBlindClockPosition(blindClockState);
+  const seconds = Math.max(1, Number(event.target.value) || 1);
+  await saveBlindClock({
+    current_step_index: pos.index,
+    status: pos.status === "running" ? "running" : pos.status,
+    remaining_seconds: pos.status === "running" ? null : seconds,
+    ends_at: pos.status === "running" ? new Date(Date.now() + seconds * 1000).toISOString() : null
+  });
+});
 $("blind-clock-end").addEventListener("click", endBlindClock);
 $("blind-clock-fullscreen").addEventListener("click", enterBlindClockFullscreen);
 $("blind-clock-exit").addEventListener("click", exitBlindClockFullscreen);
