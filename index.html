@@ -1916,6 +1916,19 @@ body.clock-only-mode .blind-clock-next-step{order:5;align-self:center;color:rgba
 body.clock-only-mode .blind-clock-state{order:6;color:rgba(255,255,255,.6);margin-top:10px;letter-spacing:1.5px}
 body.clock-only-mode .blind-clock-controls{order:7;margin-top:clamp(18px,3vh,30px)}
 body.clock-only-mode .blind-clock-controls .btn{min-height:44px;padding:10px 20px;border-radius:9px}
+/* BLINDS EM DESTAQUE + PREMIAÇÃO LATERAL */
+body.clock-only-mode .blind-clock-blinds{order:3;margin:clamp(14px,2.5vh,26px) 0 0;gap:0}
+body.clock-only-mode .blind-clock-primary{min-width:0}
+body.clock-only-mode .blind-clock-primary span{display:none}
+body.clock-only-mode .blind-clock-primary strong{font-size:clamp(58px,9vw,112px);letter-spacing:-2px;line-height:1}
+body.clock-only-mode .blind-clock-ante{order:4;font-size:clamp(13px,1.4vw,18px);font-weight:700;letter-spacing:1px;color:rgba(255,255,255,.68);margin:8px 0 0}
+body.clock-only-mode .blind-clock-next-step{order:5;font-size:clamp(11px,1.05vw,14px);font-weight:700;letter-spacing:.4px;padding:6px 11px;margin-top:16px;color:rgba(255,255,255,.62);background:rgba(20,5,10,.16);border-color:rgba(255,255,255,.12)}
+body.clock-only-mode .blind-clock-prize{position:absolute;right:clamp(18px,4vw,58px);top:50%;transform:translateY(-50%);width:190px;padding:20px 16px;border:1px solid rgba(255,220,160,.25);border-radius:14px;background:rgba(28,8,14,.48);text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+body.clock-only-mode .blind-clock-prize span{display:block;color:rgba(255,255,255,.62);font-size:10px;font-weight:900;letter-spacing:2px;margin-bottom:8px}
+body.clock-only-mode .blind-clock-prize strong{display:block;color:#ffe0a0;font-size:clamp(18px,2vw,27px);font-weight:900;overflow-wrap:anywhere}
+@media(max-width:900px){body.clock-only-mode .blind-clock-prize{position:static;transform:none;order:6;width:min(260px,80%);margin:16px auto 0;padding:12px}body.clock-only-mode .blind-clock-state{order:7}body.clock-only-mode .blind-clock-controls{order:8}}
+@media(max-width:700px){body.clock-only-mode .blind-clock-primary strong{font-size:clamp(48px,13vw,76px)}body.clock-only-mode .blind-clock-next-step{max-width:95%;line-height:1.5}}
+
 @media(max-width:700px){body.clock-only-mode .blind-clock-hero{border-radius:18px;margin:8px;padding:24px 10px}body.clock-only-mode .blind-clock-hero:before{width:90vw}body.clock-only-mode .blind-clock-kicker{font-size:16px}body.clock-only-mode .blind-clock-step{margin-top:26px;font-size:15px}body.clock-only-mode .blind-clock-time{font-size:clamp(86px,20vw,145px);letter-spacing:-3px;margin:12px 0 16px}body.clock-only-mode .blind-clock-progress{width:72%;height:6px;margin-bottom:18px}body.clock-only-mode .blind-clock-blinds{gap:clamp(15px,5vw,34px)}body.clock-only-mode .blind-clock-blind{min-width:78px}body.clock-only-mode .blind-clock-blind strong{font-size:clamp(27px,8vw,42px)}body.clock-only-mode .blind-clock-next-step{max-width:95%;line-height:1.5}}
 /* AJUSTES FINAIS DA TELA DO RELOGIO */
 body.clock-only-mode #ranking-view{display:none!important}
@@ -2423,9 +2436,11 @@ body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{width:100%
       <div class="blind-clock-next-step" id="blind-clock-next-step">PRÓXIMO BLIND: —</div>
 
       <div class="blind-clock-blinds">
-        <div class="blind-clock-blind"><span>SMALL BLIND</span><strong id="blind-clock-sb">—</strong></div>
-        <div class="blind-clock-blind"><span>BIG BLIND</span><strong id="blind-clock-bb">—</strong></div>
-        <div class="blind-clock-blind"><span>ANTE</span><strong id="blind-clock-ante">—</strong></div>
+        <div class="blind-clock-blind blind-clock-primary"><span>BLINDS</span><strong id="blind-clock-sb">— / —</strong></div>
+      </div>
+      <div class="blind-clock-ante" id="blind-clock-ante">ANTE 0</div>
+      <div class="blind-clock-prize hidden" id="blind-clock-prize">
+        <span>PREMIAÇÃO</span><strong id="blind-clock-prize-value">R$ 0,00</strong>
       </div>
       <div class="blind-clock-state" id="blind-clock-status">RELÓGIO PARADO</div>
       <div class="blind-clock-controls">
@@ -2434,6 +2449,7 @@ body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{width:100%
         <button class="btn secondary hidden" id="blind-clock-prev" type="button">‹ Voltar nível</button>
         <button class="btn secondary hidden" id="blind-clock-next" type="button">Avançar nível ›</button>
         <button class="btn secondary hidden blind-clock-fullscreen-toggle" id="blind-clock-fullscreen" type="button">⛶ Tela cheia</button>
+        <button class="btn secondary hidden" id="blind-clock-prize-toggle" type="button">Exibir premiação</button>
         <button class="btn secondary blind-clock-exit" id="blind-clock-exit" type="button">Sair da tela cheia</button>
       </div>
     </div>
@@ -2482,6 +2498,8 @@ body.clock-only-mode #blind-clock-admin #blind-clock-structure-select{width:100%
     <input id="blind-structure-name" type="text" placeholder="Ex.: Torneio de sábado">
     <label for="blind-structure-description">Descrição (opcional)</label>
     <input id="blind-structure-description" type="text" placeholder="Ex.: Níveis de 20 minutos">
+    <label for="blind-structure-prize">Premiação total (R$)</label>
+    <input id="blind-structure-prize" type="number" min="0" step="0.01" placeholder="Ex.: 1500,00">
     <div class="blind-step-header">
       <strong>Níveis e intervalos</strong>
     </div>
@@ -2910,9 +2928,8 @@ function renderBlindClock() {
   $("blind-clock-progress-fill").style.width = progress + "%";
   if (!step) {
     $("blind-clock-step-name").textContent = "Aguardando estrutura";
-    $("blind-clock-sb").textContent = "—";
-    $("blind-clock-bb").textContent = "—";
-    $("blind-clock-ante").textContent = "—";
+    $("blind-clock-sb").textContent = "— / —";
+    $("blind-clock-ante").textContent = "ANTE —";
   } else if (step.type === "break") {
     $("blind-clock-step-name").textContent = "INTERVALO";
     $("blind-clock-sb").textContent = "—";
@@ -2921,9 +2938,8 @@ function renderBlindClock() {
   } else {
     const levelNumber = blindClockState.structure_snapshot.slice(0, pos.index + 1).filter(item => item.type === "level").length;
     $("blind-clock-step-name").textContent = "NÍVEL " + levelNumber;
-    $("blind-clock-sb").textContent = Number(step.small_blind || 0).toLocaleString("pt-BR");
-    $("blind-clock-bb").textContent = Number(step.big_blind || 0).toLocaleString("pt-BR");
-    $("blind-clock-ante").textContent = Number(step.ante || 0).toLocaleString("pt-BR");
+    $("blind-clock-sb").textContent = Number(step.small_blind || 0).toLocaleString("pt-BR") + " / " + Number(step.big_blind || 0).toLocaleString("pt-BR");
+    $("blind-clock-ante").textContent = "ANTE " + Number(step.ante || 0).toLocaleString("pt-BR");
   }
   const statusLabels = {
     running: "● RELÓGIO EM ANDAMENTO",
@@ -2942,11 +2958,16 @@ function renderBlindClock() {
     const nextSb = Number(nextStep.small_blind || 0).toLocaleString("pt-BR");
     const nextBb = Number(nextStep.big_blind || 0).toLocaleString("pt-BR");
     const nextAnte = Number(nextStep.ante || 0).toLocaleString("pt-BR");
-    $("blind-clock-next-step").textContent = "PRÓXIMO BLIND • NÍVEL " + nextLevelNumber + "  |  " + nextSb + " / " + nextBb + "  |  ANTE " + nextAnte;
+    $("blind-clock-next-step").textContent = "PRÓXIMO • NÍVEL " + nextLevelNumber + "  |  " + nextSb + " / " + nextBb + "  •  ANTE " + nextAnte;
   }
 
   const hasStructure = !!blindClockState?.structure_snapshot?.length;
   const canControl = isStaff && hasStructure;
+  const prizePool = Number(blindClockState?.prize_pool || 0);
+  $("blind-clock-prize-value").textContent = prizePool.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  $("blind-clock-prize").classList.toggle("hidden", !blindClockState?.show_prize_pool || prizePool <= 0);
+  $("blind-clock-prize-toggle").classList.toggle("hidden", !canControl || prizePool <= 0);
+  $("blind-clock-prize-toggle").textContent = blindClockState?.show_prize_pool ? "Ocultar premiação" : "Exibir premiação";
   // Antes de carregar uma estrutura, manter a tela limpa e mostrar apenas os seletores.
   $("blind-clock-container").querySelector(".blind-clock-hero").classList.toggle("hidden", !hasStructure);
   $("blind-clock-container").querySelector(".blind-clock-structure-list").classList.toggle("hidden", !hasStructure);
@@ -2999,7 +3020,7 @@ async function loadBlindClockStructures() {
     return;
   }
   const { data, error } = await db.from("club_blind_structures")
-    .select("id, name, description, levels")
+    .select("id, name, description, levels, prize_pool")
     .eq("club_id", clubId)
     .eq("created_by", userId)
     .order("name");
@@ -3040,6 +3061,8 @@ async function saveBlindClock(nextState) {
   const payload = {
     ...(blindClockClubId ? { club_id: blindClockClubId } : { tournament_id: blindClockTournament.id }),
     structure_snapshot: nextState.structure_snapshot || blindClockState?.structure_snapshot || [],
+    prize_pool: nextState.prize_pool ?? blindClockState?.prize_pool ?? null,
+    show_prize_pool: nextState.show_prize_pool ?? blindClockState?.show_prize_pool ?? false,
     current_step_index: Number(nextState.current_step_index ?? blindClockState?.current_step_index ?? 0),
     status: nextState.status || "stopped",
     remaining_seconds: nextState.remaining_seconds ?? null,
@@ -3077,6 +3100,8 @@ async function loadSelectedBlindStructure() {
   blindClockSelectedStructure = selected;
   await saveBlindClock({
     structure_snapshot: selected.levels,
+    prize_pool: selected.prize_pool ?? null,
+    show_prize_pool: false,
     current_step_index: 0,
     status: "stopped",
     remaining_seconds: clockDurationSeconds(selected.levels[0]),
@@ -3287,6 +3312,10 @@ function exitBlindClockFullscreen() {
 }
 
 $("blind-clock-structure-select").addEventListener("change", loadSelectedBlindStructure);
+$("blind-clock-prize-toggle").addEventListener("click", () => {
+  if (!blindClockState?.structure_snapshot?.length) return;
+  saveBlindClock({ show_prize_pool: !blindClockState.show_prize_pool });
+});
 $("blind-clock-start").addEventListener("click", startOrResumeBlindClock);
 $("blind-clock-pause").addEventListener("click", pauseBlindClock);
 $("blind-clock-prev").addEventListener("click", () => moveBlindClock(-1));
@@ -4999,6 +5028,7 @@ function resetBlindEditor() {
   blindStructureSteps = [];
   $("blind-structure-name").value = "";
   $("blind-structure-description").value = "";
+  $("blind-structure-prize").value = "";
   $("blind-editor-title").textContent = "Nova estrutura";
   $("blind-editor-message").textContent = "";
   $("blind-save-btn").textContent = "Salvar estrutura";
@@ -5071,7 +5101,7 @@ async function loadClubBlindStructures() {
   $("blind-saved-list").innerHTML = '<div class="empty">Carregando estruturas...</div>';
   const { data, error } = await db
     .from("club_blind_structures")
-    .select("id, club_id, name, description, levels, created_at")
+    .select("id, club_id, name, description, levels, prize_pool, created_at")
     .eq("club_id", selectedClubId)
     .order("name");
   if (error) {
@@ -5090,7 +5120,7 @@ function renderSavedBlindStructures() {
   }
   list.innerHTML = clubBlindStructures.map(item => `
     <div class="blind-saved-card">
-      <div><strong>${escapeHtml(item.name)}</strong><p>${escapeHtml(item.description || "Estrutura personalizada")} • ${(item.levels || []).filter(s => s.type === "level").length} níveis</p></div>
+      <div><strong>${escapeHtml(item.name)}</strong><p>${escapeHtml(item.description || "Estrutura personalizada")} • ${(item.levels || []).filter(s => s.type === "level").length} níveis${item.prize_pool != null ? " • Premiação: " + Number(item.prize_pool).toLocaleString("pt-BR", {style:"currency",currency:"BRL"}) : ""}</p></div>
       <div class="blind-saved-actions">
         <button class="btn secondary edit-blind-structure" data-id="${item.id}">Editar</button>
         <button class="btn secondary delete-blind-structure" data-id="${item.id}">Excluir</button>
@@ -5106,6 +5136,7 @@ function renderSavedBlindStructures() {
       blindStructureSteps = Array.isArray(item.levels) ? item.levels.map(s => ({...s})) : [];
       $("blind-structure-name").value = item.name;
       $("blind-structure-description").value = item.description || "";
+      $("blind-structure-prize").value = item.prize_pool ?? "";
       $("blind-editor-title").textContent = "Editar estrutura: " + item.name;
       $("blind-editor-message").textContent = "Altere o nome ou os níveis e clique em Atualizar estrutura para salvar as mudanças.";
       $("blind-save-btn").textContent = "Atualizar estrutura";
@@ -5134,6 +5165,13 @@ function renderSavedBlindStructures() {
 async function saveClubBlindStructure() {
   const name = $("blind-structure-name").value.trim();
   const description = $("blind-structure-description").value.trim();
+  const prizePoolRaw = $("blind-structure-prize").value.trim();
+  const prizePool = prizePoolRaw === "" ? null : Number(prizePoolRaw);
+  if (prizePool !== null && (!Number.isFinite(prizePool) || prizePool < 0)) {
+    $("blind-editor-message").textContent = "Informe um valor válido para a premiação.";
+    $("blind-structure-prize").focus();
+    return;
+  }
   if (!selectedClubId || !isStaff) {
     alert("Apenas a equipe do clube pode salvar estruturas.");
     return;
@@ -5164,6 +5202,7 @@ async function saveClubBlindStructure() {
       club_id: selectedClubId,
       name,
       description: description || null,
+      prize_pool: prizePool,
       levels: blindStructureSteps,
       created_by: userData?.user?.id || null,
       updated_at: new Date().toISOString()
