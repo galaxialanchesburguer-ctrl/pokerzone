@@ -1812,6 +1812,18 @@ input:focus,select:focus {
   .blind-clock-fullscreen .blind-clock-blind{min-width:80px}
 }
 
+body.clock-only-mode header,
+body.clock-only-mode main > *:not(#club-clock-area),
+body.clock-only-mode footer,
+body.clock-only-mode .connection-status{display:none!important}
+body.clock-only-mode main{max-width:none;width:100%;min-height:100vh;margin:0;padding:0}
+body.clock-only-mode #club-clock-area{display:block!important;width:100%;min-height:100vh;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+body.clock-only-mode #blind-clock-container{width:100%;min-height:100vh;max-width:none;margin:0;border:0;border-radius:0}
+body.clock-only-mode .blind-clock-hero{width:100%;max-width:1500px;margin:auto}
+body.clock-only-mode .blind-clock-controls,
+body.clock-only-mode .blind-clock-structure-list,
+body.clock-only-mode #blind-clock-admin,
+body.clock-only-mode #blind-clock-time-admin{display:none!important}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -2297,6 +2309,7 @@ input:focus,select:focus {
         <option value="">Carregando torneios...</option>
       </select>
     </label>
+    <button class="btn secondary" id="blind-clock-open-display-btn" type="button" style="margin-top:12px">↗ Abrir somente o relógio</button>
   </div>
   <section id="blind-clock-view">
   <div class="blind-clock-wrap" id="blind-clock-container">
@@ -2363,6 +2376,19 @@ input:focus,select:focus {
     <button class="btn secondary" id="club-blinds-back-btn">Voltar ao clube</button>
   </div>
   <p class="blind-intro">Escolha um modelo pronto para editar ou crie uma estrutura exclusiva para este clube.</p>
+  <div class="blind-clock-admin" id="blind-structure-clock-shortcut">
+    <strong>RELÓGIO DE TORNEIO AO VIVO</strong>
+    <p class="season-info" style="margin:8px 0 12px">Acesse rapidamente o controle do relógio ou abra uma tela limpa para exibir em uma TV.</p>
+    <label>Selecione o torneio
+      <select id="blind-structure-clock-tournament">
+        <option value="">Carregando torneios...</option>
+      </select>
+    </label>
+    <div class="actions" style="margin-top:12px">
+      <button class="btn" id="blind-structure-clock-control" type="button">Abrir controle do relógio</button>
+      <button class="btn secondary" id="blind-structure-clock-display" type="button">↗ Abrir somente o relógio</button>
+    </div>
+  </div>
   <div class="blind-presets-grid" id="blind-presets-list"></div>
   <div class="blind-editor-panel">
     <div class="blind-editor-heading">
@@ -3053,6 +3079,52 @@ async function loadClubClockTournamentOptions() {
     select.value = blindClockTournament.id;
   }
   if (!isStaff) $("blind-clock-admin").classList.add("hidden");
+  const displayButton = $("blind-clock-open-display-btn");
+  if (displayButton) displayButton.disabled = !select.value;
+}
+
+async function loadBlindStructureClockOptions() {
+  const select = $("blind-structure-clock-tournament");
+  if (!select || !selectedClubId) return;
+  select.innerHTML = '<option value="">Carregando torneios...</option>';
+  const { data, error } = await db.from("tournaments")
+    .select("id, name")
+    .eq("club_id", selectedClubId)
+    .order("name");
+  if (error) {
+    select.innerHTML = '<option value="">Erro ao carregar torneios</option>';
+    return;
+  }
+  select.innerHTML = (data || []).length
+    ? '<option value="">Selecione um torneio</option>' + data.map(t => '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>').join("")
+    : '<option value="">Nenhum torneio cadastrado</option>';
+}
+
+function openStandaloneBlindClock(tournamentId) {
+  if (!tournamentId) {
+    alert("Selecione um torneio primeiro.");
+    return;
+  }
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash = "";
+  url.searchParams.set("clock", tournamentId);
+  window.open(url.toString(), "_blank", "noopener");
+}
+
+async function openBlindClockControls(tournamentId) {
+  if (!tournamentId) {
+    alert("Selecione um torneio primeiro.");
+    return;
+  }
+  $("club-management-area").classList.add("hidden");
+  $("club-tournaments-area").classList.add("hidden");
+  $("club-settings-area").classList.add("hidden");
+  $("club-blinds-area").classList.add("hidden");
+  $("club-clock-area").classList.remove("hidden");
+  await loadClubClockTournamentOptions();
+  $("club-clock-tournament-select").value = tournamentId;
+  await selectClubClockTournament(tournamentId);
 }
 
 async function selectClubClockTournament(tournamentId) {
@@ -3136,6 +3208,20 @@ $("club-clock-back-btn").addEventListener("click", () => {
 });
 $("club-clock-tournament-select").addEventListener("change", event => {
   selectClubClockTournament(event.target.value);
+  $("blind-clock-open-display-btn").disabled = !event.target.value;
+});
+$("blind-clock-open-display-btn").addEventListener("click", () => {
+  openStandaloneBlindClock($("club-clock-tournament-select").value);
+});
+$("blind-structure-clock-control").addEventListener("click", () => {
+  openBlindClockControls($("blind-structure-clock-tournament").value);
+});
+$("blind-structure-clock-display").addEventListener("click", () => {
+  openStandaloneBlindClock($("blind-structure-clock-tournament").value);
+});
+$("blind-structure-clock-tournament").addEventListener("change", event => {
+  $("blind-structure-clock-control").disabled = !event.target.value;
+  $("blind-structure-clock-display").disabled = !event.target.value;
 });
 
 function renderRanking(list){
@@ -4728,7 +4814,7 @@ $("club-blinds-btn").addEventListener("click", async () => {
     return;
   }
   $("club-blinds-area").classList.remove("hidden");
-  await loadClubBlindStructures();
+  await Promise.all([loadClubBlindStructures(), loadBlindStructureClockOptions()]);
   renderBlindPresets();
   resetBlindEditor();
 });
@@ -6557,6 +6643,32 @@ loadRecentTournaments();
 async function init(){
   try {
     await checkSession();
+
+    const clockOnlyTournamentId = new URLSearchParams(window.location.search).get("clock");
+    if (clockOnlyTournamentId) {
+      document.body.classList.add("clock-only-mode");
+      $("club-clock-area").classList.remove("hidden");
+      $("club-clock-area").classList.add("clock-only-area");
+      $("club-clock-area").querySelector(".box-head").classList.add("hidden");
+      $("club-clock-area").querySelector(".blind-clock-admin").classList.add("hidden");
+      $("blind-clock-admin").classList.add("hidden");
+      $("blind-clock-time-admin").classList.add("hidden");
+      $("blind-clock-container").classList.add("blind-clock-fullscreen");
+      const { data: clockTournament, error } = await db.from("tournaments")
+        .select("id, name, description, club_id")
+        .eq("id", clockOnlyTournamentId)
+        .single();
+      if (error || !clockTournament) {
+        $("blind-clock-tournament-name").textContent = "TORNEIO NÃO ENCONTRADO";
+        $("blind-clock-status").textContent = "NÃO FOI POSSÍVEL CARREGAR O RELÓGIO";
+        return;
+      }
+      blindClockTournament = clockTournament;
+      await fetchBlindClock();
+      setupBlindClockRealtime();
+      blindClockTick = setInterval(renderBlindClock, 250);
+      return;
+    }
 
     $("home-tournaments").classList.remove("hidden");
     $("tournament-app").classList.add("hidden");
