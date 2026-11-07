@@ -5420,7 +5420,7 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
 
   const { data: tournamentDetails, error: detailsError } = await db
     .from("tournament_details")
-    .select("tournament_id, event_date, start_time, buy_in, rebuy_amount")
+    .select("tournament_id, event_date, start_time, buy_in, rebuy_amount, late_registration_end_level, late_registration_end_time")
     .in("tournament_id", ids);
 
   if (detailsError) {
@@ -5456,6 +5456,12 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
   const formatMoney = value => value != null
     ? Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
     : "Não informado";
+  const formatLateRegistration = t => {
+    const parts = [];
+    if (t.late_registration_end_level != null) parts.push("Nível " + t.late_registration_end_level);
+    if (t.late_registration_end_time) parts.push("até " + t.late_registration_end_time.slice(0, 5));
+    return parts.length ? parts.join(" • ") : "Não informado";
+  };
 
   container.innerHTML = updatedRecent.map(t => `
     <div class="stage-item">
@@ -5464,6 +5470,7 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
         <small>${esc(t.description || "Torneio PokerZone")}</small>
         <small>📅 ${formatDate(t.event_date)} &nbsp; • &nbsp; 🕒 ${formatTime(t.start_time)}</small>
         <small>Buy-in: ${formatMoney(t.buy_in)} &nbsp; • &nbsp; Rebuy: ${formatMoney(t.rebuy_amount)}</small>
+        <small>Registro tardio: ${formatLateRegistration(t)}</small>
       </div>
       <button class="btn" data-recent-tournament="${t.id}">
         Entrar
