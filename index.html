@@ -2305,6 +2305,28 @@ body.clock-only-mode .blind-clock-next-step{
 
 
 
+/* TELA DE CONFIGURAÇÃO ANTES DO RELÓGIO */
+body.clock-only-mode .blind-clock-setup{
+  min-height:75vh;display:flex;align-items:center;justify-content:center;padding:28px 16px;
+}
+body.clock-only-mode .blind-clock-setup-card{
+  width:min(560px,100%);padding:clamp(24px,4vw,42px);border:1px solid rgba(237,48,56,.3);
+  border-radius:18px;background:linear-gradient(145deg,#1b1718,#101010);
+  box-shadow:0 20px 65px rgba(0,0,0,.38);text-align:center;
+}
+body.clock-only-mode .blind-clock-setup-kicker{color:#f5443b;font-size:11px;font-weight:900;letter-spacing:3px;margin-bottom:12px}
+body.clock-only-mode .blind-clock-setup-card h2{font-size:clamp(23px,3vw,32px);font-weight:900;margin-bottom:10px}
+body.clock-only-mode .blind-clock-setup-card>p{color:#aaa;font-size:14px;line-height:1.6;margin-bottom:25px}
+body.clock-only-mode #blind-clock-setup .blind-clock-admin{
+  position:static!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;
+  display:grid;gap:12px;text-align:left;background:transparent;border:0;box-shadow:none;
+}
+body.clock-only-mode #blind-clock-setup .blind-clock-admin label{color:#bbb;font-size:11px;font-weight:900;letter-spacing:1px}
+body.clock-only-mode #blind-clock-setup #blind-clock-structure-select{width:100%;height:48px;min-height:48px;font-size:14px;padding:10px 13px;background:#101010;border:1px solid #484040;border-radius:8px}
+body.clock-only-mode #blind-clock-setup #blind-clock-prize-toggle{width:100%;min-height:44px}
+body.clock-only-mode .blind-clock-setup-open{width:100%;min-height:50px;margin-top:22px;font-size:14px}
+@media(max-width:700px){body.clock-only-mode .blind-clock-setup{min-height:65vh;padding:18px 8px}body.clock-only-mode .blind-clock-setup-card{padding:24px 18px}}
+
 /* ANTE MAIS DESTACADO NO RELOGIO */
 body.clock-only-mode .blind-clock-ante{
   font-size:clamp(24px,2vw,32px)!important;
@@ -2805,16 +2827,25 @@ body.clock-only-mode .blind-clock-ante{
     <p class="season-info">O relógio é independente dos torneios. Selecione a estrutura na próxima tela.</p>
     <button class="btn" id="blind-clock-open-display-btn" type="button" style="margin-top:12px">↗ Abrir relógio</button>
   </div>
+  <section id="blind-clock-setup" class="blind-clock-setup hidden">
+    <div class="blind-clock-setup-card">
+      <div class="blind-clock-setup-kicker">POKERZONE • CONFIGURAÇÃO</div>
+      <h2>Preparar relógio de blinds</h2>
+      <p>Escolha a estrutura e defina se a premiação será exibida antes de abrir o relógio.</p>
+      <div class="blind-clock-admin hidden" id="blind-clock-admin">
+        <label for="blind-clock-structure-select">ESTRUTURA DE BLINDS</label>
+        <select id="blind-clock-structure-select" aria-label="Selecione a estrutura">
+          <option value="">Selecione a estrutura</option>
+        </select>
+        <button class="btn secondary hidden" id="blind-clock-prize-toggle" type="button">Exibir premiação no relógio</button>
+        <p id="blind-clock-admin-message" class="season-info hidden" style="margin-top:10px"></p>
+      </div>
+      <button class="btn blind-clock-setup-open" id="blind-clock-setup-open" type="button">Abrir relógio ↗</button>
+    </div>
+  </section>
   <section id="blind-clock-view">
   <div class="blind-clock-wrap" id="blind-clock-container">
     <h2 class="section-title">RELÓGIO DE BLINDS</h2>
-    <div class="blind-clock-admin hidden" id="blind-clock-admin">
-      <select id="blind-clock-structure-select" aria-label="Selecione a estrutura">
-        <option value="">Selecione a estrutura</option>
-      </select>
-      <button class="btn secondary hidden" id="blind-clock-prize-toggle" type="button">Exibir premiação no relógio</button>
-      <p id="blind-clock-admin-message" class="season-info hidden" style="margin-top:10px"></p>
-    </div>
     <div class="blind-clock-hero">
       <div class="blind-clock-kicker" id="blind-clock-tournament-name">POKERZONE • TORNEIO</div>
       <div class="blind-clock-time" id="blind-clock-countdown">00:00</div>
@@ -2837,7 +2868,7 @@ body.clock-only-mode .blind-clock-ante{
         <button class="btn secondary hidden" id="blind-clock-prev" type="button">‹ Voltar nível</button>
         <button class="btn secondary hidden" id="blind-clock-next" type="button">Avançar nível ›</button>
         <button class="btn secondary hidden blind-clock-fullscreen-toggle" id="blind-clock-fullscreen" type="button">⛶ Tela cheia</button>
-        
+        <button class="btn secondary hidden" id="blind-clock-setup-back" type="button">⚙ Configurações</button>
         <button class="btn secondary blind-clock-exit" id="blind-clock-exit" type="button">Sair da tela cheia</button>
       </div>
     </div>
@@ -3832,6 +3863,15 @@ function exitBlindClockFullscreen() {
 }
 
 $("blind-clock-structure-select").addEventListener("change", loadSelectedBlindStructure);
+$("blind-clock-setup-open").addEventListener("click", () => {
+  $("blind-clock-setup").classList.add("hidden");
+  $("blind-clock-view").classList.remove("hidden");
+  $("blind-clock-setup-back").classList.remove("hidden");
+});
+$("blind-clock-setup-back").addEventListener("click", () => {
+  $("blind-clock-view").classList.add("hidden");
+  $("blind-clock-setup").classList.remove("hidden");
+});
 $("blind-clock-prize-toggle").addEventListener("click", () => {
   if (!blindClockState?.structure_snapshot?.length) return;
   saveBlindClock({ show_prize_pool: !blindClockState.show_prize_pool });
@@ -7392,6 +7432,10 @@ async function init(){
       blindClockClubName = clockClub.name || "POKERZONE • RELÓGIO DE BLINDS";
       await fetchBlindClock();
       await loadBlindClockStructures();
+      if (isStaff) {
+        $("blind-clock-setup").classList.remove("hidden");
+        $("blind-clock-view").classList.add("hidden");
+      }
       setupBlindClockRealtime();
       blindClockTick = setInterval(renderBlindClock, 250);
       return;
