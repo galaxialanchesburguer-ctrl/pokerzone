@@ -5640,6 +5640,7 @@ function renderStageCommandCreation(searchTerm=""){
     const results=content.querySelector("#stage-command-create-results");
     if(!results)return;
     const term=normalize(termValue);
+    if(!term){results.innerHTML="";return;}
     const found=stageCommandCustomers.filter(customer=>normalize(customer.name).includes(term)||(customer.phone||"").includes((termValue||"").trim()));
     results.innerHTML=found.length?found.map(customer=>'<button type="button" class="stage-command-customer-option" data-create-command-customer="'+esc(customer.id)+'"><strong>'+esc(customer.name)+'</strong>'+(customer.phone?'<small style="display:block;color:#999;margin-top:3px">'+esc(customer.phone)+'</small>':'')+'</button>').join(""):'<div class="empty">Nenhum cliente encontrado.</div>';
     results.querySelectorAll("[data-create-command-customer]").forEach(button=>button.addEventListener("click",async()=>{
