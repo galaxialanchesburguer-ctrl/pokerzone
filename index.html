@@ -2243,6 +2243,43 @@ body.clock-only-mode .blind-clock-controls .btn{
 /* AJUSTE DE TAMANHO DO ANTE ZERO */
 body.clock-only-mode .blind-clock-ante.ante-zero{font-size:18px!important}
 @media(max-width:700px){body.clock-only-mode .blind-clock-ante.ante-zero{font-size:17px!important}}
+
+/* IDENTIDADE POKERZONE: PRETO, VERMELHO E AMARELO NO CRONOMETRO */
+body.clock-only-mode{
+  background:radial-gradient(ellipse at 50% 0%,rgba(237,48,56,.13),transparent 42%),#080808!important;
+}
+body.clock-only-mode main,
+body.clock-only-mode #club-clock-area,
+body.clock-only-mode #blind-clock-container{
+  background:transparent!important;
+}
+body.clock-only-mode .blind-clock-hero{
+  background:
+    radial-gradient(ellipse at 50% 42%,rgba(237,48,56,.16),transparent 52%),
+    linear-gradient(145deg,#202020 0%,#151515 58%,#0d0d0d 100%)!important;
+  border:1px solid rgba(237,48,56,.42)!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.04)!important;
+}
+body.clock-only-mode .blind-clock-time{
+  color:#ffd34f!important;
+  text-shadow:0 0 22px rgba(255,211,79,.18),0 8px 36px rgba(0,0,0,.55)!important;
+}
+body.clock-only-mode .blind-clock-progress{
+  background:#343434!important;
+}
+body.clock-only-mode .blind-clock-progress-fill{
+  background:#ffd34f!important;
+  box-shadow:0 0 14px rgba(255,211,79,.35)!important;
+}
+body.clock-only-mode .blind-clock-prize{
+  background:linear-gradient(155deg,#252020,#121212)!important;
+  border-color:rgba(237,48,56,.38)!important;
+}
+body.clock-only-mode .blind-clock-next-step{
+  background:rgba(237,48,56,.09)!important;
+  border-color:rgba(237,48,56,.28)!important;
+}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
