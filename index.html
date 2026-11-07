@@ -1336,6 +1336,86 @@ input:focus,select:focus {
     grid-column: 1;
   }
 }
+/* Campos padronizados da edição das informações do torneio */
+#tournament-info-view .info-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+#tournament-info-view .info-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+#tournament-info-view .info-form-field-wide {
+  grid-column: 1 / -1;
+}
+#tournament-info-view .info-form-field label {
+  display: block;
+  margin: 0;
+  color: #c9bcbc;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: .25px;
+}
+#tournament-info-view .info-form-field input,
+#tournament-info-view .info-form-field textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid #443737;
+  border-radius: 8px;
+  outline: none;
+  background: #111;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  transition: border-color .2s, box-shadow .2s;
+}
+#tournament-info-view .info-form-field textarea {
+  min-height: 104px;
+  resize: vertical;
+}
+#tournament-info-view .info-form-field input:focus,
+#tournament-info-view .info-form-field textarea:focus {
+  border-color: #f5443b;
+  box-shadow: 0 0 0 3px rgba(245,68,59,.13);
+}
+#tournament-info-view .info-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #302929;
+}
+#tournament-info-view .info-form-actions .btn {
+  min-height: 43px;
+  padding: 10px 18px;
+}
+@media (max-width: 650px) {
+  #tournament-info-view .info-edit-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  #tournament-info-view .info-form-field-wide {
+    grid-column: 1;
+  }
+  #tournament-info-view .info-form-actions {
+    flex-direction: column;
+  }
+  #tournament-info-view .info-form-actions .btn {
+    width: 100%;
+  }
+}
 #edit-tournament-info-btn {
   grid-column: 1 / -1;
   justify-self: start;
@@ -3626,47 +3706,63 @@ function renderTournamentDetails(details) {
   const row = (label, value) => `<p><strong>${label}:</strong> ${value}</p>`;
 
   const field = (id, label, value, type = "number") => `
-    <label>${label}</label>
-    <input id="${id}" type="${type}" value="${esc(value ?? "")}" ${type === "number" ? 'min="0" step="any"' : ""}>
+    <div class="info-form-field">
+      <label for="${id}">${label}</label>
+      <input id="${id}" type="${type}" value="${esc(value ?? "")}" ${type === "number" ? 'min="0" step="any"' : ""}>
+    </div>
   `;
 
   if (isEditingTournamentInfo) {
     $("info-registration").innerHTML =
+      '<div class="info-edit-grid">' +
       field("edit-tournament-name", "Nome do torneio", tournament.name || "", "text") +
-      `<label>Descrição do torneio</label><textarea id="edit-tournament-description" rows="3">${esc(tournament.description || "")}</textarea>` +
+      `<div class="info-form-field info-form-field-wide"><label for="edit-tournament-description">Descrição do torneio</label><textarea id="edit-tournament-description" rows="3">${esc(tournament.description || "")}</textarea></div>` +
       field("edit-tournament-buy-in", "Buy-in (R$)", details.buy_in) +
       field("edit-tournament-rebuy", "Rebuy (R$)", details.rebuy_amount) +
       field("edit-tournament-rebuy-limit", "Limite de rebuys", details.rebuy_limit) +
       field("edit-tournament-addon", "Add-on (R$)", details.addon_amount) +
-      field("edit-tournament-guaranteed", "Premiação garantida (R$)", details.guaranteed_prize);
+      field("edit-tournament-guaranteed", "Premiação garantida (R$)", details.guaranteed_prize) +
+      '</div>';
 
     $("info-structure").innerHTML =
+      '<div class="info-edit-grid">' +
       field("edit-tournament-stack", "Stack inicial", details.starting_stack) +
-      field("edit-tournament-level-duration", "Duração dos níveis (minutos)", details.level_duration_minutes);
+      field("edit-tournament-level-duration", "Duração dos níveis (minutos)", details.level_duration_minutes) +
+      '</div>';
 
     $("info-schedule").innerHTML =
+      '<div class="info-edit-grid">' +
       field("edit-tournament-date", "Data", details.event_date, "date") +
       field("edit-tournament-start-time", "Horário de início", details.start_time, "time") +
       field("edit-tournament-late-level", "Registro tardio até o nível", details.late_registration_end_level) +
-      field("edit-tournament-late-time", "Horário limite do registro tardio", details.late_registration_end_time, "time");
+      field("edit-tournament-late-time", "Horário limite do registro tardio", details.late_registration_end_time, "time") +
+      '</div>';
 
     const blindsText = (details.blind_structure || [])
       .map(level => `${level.small_blind} / ${level.big_blind} / ${level.ante ?? 0}`)
       .join("\n");
 
     $("info-blinds").innerHTML = `
-      <label>Estrutura de blinds (SB / BB / Ante, um nível por linha)</label>
-      <textarea id="edit-tournament-blinds" rows="8">${esc(blindsText)}</textarea>
+      <div class="info-edit-grid">
+        <div class="info-form-field info-form-field-wide">
+          <label for="edit-tournament-blinds">Estrutura de blinds (SB / BB / Ante, um nível por linha)</label>
+          <textarea id="edit-tournament-blinds" rows="8">${esc(blindsText)}</textarea>
+        </div>
+      </div>
     `;
 
     $("info-notes").innerHTML = `
-      <label>Intervalos (um por linha)</label>
-      <textarea id="edit-tournament-breaks" rows="4">${esc((details.break_structure || []).join("\n"))}</textarea>
-
-      <label>Observações</label>
-      <textarea id="edit-tournament-notes" rows="4">${esc(details.notes || "")}</textarea>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:15px;">
+      <div class="info-edit-grid">
+        <div class="info-form-field info-form-field-wide">
+          <label for="edit-tournament-breaks">Intervalos (um por linha)</label>
+          <textarea id="edit-tournament-breaks" rows="4">${esc((details.break_structure || []).join("\n"))}</textarea>
+        </div>
+        <div class="info-form-field info-form-field-wide">
+          <label for="edit-tournament-notes">Observações</label>
+          <textarea id="edit-tournament-notes" rows="4">${esc(details.notes || "")}</textarea>
+        </div>
+      </div>
+      <div class="info-form-actions">
         <button class="btn" id="save-tournament-info-btn">Salvar alterações</button>
         <button class="btn secondary" id="cancel-tournament-info-btn">Cancelar</button>
       </div>
