@@ -5592,9 +5592,9 @@ async function loadStageCommandCards() {
       let command=rows.find(item=>item.tournament_player_id===player.player_id);
       if(!command) command=rows.find(item=>!item.tournament_player_id&&Number(item.command_number)===i+1);
       if(command){
-        const {error}=await db.from("stage_commands").update({tournament_player_id:player.player_id,command_number:i+1}).eq("id",command.id);
+        const {error}=await db.from("stage_commands").update({tournament_player_id:player.player_id}).eq("id",command.id);
         if(error){grid.innerHTML='<div class="notice">Não foi possível vincular a comanda de '+esc(player.name)+': '+esc(error.message)+'</div>';return;}
-        command.tournament_player_id=player.player_id; command.command_number=i+1;
+        command.tournament_player_id=player.player_id;
       }else{
         const {data:newCommand,error}=await db.from("stage_commands").insert({stage_id:currentStage.id,club_id:clubId,command_number:i+1,tournament_player_id:player.player_id}).select("id,command_number,club_player_id,club_id,tournament_player_id").single();
         if(error){grid.innerHTML='<div class="notice">Não foi possível criar a comanda de '+esc(player.name)+': '+esc(error.message)+'</div>';return;}
