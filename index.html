@@ -3381,7 +3381,7 @@ function renderBlindClock() {
   const timeSlider = $("blind-clock-time-slider");
   const sliderValue = $("blind-clock-slider-value");
   if (timeSlider && document.activeElement !== timeSlider) {
-    const sliderMax = Math.max(1, levelDuration || clockDurationSeconds(step));
+    const sliderMax = Math.max(1, clockDurationSeconds(step));
     timeSlider.max = String(sliderMax);
     timeSlider.value = String(Math.max(1, Math.min(sliderMax, pos.remaining || 1)));
   }
