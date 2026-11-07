@@ -2596,8 +2596,8 @@ body.clock-only-mode .blind-clock-ante{
 .admin-sidebar-link.active{background:linear-gradient(110deg,rgba(237,48,56,.23),rgba(237,48,56,.06));border-color:#713036;color:#fff}
 .tournament-tree{position:absolute;inset:0;z-index:8;margin:0;padding:22px 15px;background:linear-gradient(180deg,#151010,#090909 72%);border-right:1px solid #3b2022;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
 .tournament-tree.hidden{display:none!important}
-.tournament-tree-head{display:flex;align-items:center;gap:9px;padding:0 0 14px;border-bottom:1px solid #352426}
-.tournament-tree-back{flex:0 0 auto;border:1px solid #472326;border-radius:7px;background:#251719;color:#eee;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.tournament-tree-head{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:0 0 14px;border-bottom:1px solid #352426}
+.tournament-tree-back{align-self:flex-start;flex:0 0 auto;border:1px solid #472326;border-radius:7px;background:#251719;color:#eee;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer}
 .tournament-tree-back:hover{background:#321c20;border-color:#713036}
 .tournament-tree-title{font-size:11px;font-weight:900;letter-spacing:1.3px;color:#eee;line-height:1.3}
 #tournament-tree-list{display:grid;align-content:start;gap:5px}
@@ -4972,8 +4972,8 @@ function renderTournamentTreePanel(title, backLabel, backAction, content) {
   const tree = $("tournament-tree");
   tree.innerHTML = `
     <div class="tournament-tree-head">
-      <button type="button" class="tournament-tree-back" id="tournament-tree-back">‹ ${esc(backLabel)}</button>
       <div class="tournament-tree-title">${esc(title)}</div>
+      <button type="button" class="tournament-tree-back" id="tournament-tree-back">‹ ${esc(backLabel)}</button>
     </div>
     <div id="tournament-tree-list">${content || ""}</div>`;
   $("tournament-tree-back").addEventListener("click", backAction);
