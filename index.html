@@ -1746,6 +1746,10 @@ input:focus,select:focus {
 /* ===== RELÓGIO DE BLINDS AO VIVO ===== */
 .blind-clock-next-step{display:inline-block;margin:10px auto 0;padding:10px 18px;border:1px solid #633037;border-radius:10px;background:rgba(237,48,56,.10);color:#ffb1b5;font-size:13px;font-weight:800;letter-spacing:.5px}
 #club-clock-area{margin-top:14px}
+.recent-clubs-history{margin:16px 0 18px}
+.recent-clubs-history h3{font-size:12px;letter-spacing:1px;color:#aaa;margin:0 0 10px}
+.recent-clubs-history .stage-item{margin:8px 0}
+.recent-clubs-history .empty{padding:12px 0;color:#888;font-size:13px}
 
 /* Perfil do clube */
 .club-profile-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 24px;border-bottom:1px solid #303030;flex-wrap:wrap}
@@ -2412,6 +2416,13 @@ input:focus,select:focus {
       id="tournament-search-input"
       placeholder="Digite o nome do clube..."
     >
+
+    <div id="recent-clubs-history" class="recent-clubs-history">
+      <h3>CLUBES ACESSADOS RECENTEMENTE</h3>
+      <div id="recent-clubs-list">
+        <div class="empty">Os clubes que você abrir aparecerão aqui.</div>
+      </div>
+    </div>
 
     <div id="tournament-search-results">
       <div class="empty">Digite o nome de um clube para pesquisar.</div>
@@ -3529,7 +3540,11 @@ async function checkSession() {
   recentTournamentsStorageKey = session?.user?.id
     ? `pokerzone_recent_tournaments_${session.user.id}`
     : "pokerzone_recent_tournaments_public";
+  recentClubsStorageKey = session?.user?.id
+    ? `pokerzone_recent_clubs_${session.user.id}`
+    : "pokerzone_recent_clubs_public";
   loadRecentTournaments();
+  renderRecentClubs();
 
   if (session) {
     const { data: profile } = await db
@@ -4308,6 +4323,7 @@ async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){
 let currentTournamentDetails = null;
  let isEditingTournamentInfo = false;
  let recentTournamentsStorageKey = "pokerzone_recent_tournaments_public";
+let recentClubsStorageKey = "pokerzone_recent_clubs_public";
  
 async function openTournament(selectedTournament) {
   if (blindClockTick) {
@@ -5784,13 +5800,17 @@ if (detailsError) throw detailsError;
  async function searchTournaments() {
   const term = $("tournament-search-input").value.trim();
   const resultsBox = $("tournament-search-results");
+  const historyBox = $("recent-clubs-history");
 
   if (!term) {
     resultsBox.innerHTML =
       '<div class="empty">Digite o nome de um clube para pesquisar.</div>';
+    historyBox.classList.remove("hidden");
+    renderRecentClubs();
     return;
   }
 
+  historyBox.classList.add("hidden");
   resultsBox.innerHTML =
     '<div class="empty">Buscando clubes...</div>';
 
@@ -5827,8 +5847,67 @@ if (detailsError) throw detailsError;
 
   resultsBox.querySelectorAll("[data-open-club]").forEach(button => {
     button.addEventListener("click", async () => {
-      await openClub(button.dataset.openClub);
+      const club = data.find(item => item.id === button.dataset.openClub);
+      if (club) saveRecentClub(club);
       $("tournament-search-area").classList.add("hidden");
+      await openClub(button.dataset.openClub);
+    });
+  });
+}
+
+function saveRecentClub(club) {
+  const recent = JSON.parse(localStorage.getItem(recentClubsStorageKey) || "[]");
+  const updated = [
+    { id: club.id, name: club.name, city: club.city || "", state: club.state || "" },
+    ...recent.filter(item => item.id !== club.id)
+  ].slice(0, 8);
+  localStorage.setItem(recentClubsStorageKey, JSON.stringify(updated));
+}
+
+async function renderRecentClubs() {
+  const container = $("recent-clubs-list");
+  if (!container) return;
+
+  const recent = JSON.parse(localStorage.getItem(recentClubsStorageKey) || "[]");
+  if (!recent.length) {
+    container.innerHTML = '<div class="empty">Os clubes que você abrir aparecerão aqui.</div>';
+    return;
+  }
+
+  const ids = recent.map(item => item.id).filter(Boolean);
+  const { data, error } = await db
+    .from("clubs")
+    .select("id, name, city, state")
+    .in("id", ids);
+
+  if (error) {
+    console.error("Erro ao atualizar clubes recentes:", error);
+    container.innerHTML = '<div class="empty">Não foi possível carregar o histórico de clubes.</div>';
+    return;
+  }
+
+  const updated = ids.map(id => (data || []).find(club => club.id === id)).filter(Boolean);
+  localStorage.setItem(recentClubsStorageKey, JSON.stringify(updated));
+
+  if (!updated.length) {
+    container.innerHTML = '<div class="empty">Os clubes que você abrir aparecerão aqui.</div>';
+    return;
+  }
+
+  container.innerHTML = updated.map(club => `
+    <div class="stage-item">
+      <div>
+        <strong>${escapeHtml(club.name)}</strong>
+        <small>${escapeHtml((club.city || "") + (club.state ? " - " + club.state : ""))}</small>
+      </div>
+      <button class="btn" data-recent-club="${club.id}">Abrir clube</button>
+    </div>
+  `).join("");
+
+  container.querySelectorAll("[data-recent-club]").forEach(button => {
+    button.addEventListener("click", async () => {
+      $("tournament-search-area").classList.add("hidden");
+      await openClub(button.dataset.recentClub);
     });
   });
 }
@@ -6017,6 +6096,10 @@ $("public-tournament-search-input").addEventListener(
 $("search-club-btn").addEventListener("click", () => {
   closeHomeSearches();
   $("tournament-search-area").classList.remove("hidden");
+  $("tournament-search-input").value = "";
+  $("tournament-search-results").innerHTML = '<div class="empty">Digite o nome de um clube para pesquisar.</div>';
+  $("recent-clubs-history").classList.remove("hidden");
+  renderRecentClubs();
   $("tournament-search-input").focus();
 });
 
