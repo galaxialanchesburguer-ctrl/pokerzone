@@ -5390,7 +5390,7 @@ $("close-tournament-search").addEventListener("click", () => {
 $("tournament-search-input").addEventListener("input", searchTournaments);
 
 
- function loadRecentTournaments(){
+ async function loadRecentTournaments(){
   const container = $("recent-tournaments-list");
 
   const recent = JSON.parse(
@@ -5403,8 +5403,38 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
     return;
   }
 
-  container.innerHTML = recent.map(t => `
-  <div class="stage-item">
+  container.innerHTML = '<div class="empty">Atualizando torneios...</div>';
+
+  const ids = recent.map(t => t.id).filter(Boolean);
+  const { data: updatedTournaments, error } = await db
+    .from("tournaments")
+    .select("id, name, description")
+    .in("id", ids);
+
+  if (error) {
+    console.error("Erro ao atualizar torneios recentes:", error);
+    container.innerHTML =
+      '<div class="empty">Não foi possível atualizar os torneios recentes.</div>';
+    return;
+  }
+
+  const updatedRecent = ids
+    .map(id => updatedTournaments.find(t => t.id === id))
+    .filter(Boolean);
+
+  localStorage.setItem(
+    recentTournamentsStorageKey,
+    JSON.stringify(updatedRecent)
+  );
+
+  if (!updatedRecent.length) {
+    container.innerHTML =
+      '<div class="empty">Seus torneios acessados aparecerão aqui.</div>';
+    return;
+  }
+
+  container.innerHTML = updatedRecent.map(t => `
+    <div class="stage-item">
       <div>
         <strong>${esc(t.name)}</strong>
         <small>${esc(t.description || "Torneio PokerZone")}</small>
@@ -5417,7 +5447,7 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
 
   container.querySelectorAll("[data-recent-tournament]").forEach(button => {
     button.addEventListener("click", () => {
-      const selected = recent.find(t => t.id === button.dataset.recentTournament);
+      const selected = updatedRecent.find(t => t.id === button.dataset.recentTournament);
       if (selected) openTournament(selected);
     });
   });
