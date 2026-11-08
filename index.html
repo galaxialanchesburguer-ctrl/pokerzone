@@ -3282,6 +3282,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <div class="club-haver-tabs" role="tablist" aria-label="Informações do cliente">
         <button type="button" class="club-haver-tab active" id="club-haver-tab-profile" role="tab" aria-selected="true" aria-controls="club-haver-profile-panel">Perfil</button>
         <button type="button" class="club-haver-tab" id="club-haver-tab-stages" role="tab" aria-selected="false" aria-controls="club-haver-stages-panel">Etapas</button>
+        <button type="button" class="club-haver-tab" id="club-haver-tab-notebook" role="tab" aria-selected="false" aria-controls="club-haver-notebook-panel">Caderno</button>
       </div>
       <section id="club-haver-profile-panel" class="club-haver-tab-panel">
       <div class="club-haver-summary">
@@ -3321,6 +3322,11 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         <h4>Etapas disputadas</h4>
         <p class="season-info">Histórico das etapas em que este cliente teve movimentações vinculadas.</p>
         <div id="club-haver-player-stages" class="box"><div class="empty">Carregando etapas...</div></div>
+      </section>
+      <section id="club-haver-notebook-panel" class="club-haver-tab-panel hidden" role="tabpanel" aria-labelledby="club-haver-tab-notebook">
+        <h4>Débitos do cliente</h4>
+        <div class="club-haver-stat debt" style="margin:10px 0"><span>TOTAL DE DÉBITOS LANÇADOS</span><strong id="club-haver-notebook-total">R$ 0,00</strong></div>
+        <div id="club-haver-notebook-list" class="box"><div class="empty">Carregando débitos...</div></div>
       </section>
     </div>
   </div>
@@ -8515,6 +8521,25 @@ async function loadClubHaverPlayerStages(){
     return '<div class="club-haver-stage-row"><div><strong>'+esc(label)+'</strong><div class="club-haver-stage-meta">'+esc(tournament?.name||"Torneio")+' • '+esc(date)+' • '+group.rows.length+' movimentação(ões)</div></div><strong>'+formatMoney(group.total)+'</strong></div>';
   }).join("")||'<div class="empty">Nenhuma etapa encontrada.</div>';
 }
+async function loadClubHaverNotebook(){
+  const target=$("club-haver-notebook-list");
+  const total=$("club-haver-notebook-total");
+  if(!target||!clubHaverSelectedPlayer)return;
+  target.innerHTML='<div class="empty">Carregando débitos...</div>';
+  const {data,error}=await db.from("club_player_ledger")
+    .select("id,entry_type,category,description,amount,created_at")
+    .eq("club_player_id",clubHaverSelectedPlayer.id)
+    .eq("entry_type","charge")
+    .order("created_at",{ascending:false});
+  if(error){target.innerHTML='<div class="notice">Erro ao carregar débitos: '+esc(error.message)+'</div>';return;}
+  const debits=data||[];
+  const sum=debits.reduce((value,row)=>value+(Number(row.amount)||0),0);
+  total.textContent=clubMoney(sum);
+  target.innerHTML=debits.length?debits.map(row=>{
+    const date=new Date(row.created_at).toLocaleString("pt-BR");
+    return '<div class="club-haver-entry"><div><strong>'+esc(row.description||"Débito")+'</strong><small>'+esc(row.category||"Consumo")+' • '+date+'</small></div><span class="charge">+ '+clubMoney(row.amount)+'</span></div>';
+  }).join(""):'<div class="empty">Nenhum débito registrado para este cliente.</div>';
+}
 async function openClubHaverPlayer(playerId) {
   clubHaverSelectedPlayer = clubHaverPlayers.find(p=>p.id===playerId);
   if (!clubHaverSelectedPlayer) return;
@@ -8523,12 +8548,13 @@ async function openClubHaverPlayer(playerId) {
   $("club-haver-player-detail").classList.add("drawer-open");
   $("club-haver-player-drawer-backdrop").classList.remove("hidden");
   $("club-haver-selected-name").textContent = clubHaverSelectedPlayer.name;
-  $("club-haver-tab-profile")?.classList.add("active");
-  $("club-haver-tab-stages")?.classList.remove("active");
-  $("club-haver-tab-profile")?.setAttribute("aria-selected","true");
-  $("club-haver-tab-stages")?.setAttribute("aria-selected","false");
+  ["profile","stages","notebook"].forEach(tab=>{
+    $("club-haver-tab-"+tab)?.classList.toggle("active",tab==="profile");
+    $("club-haver-tab-"+tab)?.setAttribute("aria-selected",tab==="profile"?"true":"false");
+  });
   $("club-haver-profile-panel")?.classList.remove("hidden");
   $("club-haver-stages-panel")?.classList.add("hidden");
+  $("club-haver-notebook-panel")?.classList.add("hidden");
   await loadClubHaverQuickProducts();
   await loadClubHaverLedger();
   if($("club-haver-tab-stages")&&!$("club-haver-tab-stages").dataset.bound){
@@ -8538,12 +8564,23 @@ async function openClubHaverPlayer(playerId) {
       $("club-haver-profile-panel").classList.remove("hidden");$("club-haver-stages-panel").classList.add("hidden");
     });
     $("club-haver-tab-stages").addEventListener("click",async()=>{
-      $("club-haver-tab-stages").classList.add("active");$("club-haver-tab-profile").classList.remove("active");
-      $("club-haver-tab-stages").setAttribute("aria-selected","true");$("club-haver-tab-profile").setAttribute("aria-selected","false");
-      $("club-haver-stages-panel").classList.remove("hidden");$("club-haver-profile-panel").classList.add("hidden");
+      ["profile","stages","notebook"].forEach(tab=>{
+        $("club-haver-tab-"+tab).classList.toggle("active",tab==="stages");
+        $("club-haver-tab-"+tab).setAttribute("aria-selected",tab==="stages"?"true":"false");
+        $("club-haver-"+(tab==="profile"?"profile":tab==="stages"?"stages":"notebook")+"-panel").classList.toggle("hidden",tab!=="stages");
+      });
       await loadClubHaverPlayerStages();
     });
+    $("club-haver-tab-notebook").addEventListener("click",async()=>{
+      ["profile","stages","notebook"].forEach(tab=>{
+        $("club-haver-tab-"+tab).classList.toggle("active",tab==="notebook");
+        $("club-haver-tab-"+tab).setAttribute("aria-selected",tab==="notebook"?"true":"false");
+        $("club-haver-"+(tab==="profile"?"profile":tab==="stages"?"stages":"notebook")+"-panel").classList.toggle("hidden",tab!=="notebook");
+      });
+      await loadClubHaverNotebook();
+    });
     $("club-haver-tab-stages").dataset.bound="1";
+    $("club-haver-tab-notebook").dataset.bound="1";
   }
 }
 async function deleteClubHaverPlayer(){
