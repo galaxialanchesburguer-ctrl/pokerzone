@@ -2528,7 +2528,7 @@ main:has(#club-haver-area:not(.hidden)){max-width:none;width:100%;box-sizing:bor
 #club-details-area:has(#club-haver-area:not(.hidden)){width:100%;max-width:none;box-sizing:border-box}
 #club-haver-area{width:100%;max-width:none;box-sizing:border-box}
 #club-haver-overview,#club-haver-player-list{width:100%;max-width:none;box-sizing:border-box}
-.client-list-card{width:100%;grid-template-columns:minmax(220px,1.5fr) minmax(160px,.85fr) minmax(260px,1.6fr) minmax(150px,.9fr) auto}
+.client-list-card{width:100%;grid-template-columns:minmax(220px,1.5fr) minmax(160px,.85fr) minmax(260px,1.6fr) minmax(150px,.9fr)}
 @media(max-width:900px){main:has(#club-haver-area:not(.hidden)){padding-left:14px;padding-right:14px}}
 /* Centralizar a área de clientes dentro do espaço disponível ao lado do menu lateral */
 body.admin-sidebar-active main:has(#club-haver-area:not(.hidden)){display:flex;justify-content:center}
@@ -2548,7 +2548,7 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .client-directory-toolbar{margin:0 0 16px;display:flex;gap:12px;align-items:center}.client-directory-toolbar input{flex:1;min-width:220px;height:44px}.client-directory-toolbar select{min-width:205px;height:44px}.client-directory-toolbar .btn{height:44px;white-space:nowrap}.client-directory-actions{margin:0 0 14px}
 .club-haver-toolbar input{flex:1;min-width:190px}
 .club-haver-player{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:15px 17px;border:1px solid #343030;background:#171717;border-radius:10px;margin:9px 0}
-.client-list-card{display:grid;width:100%;box-sizing:border-box;grid-template-columns:minmax(190px,1.45fr) minmax(145px,.9fr) minmax(230px,1.5fr) minmax(135px,.9fr) auto;align-items:center;gap:22px;padding:18px 22px}
+.client-list-card{display:grid;width:100%;box-sizing:border-box;grid-template-columns:minmax(190px,1.45fr) minmax(145px,.9fr) minmax(230px,1.5fr) minmax(135px,.9fr);align-items:center;gap:22px;padding:18px 22px}
 .client-list-main strong{font-size:16px;font-weight:850}
 .client-list-main small{font-size:12px;color:#aaa}
 .client-list-info{min-width:0}
@@ -3384,7 +3384,6 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
           <option value="name-desc">Nome (Z–A)</option>
           <option value="debt-desc">Maiores devedores</option>
           <option value="debt-asc">Menores saldos devedores</option>
-          <option value="spent-desc">Maior total gasto</option>
           <option value="recent-desc">Cadastro mais recente</option>
           <option value="recent-asc">Cadastro mais antigo</option>
         </select>
@@ -8735,9 +8734,9 @@ function renderClubHaverPlayers(){
   const dateLabel=value=>value?new Date(value+"T00:00:00").toLocaleDateString("pt-BR"): "—";
   const metricsFor=player=>{
     const rows=entries.filter(row=>row.club_player_id===player.id);
-    const charged=rows.filter(row=>row.entry_type==="charge"&&row.category!=="Premiação paga").reduce((sum,row)=>sum+(Number(row.amount)||0),0);
-    const paid=rows.filter(row=>row.entry_type==="payment").reduce((sum,row)=>sum+(Number(row.amount)||0),0);
-    return {rows,spent:charged,debt:charged-paid};
+    // Mesmo cálculo do saldo final exibido no Caderno: pagamentos positivos e débitos negativos.
+    const notebookBalance=rows.reduce((sum,row)=>sum+(row.entry_type==="payment"?(Number(row.amount)||0):-(Number(row.amount)||0)),0);
+    return {rows,debit:Math.max(0,-notebookBalance)};
   };
   visible.sort((a,b)=>{
     const ma=metricsFor(a),mb=metricsFor(b);
@@ -8750,7 +8749,7 @@ function renderClubHaverPlayers(){
     return (a.name||"").localeCompare(b.name||"","pt-BR");
   });
   list.innerHTML=visible.map(player=>{
-    const {rows,spent,debt}=metricsFor(player);
+    const {rows,debit}=metricsFor(player);
     const playerLedgerIds=new Set(rows.map(row=>row.id));
     const lastEntry=clubHaverTournamentEntries.filter(row=>playerLedgerIds.has(row.ledger_entry_id)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
     let lastTournament="—";
@@ -8761,8 +8760,7 @@ function renderClubHaverPlayers(){
       const stageLabel=stage?(stage.stage_number?"Etapa "+stage.stage_number:stage.name||"Etapa"):"";
       lastTournament=[date,tournament?.name||"Torneio",stageLabel].filter(Boolean).join(" • ");
     }
-    const balanceLabel=debt>0?"SALDO DEVEDOR":debt<0?"CRÉDITO DO CLIENTE":"SALDO QUITADO";
-    return '<div class="club-haver-player client-list-card" role="button" tabindex="0" data-player-id="'+esc(player.id)+'" aria-label="Abrir perfil de '+esc(player.name)+'"><div class="client-list-main"><strong>'+esc(player.name)+'</strong><small>'+esc(player.phone||"Telefone não informado")+'</small></div><div class="client-list-info"><span class="client-list-label">TOTAL JÁ GASTO</span><strong>'+clubMoney(spent)+'</strong></div><div class="client-list-info"><span class="client-list-label">'+balanceLabel+'</span><strong>'+clubMoney(Math.abs(debt))+'</strong></div><div class="client-list-info client-list-last"><span class="client-list-label">ÚLTIMO TORNEIO</span><strong>'+esc(lastTournament)+'</strong></div><div class="client-list-info"><span class="client-list-label">CLIENTE DESDE</span><strong>'+dateLabel(player.created_at?player.created_at.slice(0,10):"")+'</strong></div></div>';
+    return '<div class="club-haver-player client-list-card" role="button" tabindex="0" data-player-id="'+esc(player.id)+'" aria-label="Abrir perfil de '+esc(player.name)+'"><div class="client-list-main"><strong>'+esc(player.name)+'</strong><small>'+esc(player.phone||"Telefone não informado")+'</small></div><div class="client-list-info"><span class="client-list-label">DÉBITO</span><strong>'+clubMoney(debit)+'</strong></div><div class="client-list-info client-list-last"><span class="client-list-label">ÚLTIMO TORNEIO</span><strong>'+esc(lastTournament)+'</strong></div><div class="client-list-info"><span class="client-list-label">CLIENTE DESDE</span><strong>'+dateLabel(player.created_at?player.created_at.slice(0,10):"")+'</strong></div></div>';
   }).join("");
 }
 async function saveClubHaverPlayer() {
