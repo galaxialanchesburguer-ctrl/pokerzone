@@ -7183,7 +7183,6 @@ async function openTournament(selectedTournament) {
   stageEditorReturnVisible = false;
   $("stage-editor").classList.add("hidden");
   updateDeleteActionButton();
-  $("delete-tournament-btn").classList.toggle("hidden", !isAdmin);
  $("edit-tournament-info-btn").classList.toggle("hidden", !isStaff);
 
   localStorage.setItem(
@@ -8231,8 +8230,8 @@ $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await
 
 
 async function deleteCurrentTournament() {
-  if (!isAdmin || !tournament) {
-    alert("Apenas administradores podem excluir torneios.");
+  if (!canManageCurrentTournament()) {
+    alert("Apenas o administrador geral ou o gestor do clube deste torneio pode excluí-lo.");
     return;
   }
 
@@ -8282,12 +8281,19 @@ async function deleteCurrentTournament() {
     alert("Não foi possível excluir o torneio: " + error.message);
   }
 }
+function canManageCurrentTournament() {
+  return Boolean(
+    isAdmin ||
+    (isClubManager && managedClubId && tournament && tournament.club_id === managedClubId)
+  );
+}
+
 function updateDeleteActionButton() {
   const button = $("delete-tournament-btn");
   if (!button) return;
   const deletingStage = Boolean(currentStage?.id && !$("stage-editor").classList.contains("hidden"));
   button.textContent = deletingStage ? "Excluir etapa" : "Excluir torneio";
-  button.classList.toggle("hidden", deletingStage ? (!isStaff || !currentStage?.id) : !isAdmin);
+  button.classList.toggle("hidden", deletingStage ? (!isStaff || !currentStage?.id) : !canManageCurrentTournament());
 }
 
 async function deleteCurrentStage() {
