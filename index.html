@@ -1477,29 +1477,7 @@ input:focus,select:focus {
     padding: 9px 15px 15px;
   }
 }
- /* LISTA COMPACTA DE ETAPAS E CONSULTA FINANCEIRA */
-#stage-list-box .stage-list-compact{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 18px;margin:0;border:0;border-bottom:1px solid #302727;border-radius:0;background:transparent;cursor:pointer;min-height:64px}
-#stage-list-box .stage-list-compact:first-child{border-top:1px solid #302727}
-#stage-list-box .stage-list-compact:hover{background:rgba(237,48,56,.08);border-color:#493033}
-#stage-list-box .stage-list-copy{display:flex;flex-direction:column;gap:5px;min-width:0}
-#stage-list-box .stage-list-copy .stage-results-link{font-size:14px;margin:0;color:#fff}
-#stage-list-box .stage-list-copy small{font-size:12px;color:#999}
-#stage-list-box .stage-list-chevron{font-size:27px;color:#f5443b;line-height:1}
-#stage-financial-modal-content{display:grid;gap:12px}
-.stage-financial-player{background:#211d1d;border:1px solid #3b3030;border-radius:12px;padding:14px}
-.stage-financial-player-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
-.stage-financial-player-head strong{font-size:14px}
-.stage-financial-player-head small{display:block;color:#999;font-size:11px;margin-top:4px}
-.stage-financial-totals{display:flex;gap:12px;flex-wrap:wrap;color:#aaa;font-size:11px;margin:8px 0}
-.stage-financial-totals b{color:#fff}
-.stage-financial-movement{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #382f2f;font-size:12px}
-.stage-financial-movement small{display:block;color:#999;margin-top:3px}
-.stage-financial-movement .positive{color:#54d69a;white-space:nowrap;font-weight:700}
-.stage-financial-movement .negative{color:#ff858b;white-space:nowrap;font-weight:700}
-.stage-financial-player .command-open{margin-top:12px;width:100%}
-@media(max-width:600px){#stage-list-box .stage-list-compact{padding:14px 12px}.stage-financial-player{padding:11px}.stage-financial-movement{font-size:11px}}
-
-/* NOVO VISUAL DA LISTA DE ETAPAS */
+ /* NOVO VISUAL DA LISTA DE ETAPAS */
 #stage-list-box > #stage-list {
   padding: 10px 18px 18px;
 }
@@ -4007,18 +3985,6 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 </section>
 
 </section>
-  <div id="stage-financial-modal" class="stage-command-modal hidden" role="dialog" aria-modal="true" aria-labelledby="stage-financial-modal-title">
-    <div class="stage-command-modal-panel">
-      <div class="stage-command-modal-head">
-        <div><span>MOVIMENTAÇÕES FINANCEIRAS</span><h3 id="stage-financial-modal-title">Etapa</h3></div>
-        <div class="actions">
-          <button type="button" class="btn secondary" id="stage-financial-edit">Editar etapa</button>
-          <button type="button" class="btn secondary" id="stage-financial-close">Fechar ✕</button>
-        </div>
-      </div>
-      <div id="stage-financial-modal-content"><div class="empty">Carregando movimentações...</div></div>
-    </div>
-  </div>
   <div id="stage-command-modal" class="stage-command-modal hidden" role="dialog" aria-modal="true" aria-labelledby="stage-command-modal-title">
     <div class="stage-command-modal-panel">
       <div class="stage-command-modal-head"><div><span>COMANDA INDIVIDUAL</span><h3 id="stage-command-modal-title">Jogador</h3></div><button type="button" class="btn secondary" id="stage-command-modal-close">Fechar ✕</button></div>
@@ -5856,17 +5822,51 @@ async function loadStages() {
 
    $("stage-list").innerHTML = stages.length
   ? stages.map(s => `
-     <div class="stage-item stage-list-compact" data-stage-card="${s.id}" role="button" tabindex="0" aria-label="Ver movimentações da etapa ${esc(s.name || s.stage_number)}">
-       <div class="stage-list-copy">
-         <strong class="stage-results-link">${esc(s.name || "ETAPA " + s.stage_number)}</strong>
-         <small>📅 ${new Date(s.played_at + "T12:00:00").toLocaleDateString("pt-BR")}</small>
-       </div>
-       <span class="stage-list-chevron">›</span>
-     </div>
-     <div id="stage-results-${s.id}" class="box hidden">
-       <div class="box-head"><h2 id="stage-results-title-${s.id}">RESULTADO DA ETAPA</h2></div>
-       <div id="stage-results-content-${s.id}"><div class="empty">Carregando resultados...</div></div>
-     </div>
+     <div class="stage-item" data-stage-card="${s.id}">
+  <div class="stage-main">
+    <div class="stage-number">
+      ETAPA ${String(s.stage_number).padStart(2, "0")}
+    </div>
+
+    <div class="stage-info">
+      <button class="stage-results-link" data-stage-results="${s.id}">
+        ${esc(s.name || "ETAPA " + s.stage_number)}
+      </button>
+
+      <div class="stage-meta">
+        <span>📅 ${new Date(s.played_at + "T12:00:00").toLocaleDateString("pt-BR")}</span>
+
+        <span class="stage-status ${s.status === "published" ? "published" : "draft"}">
+          ${s.status === "published" ? "Publicada" : "Rascunho"}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <span class="tag">👥 ${s.participant_count || 0} participantes</span>
+
+    <button class="btn" data-edit-stage="${s.id}">
+      ${isStaff ? "Editar etapa" : "Ver etapa →"}
+    </button>
+
+    ${isStaff ? `
+      <button class="btn secondary" data-delete-stage="${s.id}">
+        Excluir
+      </button>
+    ` : ""}
+  </div>
+</div>
+
+      <div id="stage-results-${s.id}" class="box hidden">
+        <div class="box-head">
+          <h2 id="stage-results-title-${s.id}">RESULTADO DA ETAPA</h2>
+        </div>
+
+        <div id="stage-results-content-${s.id}">
+          <div class="empty">Carregando resultados...</div>
+        </div>
+      </div>
     `).join("")
   : '<div class="empty">Nenhuma etapa disponível.</div>';
 
@@ -5891,14 +5891,7 @@ document.querySelectorAll("[data-edit-stage]").forEach(b => {
       return;
     }
 
-    if (isStaff) openStageFinancialOverview(card.dataset.stageCard);
-    else openStageResults(card.dataset.stageCard);
-  });
-  card.addEventListener("keydown", event => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    event.preventDefault();
-    if (isStaff) openStageFinancialOverview(card.dataset.stageCard);
-    else openStageResults(card.dataset.stageCard);
+    openStageResults(card.dataset.stageCard);
   });
 });
    
@@ -5967,90 +5960,6 @@ function updatePlayerSuggestions() {
   $("player-suggestions").innerHTML = players
     .map(p => `<option value="${esc(p.name)}"></option>`)
     .join("");
-}
-let stageFinancialModalStageId=null;
-function closeStageFinancialModal(){
-  $("stage-financial-modal")?.classList.add("hidden");
-  stageFinancialModalStageId=null;
-}
-$("stage-financial-close")?.addEventListener("click",closeStageFinancialModal);
-$("stage-financial-modal")?.addEventListener("click",event=>{
-  if(event.target.id==="stage-financial-modal")closeStageFinancialModal();
-});
-$("stage-financial-edit")?.addEventListener("click",()=>{
-  const id=stageFinancialModalStageId;
-  closeStageFinancialModal();
-  if(id)openStage(id);
-});
-async function openStageFinancialOverview(id){
-  if(!isStaff||!id)return;
-  const stage=stages.find(item=>item.id===id);
-  if(!stage)return;
-  stageFinancialModalStageId=id;
-  currentStage=stage;
-  const modal=$("stage-financial-modal"),content=$("stage-financial-modal-content");
-  const date=stage.played_at?new Date(stage.played_at+"T12:00:00").toLocaleDateString("pt-BR"):"Data não informada";
-  $("stage-financial-modal-title").textContent=(stage.name||"Etapa "+stage.stage_number)+" • "+date;
-  content.innerHTML='<div class="empty">Carregando comandas e movimentações...</div>';
-  modal.classList.remove("hidden");
-  const [{data:resultRows,error:resultError},{data:commands,error:commandsError},{data:ledgerRows,error:ledgerError}]=await Promise.all([
-    db.from("results").select("id,player_id,position,points,player:players(id,display_name)").eq("stage_id",id).order("position"),
-    db.from("stage_commands").select("id,command_number,club_id,club_player_id,tournament_player_id").eq("stage_id",id).order("command_number"),
-    db.from("club_player_ledger").select("id,stage_command_id,club_player_id,entry_type,category,description,amount,created_at").eq("stage_id",id).order("created_at",{ascending:false})
-  ]);
-  if(stageFinancialModalStageId!==id)return;
-  if(resultError||commandsError||ledgerError){
-    content.innerHTML='<div class="notice">Não foi possível carregar as movimentações: '+esc((resultError||commandsError||ledgerError).message)+'</div>';
-    return;
-  }
-  const results=resultRows||[];
-  editorResults=results.map(row=>({id:row.id,player_id:row.player_id,name:row.player?.display_name||"Jogador",position:row.position,points:row.points}));
-  const commandRows=commands||[],historyRows=ledgerRows||[];
-  const customerIds=[...new Set(commandRows.map(row=>row.club_player_id).filter(Boolean).concat(historyRows.map(row=>row.club_player_id).filter(Boolean)))];
-  const customerResult=customerIds.length
-    ?await db.from("club_players").select("id,name").in("id",customerIds)
-    :{data:[],error:null};
-  if(customerResult.error){content.innerHTML='<div class="notice">Não foi possível identificar os clientes: '+esc(customerResult.error.message)+'</div>';return;}
-  const customerById=new Map((customerResult.data||[]).map(row=>[row.id,row]));
-  const money=value=>Number(value||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-  const renderMovements=rows=>rows.length?rows.map(row=>{
-    const isPayment=row.entry_type==="payment";
-    const label=row.description||row.category||"Lançamento";
-    return '<div class="stage-financial-movement"><span>'+esc(label)+'<small>'+esc(row.category||"")+' • '+new Date(row.created_at).toLocaleDateString("pt-BR")+'</small></span><strong class="'+(isPayment?"positive":"negative")+'">'+(isPayment?"+ ":"− ")+money(row.amount)+'</strong></div>';
-  }).join(""):'<div class="empty" style="padding:12px 0">Nenhuma movimentação registrada nesta etapa.</div>';
-  const usedCommandIds=new Set(),cards=[];
-  results.forEach((player,index)=>{
-    const command=commandRows.find(row=>row.tournament_player_id===player.player_id)||commandRows.find(row=>!row.tournament_player_id&&Number(row.command_number)===index+1);
-    if(command)usedCommandIds.add(command.id);
-    const rows=command?historyRows.filter(row=>row.stage_command_id===command.id):[];
-    const charges=rows.filter(row=>row.entry_type==="charge").reduce((sum,row)=>sum+Number(row.amount||0),0);
-    const payments=rows.filter(row=>row.entry_type==="payment").reduce((sum,row)=>sum+Number(row.amount||0),0);
-    const customer=customerById.get(rows.find(row=>row.club_player_id)?.club_player_id||command?.club_player_id);
-    const name=customer?.name||player.player?.display_name||"Jogador";
-    cards.push('<article class="stage-financial-player"><div class="stage-financial-player-head"><div><strong>'+esc(name)+'</strong><small>'+(player.position?player.position+'º lugar':'Participante')+'</small></div><strong>'+money(charges-payments)+'</strong></div><div class="stage-financial-totals"><span>Débitos: <b>'+money(charges)+'</b></span><span>Pagamentos: <b>'+money(payments)+'</b></span></div>'+renderMovements(rows)+(command?'<button type="button" class="btn secondary command-open" data-stage-financial-command="'+esc(command.id)+'">Abrir comanda</button>':'<small style="color:#999">Comanda ainda não criada para este jogador.</small>')+'</article>');
-  });
-  commandRows.filter(command=>!usedCommandIds.has(command.id)).forEach(command=>{
-    const rows=historyRows.filter(row=>row.stage_command_id===command.id);
-    const customer=customerById.get(rows.find(row=>row.club_player_id)?.club_player_id||command.club_player_id);
-    const name=customer?.name||"Comanda "+command.command_number;
-    const charges=rows.filter(row=>row.entry_type==="charge").reduce((sum,row)=>sum+Number(row.amount||0),0);
-    const payments=rows.filter(row=>row.entry_type==="payment").reduce((sum,row)=>sum+Number(row.amount||0),0);
-    cards.push('<article class="stage-financial-player"><div class="stage-financial-player-head"><strong>'+esc(name)+'</strong><strong>'+money(charges-payments)+'</strong></div><div class="stage-financial-totals"><span>Débitos: <b>'+money(charges)+'</b></span><span>Pagamentos: <b>'+money(payments)+'</b></span></div>'+renderMovements(rows)+'<button type="button" class="btn secondary command-open" data-stage-financial-command="'+esc(command.id)+'">Abrir comanda</button></article>');
-  });
-  const unlinkedGroups=new Map();
-  historyRows.filter(row=>!row.stage_command_id).forEach(row=>{
-    const key=row.club_player_id||"sem-cliente";
-    if(!unlinkedGroups.has(key))unlinkedGroups.set(key,[]);
-    unlinkedGroups.get(key).push(row);
-  });
-  unlinkedGroups.forEach((rows,key)=>{
-    const name=customerById.get(key)?.name||"Lançamentos sem comanda vinculada";
-    const charges=rows.filter(row=>row.entry_type==="charge").reduce((sum,row)=>sum+Number(row.amount||0),0);
-    const payments=rows.filter(row=>row.entry_type==="payment").reduce((sum,row)=>sum+Number(row.amount||0),0);
-    cards.push('<article class="stage-financial-player"><div class="stage-financial-player-head"><strong>'+esc(name)+'</strong><strong>'+money(charges-payments)+'</strong></div><div class="stage-financial-totals"><span>Débitos: <b>'+money(charges)+'</b></span><span>Pagamentos: <b>'+money(payments)+'</b></span></div>'+renderMovements(rows)+'</article>');
-  });
-  content.innerHTML=cards.length?cards.join(""):'<div class="empty">Nenhuma comanda ou movimentação financeira encontrada nesta etapa.</div>';
-  content.querySelectorAll("[data-stage-financial-command]").forEach(button=>button.addEventListener("click",()=>openStagePlayerCommand(button.dataset.stageFinancialCommand)));
 }
  async function openStageResults(id) {
   const stage = stages.find(s => s.id === id);
