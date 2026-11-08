@@ -8494,7 +8494,7 @@ async function loadClubHaverPlayerStages(){
   const stageIds=[...new Set(rows.map(row=>row.stage_id).filter(Boolean))];
   if(!stageIds.length){target.innerHTML='<div class="empty">Este cliente ainda não possui movimentações vinculadas a etapas.</div>';return;}
   const [{data:stages,error:stagesError},{data:tournaments,error:tournamentsError}]=await Promise.all([
-    db.from("stages").select("id,stage_number,name,played_at,tournament_id").in("id",stageIds),
+    db.from("stages").select("id,stage_number,name,played_at").in("id",stageIds),
     db.from("tournaments").select("id,name").in("id",[...new Set(rows.map(row=>row.tournament_id).filter(Boolean))])
   ]);
   if(stagesError||tournamentsError){const err=stagesError||tournamentsError;target.innerHTML='<div class="empty">Erro ao carregar dados das etapas: '+esc(err.message)+'</div>';return;}
@@ -8509,7 +8509,7 @@ async function loadClubHaverPlayerStages(){
   });
   const list=[...grouped.values()].sort((a,b)=>new Date(b.stage.played_at||b.rows[0].created_at)-new Date(a.stage.played_at||a.rows[0].created_at));
   target.innerHTML=list.map(group=>{
-    const stage=group.stage,tournament=tournamentMap.get(stage.tournament_id)||tournamentMap.get(group.rows.find(row=>row.tournament_id)?.tournament_id);
+    const stage=group.stage,tournament=tournamentMap.get(group.rows.find(row=>row.tournament_id)?.tournament_id);
     const label=stage.name||("Etapa "+(stage.stage_number??""));
     const date=stage.played_at?dateLabel(String(stage.played_at).slice(0,10)):dateLabel(String(group.rows[0].created_at||"").slice(0,10));
     return '<div class="club-haver-stage-row"><div><strong>'+esc(label)+'</strong><div class="club-haver-stage-meta">'+esc(tournament?.name||"Torneio")+' • '+esc(date)+' • '+group.rows.length+' movimentação(ões)</div></div><strong>'+formatMoney(group.total)+'</strong></div>';
