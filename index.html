@@ -2556,6 +2556,23 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .client-list-info strong{display:block;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
 .client-list-open{white-space:nowrap}
 @media(max-width:900px){.client-list-card{grid-template-columns:1fr 1fr;gap:12px}.client-list-main{grid-column:1/-1}.client-list-last{grid-column:1/-1}.client-list-open{justify-self:start}}
+/* Perfil do jogador em painel lateral */
+#club-haver-player-drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:1200;backdrop-filter:blur(2px)}
+#club-haver-player-detail{position:fixed;z-index:1201;top:0;right:0;width:min(640px,calc(100vw - 248px));height:100vh;height:100dvh;overflow-y:auto;overscroll-behavior:contain;background:#111;border-left:1px solid #393030;box-shadow:-18px 0 55px rgba(0,0,0,.45);padding:24px;box-sizing:border-box;transform:translateX(105%);transition:transform .25s ease}
+#club-haver-player-detail.drawer-open{transform:translateX(0)}
+#club-haver-player-detail>.club-haver-detail-head{position:sticky;top:-24px;z-index:2;background:#111;padding:12px 0;border-bottom:1px solid #302929}
+#club-haver-player-detail .club-haver-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#club-haver-player-detail .club-haver-stat{padding:12px}
+#club-haver-player-detail .club-haver-stat strong{font-size:19px}
+.client-list-card{cursor:pointer;transition:border-color .16s,background .16s}
+.client-list-card:hover{border-color:#a64a50;background:#202020}
+.client-list-card:focus-visible{outline:2px solid #f5443b;outline-offset:2px}
+@media(max-width:760px){
+ #club-haver-player-detail{width:min(100vw,560px);padding:16px}
+ #club-haver-player-detail>.club-haver-detail-head{top:-16px}
+ #club-haver-player-detail .club-haver-summary{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){#club-haver-player-detail{transition:none}}
 
 .club-haver-player strong{display:block;font-size:14px}.club-haver-player small{display:block;color:#999;margin-top:5px}
 .club-haver-player .debt-value{font-size:16px;font-weight:900;color:#ff737b;white-space:nowrap}
@@ -3216,12 +3233,13 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       </div>
       <div id="club-haver-player-list"><div class="empty">Carregando jogadores...</div></div>
     </div>
+    <div id="club-haver-player-drawer-backdrop" class="hidden"></div>
     <div id="club-haver-player-detail" class="hidden">
       <div class="club-haver-detail-head">
         <div><h3 id="club-haver-selected-name">JOGADOR</h3><p class="season-info">Extrato individual • histórico acumulado</p></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn danger" id="club-haver-delete-player" type="button">Remover cliente</button>
-          <button class="btn secondary" id="club-haver-back-list">← Lista de jogadores</button>
+          <button class="btn secondary" id="club-haver-back-list">✕ Fechar perfil</button>
         </div>
       </div>
       <div class="club-haver-summary">
@@ -8400,7 +8418,7 @@ function renderClubHaverPlayers(){
       const stageLabel=stage?(stage.stage_number?"Etapa "+stage.stage_number:stage.name||"Etapa"):"";
       lastTournament=[date,tournament?.name||"Torneio",stageLabel].filter(Boolean).join(" • ");
     }
-    return '<div class="club-haver-player client-list-card"><div class="client-list-main"><strong>'+esc(player.name)+'</strong><small>'+esc(player.phone||"Telefone não informado")+'</small></div><div class="client-list-info"><span class="client-list-label">TOTAL JÁ GASTO</span><strong>'+clubMoney(spent)+'</strong></div><div class="client-list-info client-list-last"><span class="client-list-label">ÚLTIMO TORNEIO</span><strong>'+esc(lastTournament)+'</strong></div><div class="client-list-info"><span class="client-list-label">CLIENTE DESDE</span><strong>'+dateLabel(player.created_at?player.created_at.slice(0,10):"")+'</strong></div></div>';
+    return '<div class="club-haver-player client-list-card" role="button" tabindex="0" data-player-id="'+esc(player.id)+'" aria-label="Abrir perfil de '+esc(player.name)+'"><div class="client-list-main"><strong>'+esc(player.name)+'</strong><small>'+esc(player.phone||"Telefone não informado")+'</small></div><div class="client-list-info"><span class="client-list-label">TOTAL JÁ GASTO</span><strong>'+clubMoney(spent)+'</strong></div><div class="client-list-info client-list-last"><span class="client-list-label">ÚLTIMO TORNEIO</span><strong>'+esc(lastTournament)+'</strong></div><div class="client-list-info"><span class="client-list-label">CLIENTE DESDE</span><strong>'+dateLabel(player.created_at?player.created_at.slice(0,10):"")+'</strong></div></div>';
   }).join("");
 
 }
@@ -8419,8 +8437,10 @@ async function saveClubHaverPlayer() {
 async function openClubHaverPlayer(playerId) {
   clubHaverSelectedPlayer = clubHaverPlayers.find(p=>p.id===playerId);
   if (!clubHaverSelectedPlayer) return;
-  $("club-haver-overview").classList.add("hidden");
+  $("club-haver-overview").classList.remove("hidden");
   $("club-haver-player-detail").classList.remove("hidden");
+  $("club-haver-player-detail").classList.add("drawer-open");
+  $("club-haver-player-drawer-backdrop").classList.remove("hidden");
   $("club-haver-selected-name").textContent = clubHaverSelectedPlayer.name;
   await loadClubHaverQuickProducts();
   await loadClubHaverLedger();
@@ -8449,8 +8469,7 @@ async function deleteClubHaverPlayer(){
   const {error:deletePlayerError}=await db.from("club_players").delete().eq("id",player.id).eq("club_id",selectedClubId);
   if(deletePlayerError){alert("Não foi possível remover o cliente: "+deletePlayerError.message);if(button)button.disabled=false;return;}
   clubHaverSelectedPlayer=null;
-  $("club-haver-player-detail").classList.add("hidden");
-  $("club-haver-overview").classList.remove("hidden");
+  closeClubHaverPlayerDrawer();
   await loadClubHaver();
   alert("Cliente removido com sucesso.");
 }
@@ -8528,9 +8547,22 @@ $("club-haver-back").addEventListener("click",()=>{
   $("club-management-area").classList.remove("hidden");
 });
 $("club-haver-delete-player").addEventListener("click",deleteClubHaverPlayer);
-$("club-haver-back-list").addEventListener("click",()=>{
+function closeClubHaverPlayerDrawer(){
+  $("club-haver-player-detail").classList.remove("drawer-open");
   $("club-haver-player-detail").classList.add("hidden");
-  $("club-haver-overview").classList.remove("hidden");
+  $("club-haver-player-drawer-backdrop").classList.add("hidden");
+}
+$("club-haver-back-list").addEventListener("click",closeClubHaverPlayerDrawer);
+$("club-haver-player-drawer-backdrop").addEventListener("click",closeClubHaverPlayerDrawer);
+$("club-haver-player-list").addEventListener("click",event=>{
+  const card=event.target.closest("[data-player-id]");
+  if(card)openClubHaverPlayer(card.dataset.playerId);
+});
+$("club-haver-player-list").addEventListener("keydown",event=>{
+  if((event.key==="Enter"||event.key===" ")&&event.target.matches("[data-player-id]")){
+    event.preventDefault();
+    openClubHaverPlayer(event.target.dataset.playerId);
+  }
 });
 
 $("club-haver-new-player-toggle").addEventListener("click",()=>$("club-haver-new-player").classList.toggle("hidden"));
