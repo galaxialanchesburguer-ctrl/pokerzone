@@ -2665,6 +2665,22 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .club-haver-form label{display:grid;gap:6px;color:#aaa;font-size:12px}.club-haver-form input,.club-haver-form select{width:100%}
 .club-haver-form .wide{grid-column:1/-1}
 .club-haver-detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:15px 0}
+.club-haver-notebook-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.club-haver-notebook-heading h4{margin:0}
+.club-haver-manual-form{padding:16px;margin:12px 0;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.035)}
+.club-haver-manual-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.club-haver-manual-grid label{display:flex;flex-direction:column;gap:6px;color:#bbb;font-size:12px}
+.club-haver-manual-grid input,.club-haver-manual-grid select{width:100%;min-width:0;padding:11px;border:1px solid #454545;border-radius:8px;background:#171717;color:#fff}
+.club-haver-manual-grid .wide{grid-column:1/-1}
+.club-haver-manual-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.club-haver-notebook-table{width:100%;border-collapse:collapse}
+.club-haver-notebook-table th,.club-haver-notebook-table td{padding:12px 14px;text-align:left;border-bottom:1px solid #302a2a}
+.club-haver-notebook-table th:last-child,.club-haver-notebook-table td:last-child{text-align:right;white-space:nowrap}
+.club-haver-notebook-table th{font-size:11px;color:#aaa;letter-spacing:.6px}
+.club-haver-notebook-table td{font-size:13px}
+.club-haver-notebook-table .positive{color:#55d69a;font-weight:800}
+.club-haver-notebook-table .negative{color:#ff737b;font-weight:800}
+@media(max-width:520px){.club-haver-manual-grid{grid-template-columns:1fr}.club-haver-manual-grid .wide{grid-column:auto}.club-haver-notebook-table th,.club-haver-notebook-table td{padding:10px 8px;font-size:11px}}
 .club-haver-balance{padding:18px;border:1px solid #713238;background:linear-gradient(120deg,rgba(237,48,56,.13),#171717);border-radius:11px;margin:12px 0 18px}
 .club-haver-balance span{display:block;color:#aaa;font-size:11px;letter-spacing:1px}.club-haver-balance strong{display:block;font-size:29px;margin-top:7px;color:#ff747b}
 .club-haver-entry{display:flex;justify-content:space-between;gap:12px;padding:13px 15px;border-top:1px solid #302a2a;align-items:center}
@@ -3376,9 +3392,20 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         <div id="club-haver-player-stages" class="box"><div class="empty">Carregando etapas...</div></div>
       </section>
       <section id="club-haver-notebook-panel" class="club-haver-tab-panel hidden" role="tabpanel" aria-labelledby="club-haver-tab-notebook">
-        <h4>Histórico financeiro</h4>
-        <p class="season-info">Acompanhe comandas pendentes e pagamentos realizados por este jogador.</p>
-        <div class="club-haver-stat debt" style="margin:10px 0"><span>SALDO PENDENTE</span><strong id="club-haver-notebook-total">R$ 0,00</strong></div>
+        <div class="club-haver-notebook-heading"><div><h4 id="club-haver-notebook-player-name">Caderno</h4><p class="season-info">Movimentações positivas e negativas deste jogador.</p></div><button type="button" class="btn" id="club-haver-notebook-add">+ Lançar manual</button></div>
+        <div id="club-haver-notebook-manual-form" class="club-haver-manual-form hidden">
+          <h4>NOVO LANÇAMENTO</h4>
+          <div class="club-haver-manual-grid">
+            <label>Data<input type="date" id="club-haver-manual-date" required></label>
+            <label>Etapa<select id="club-haver-manual-stage"><option value="">Sem etapa</option></select></label>
+            <label>Movimentação<select id="club-haver-manual-kind"><option value="negative">NEG — Débito</option><option value="positive">POS — Crédito</option></select></label>
+            <label>Valor (R$)<input type="number" id="club-haver-manual-amount" min="0.01" step="0.01" placeholder="0,00" required></label>
+            <label class="wide">Descrição<input type="text" id="club-haver-manual-description" maxlength="120" placeholder="Ex.: ajuste de saldo"></label>
+          </div>
+          <div class="club-haver-manual-actions"><button type="button" class="btn secondary" id="club-haver-manual-cancel">Cancelar</button><button type="button" class="btn" id="club-haver-manual-save">Salvar lançamento</button></div>
+          <p id="club-haver-manual-message" class="season-info" aria-live="polite"></p>
+        </div>
+        <div class="club-haver-stat debt" style="margin:10px 0"><span>SALDO FINAL</span><strong id="club-haver-notebook-total">R$ 0,00</strong></div>
         <div id="club-haver-notebook-list" class="box"><div class="empty">Carregando histórico...</div></div>
       </section>
 
@@ -8679,11 +8706,13 @@ async function loadClubHaverNotebook(){
   const target=$("club-haver-notebook-list");
   const total=$("club-haver-notebook-total");
   if(!target||!clubHaverSelectedPlayer)return;
+  const playerName=$("club-haver-notebook-player-name");
+  if(playerName)playerName.textContent="CADERNO • "+clubHaverSelectedPlayer.name;
   target.innerHTML='<div class="empty">Carregando histórico...</div>';
   const {data:ledger,error}=await db.from("club_player_ledger")
     .select("id,stage_command_id,stage_id,tournament_id,entry_type,category,description,amount,created_at")
     .eq("club_player_id",clubHaverSelectedPlayer.id)
-    .order("created_at",{ascending:false});
+    .order("created_at",{ascending:true});
   if(error){target.innerHTML='<div class="notice">Erro ao carregar histórico: '+esc(error.message)+'</div>';return;}
   const rows=ledger||[];
   const stageIds=[...new Set(rows.map(row=>row.stage_id).filter(Boolean))];
@@ -8727,40 +8756,75 @@ async function loadClubHaverNotebook(){
     const paid=payments.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
     const prize=prizes.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
     const prizePaid=prizesPaid.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
-    const balance=charged-paid-prize+prizePaid;
+    const movement=-(charged-paid-prize+prizePaid);
     const latest=commandRowsForPlayer.reduce((a,b)=>new Date(a.created_at||0)>new Date(b.created_at||0)?a:b);
     const info=stageDetails(command?.stage_id||latest.stage_id,latest.created_at);
-    const isPaid=balance<=0.009;
-    history.push({
-      kind:isPaid?"positive":"negative",
+    if(Math.abs(movement)>0.009)history.push({
+      kind:movement>0?"positive":"negative",movement,
       date:info.date,stage:info.label,
-      amount:isPaid?charged:Math.max(0,balance),
-      title:command?.command_number!=null?"Comanda Nº "+command.command_number:"Comanda",
       sortDate:latest.created_at||""
     });
   });
-  // A transferência para o caderno é uma dívida nova, mesmo que a comanda original tenha sido fechada.
-  rows.filter(row=>!row.stage_command_id&&row.entry_type==="charge"&&row.category==="Caderno").forEach(row=>{
+  // Lançamentos avulsos no caderno, incluindo ajustes manuais POS e NEG.
+  rows.filter(row=>!row.stage_command_id&&((row.entry_type==="charge"&&row.category==="Caderno")||(row.entry_type==="payment"&&row.category==="Ajuste manual"))).forEach(row=>{
     const info=stageDetails(row.stage_id,row.created_at);
-    history.push({
-      kind:"negative",date:info.date,stage:info.label,
-      amount:Number(row.amount)||0,
-      title:row.description||"Débito transferido para o caderno",
-      sortDate:row.created_at||""
-    });
+    const movement=row.entry_type==="payment"?Number(row.amount)||0:-(Number(row.amount)||0);
+    history.push({kind:movement>=0?"positive":"negative",movement,date:info.date,stage:info.label,sortDate:row.created_at||""});
   });
-  history.sort((a,b)=>new Date(b.sortDate||0)-new Date(a.sortDate||0));
-  const pending=history.filter(item=>item.kind==="negative").reduce((sum,item)=>sum+item.amount,0);
-  total.textContent=clubMoney(pending);
-  target.innerHTML=history.length?history.map(item=>
-    '<div class="club-haver-entry club-haver-notebook-row '+item.kind+'">'+
-      '<div class="club-haver-notebook-main"><strong>'+esc(item.title)+'</strong>'+
-      '<small>'+esc(item.date)+' • '+esc(item.stage)+'</small></div>'+
-      '<div class="club-haver-notebook-result"><strong class="'+(item.kind==="positive"?"payment":"charge")+'">'+
-      (item.kind==="positive"?"PAGO":clubMoney(item.amount))+'</strong>'+
-      (item.kind==="negative"?'<small>PENDENTE</small>':'')+'</div></div>'
-  ).join(""):'<div class="empty">Nenhuma movimentação financeira registrada para este jogador.</div>';
+  history.sort((a,b)=>new Date(a.sortDate||0)-new Date(b.sortDate||0));
+  const finalBalance=history.reduce((sum,item)=>sum+item.movement,0);
+  total.textContent=clubMoney(finalBalance);
+  total.style.color=finalBalance>=0?"#55d69a":"#ff737b";
+  target.innerHTML=history.length?
+    '<table class="club-haver-notebook-table"><thead><tr><th>DATA / ETAPA</th><th>POS / NEG</th></tr></thead><tbody>'+
+    history.map(item=>'<tr><td>'+esc(item.date)+' • '+esc(item.stage)+'</td><td class="'+item.kind+'">'+(item.movement>0?"+":"")+clubMoney(item.movement)+'</td></tr>').join("")+
+    '</tbody></table>':
+    '<div class="empty">Nenhuma movimentação financeira registrada para este jogador.</div>';
 }
+async function openClubHaverManualForm(){
+  if(!clubHaverSelectedPlayer)return;
+  const form=$("club-haver-notebook-manual-form");
+  const stageSelect=$("club-haver-manual-stage");
+  const message=$("club-haver-manual-message");
+  if(!form||!stageSelect)return;
+  form.classList.remove("hidden");
+  $("club-haver-manual-date").value=new Date().toLocaleDateString("en-CA");
+  $("club-haver-manual-amount").value="";
+  $("club-haver-manual-description").value="";
+  message.textContent="Carregando etapas...";
+  const {data:stages,error}=await db.from("stages").select("id,stage_number,name,played_at").eq("club_id",selectedClubId).order("played_at",{ascending:false});
+  if(error){message.textContent="Não foi possível carregar as etapas: "+error.message;return;}
+  stageSelect.innerHTML='<option value="">Sem etapa</option>'+(stages||[]).map(stage=>'<option value="'+esc(stage.id)+'">'+esc(stage.stage_number!=null?"Etapa "+stage.stage_number:stage.name||"Etapa")+(stage.played_at?" • "+esc(new Date(String(stage.played_at).slice(0,10)+"T12:00:00").toLocaleDateString("pt-BR")):"")+'</option>').join("");
+  message.textContent="";
+}
+async function saveClubHaverManualEntry(){
+  const player=clubHaverSelectedPlayer;
+  const button=$("club-haver-manual-save");
+  const message=$("club-haver-manual-message");
+  if(!player||!button||!message)return;
+  const date=$("club-haver-manual-date").value;
+  const stageId=$("club-haver-manual-stage").value||null;
+  const kind=$("club-haver-manual-kind").value;
+  const amount=Number($("club-haver-manual-amount").value);
+  const description=$("club-haver-manual-description").value.trim()||"Lançamento manual";
+  if(!date){message.textContent="Informe a data do lançamento.";return;}
+  if(!Number.isFinite(amount)||amount<=0){message.textContent="Informe um valor maior que zero.";return;}
+  button.disabled=true;message.textContent="Salvando lançamento...";
+  const {data:userData}=await db.auth.getUser();
+  const {error}=await db.from("club_player_ledger").insert({
+    club_player_id:player.id,stage_id:stageId,
+    entry_type:kind==="positive"?"payment":"charge",
+    category:kind==="positive"?"Ajuste manual":"Caderno",
+    description,amount,
+    created_at:new Date(date+"T12:00:00").toISOString(),
+    created_by:userData?.user?.id||null
+  });
+  if(error){message.textContent="Não foi possível salvar: "+error.message;button.disabled=false;return;}
+  $("club-haver-notebook-manual-form").classList.add("hidden");
+  button.disabled=false;
+  await loadClubHaverNotebook();
+}
+
 async function openClubHaverPlayer(playerId) {
   clubHaverSelectedPlayer = clubHaverPlayers.find(p=>p.id===playerId);
   if (!clubHaverSelectedPlayer) return;
@@ -8776,6 +8840,12 @@ async function openClubHaverPlayer(playerId) {
   $("club-haver-profile-panel")?.classList.remove("hidden");
   $("club-haver-stages-panel")?.classList.add("hidden");
   $("club-haver-notebook-panel")?.classList.add("hidden");
+  if($("club-haver-notebook-add")&&!$("club-haver-notebook-add").dataset.bound){
+    $("club-haver-notebook-add").addEventListener("click",openClubHaverManualForm);
+    $("club-haver-manual-cancel").addEventListener("click",()=>$("club-haver-notebook-manual-form").classList.add("hidden"));
+    $("club-haver-manual-save").addEventListener("click",saveClubHaverManualEntry);
+    $("club-haver-notebook-add").dataset.bound="1";
+  }
   if($("club-haver-tab-profile")&&!$("club-haver-tab-profile").dataset.bound){
     const switchClubHaverTab=async tab=>{
       ["profile","stages","notebook"].forEach(name=>{
