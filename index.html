@@ -3983,6 +3983,61 @@ let rankingThroughStageNumber = null;
 let managedClubId=null, isClubManager=false;
 let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}, tournamentEntryCustomers=[], activeTournamentStage=null, selectedTournamentEntryPlayerId="";
 const $=id=>document.getElementById(id);
+
+// Ações da tela pública: registradas no início para não depender da inicialização administrativa.
+function closeHomeSearches() {
+  $("public-tournament-search").classList.add("hidden");
+  $("tournament-search-area").classList.add("hidden");
+  $("public-player-search").classList.add("hidden");
+}
+
+ $("search-player-btn").addEventListener("click", () => {
+  closeHomeSearches();
+  $("public-player-search").classList.remove("hidden");
+  $("public-player-search-input").focus();
+});
+
+$("close-public-player-search").addEventListener("click", () => {
+  $("public-player-search").classList.add("hidden");
+});
+
+$("public-player-search-input").addEventListener(
+  "input",
+  searchPublicPlayers
+);
+
+$("search-tournament-btn").addEventListener("click", () => {
+  closeHomeSearches();
+  $("public-tournament-search").classList.remove("hidden");
+  $("public-tournament-search-input").focus();
+});
+
+$("close-public-tournament-search").addEventListener("click", () => {
+  $("public-tournament-search").classList.add("hidden");
+});
+
+$("public-tournament-search-input").addEventListener(
+  "input",
+  searchPublicTournaments
+);
+
+$("search-club-btn").addEventListener("click", () => {
+  closeHomeSearches();
+  $("tournament-search-area").classList.remove("hidden");
+  $("tournament-search-input").value = "";
+  $("tournament-search-results").innerHTML = '<div class="empty">Digite o nome de um clube para pesquisar.</div>';
+  $("recent-clubs-history").classList.remove("hidden");
+  renderRecentClubs();
+  $("tournament-search-input").focus();
+});
+
+$("nearby-tournaments-btn").addEventListener("click", () => {
+  closeHomeSearches();
+  $("home-tournaments").classList.add("hidden");
+  $("nearby-tournaments-screen").classList.remove("hidden");
+});
+
+
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function msg(text){$("connection-status").textContent=text}
 let stageEditorReturnVisible = false;
@@ -9653,57 +9708,6 @@ async function searchPublicPlayers() {
   });
 }
  
-function closeHomeSearches() {
-  $("public-tournament-search").classList.add("hidden");
-  $("tournament-search-area").classList.add("hidden");
-  $("public-player-search").classList.add("hidden");
-}
-
- $("search-player-btn").addEventListener("click", () => {
-  closeHomeSearches();
-  $("public-player-search").classList.remove("hidden");
-  $("public-player-search-input").focus();
-});
-
-$("close-public-player-search").addEventListener("click", () => {
-  $("public-player-search").classList.add("hidden");
-});
-
-$("public-player-search-input").addEventListener(
-  "input",
-  searchPublicPlayers
-);
-
-$("search-tournament-btn").addEventListener("click", () => {
-  closeHomeSearches();
-  $("public-tournament-search").classList.remove("hidden");
-  $("public-tournament-search-input").focus();
-});
-
-$("close-public-tournament-search").addEventListener("click", () => {
-  $("public-tournament-search").classList.add("hidden");
-});
-
-$("public-tournament-search-input").addEventListener(
-  "input",
-  searchPublicTournaments
-);
-
-$("search-club-btn").addEventListener("click", () => {
-  closeHomeSearches();
-  $("tournament-search-area").classList.remove("hidden");
-  $("tournament-search-input").value = "";
-  $("tournament-search-results").innerHTML = '<div class="empty">Digite o nome de um clube para pesquisar.</div>';
-  $("recent-clubs-history").classList.remove("hidden");
-  renderRecentClubs();
-  $("tournament-search-input").focus();
-});
-
-$("nearby-tournaments-btn").addEventListener("click", () => {
-  closeHomeSearches();
-  $("home-tournaments").classList.add("hidden");
-  $("nearby-tournaments-screen").classList.remove("hidden");
-});
 
 $("nearby-back-btn").addEventListener("click", () => {
   $("nearby-tournaments-screen").classList.add("hidden");
