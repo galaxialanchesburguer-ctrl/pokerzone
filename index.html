@@ -8769,7 +8769,7 @@ async function loadClubHaverNotebook(){
   rows.filter(row=>!row.stage_command_id&&((row.entry_type==="charge"&&row.category==="Caderno")||(row.entry_type==="payment"&&row.category==="Ajuste manual"))).forEach(row=>{
     const info=stageDetails(row.stage_id,row.created_at);
     const movement=row.entry_type==="payment"?Number(row.amount)||0:-(Number(row.amount)||0);
-    history.push({kind:movement>=0?"positive":"negative",movement,date:info.date,stage:info.label,sortDate:row.created_at||""});
+    history.push({kind:movement>=0?"positive":"negative",movement,date:formatDate(row.created_at),stage:info.label,sortDate:row.created_at||""});
   });
   history.sort((a,b)=>new Date(a.sortDate||0)-new Date(b.sortDate||0));
   const finalBalance=history.reduce((sum,item)=>sum+item.movement,0);
@@ -8788,7 +8788,8 @@ async function openClubHaverManualForm(){
   const message=$("club-haver-manual-message");
   if(!form||!stageSelect)return;
   form.classList.remove("hidden");
-  $("club-haver-manual-date").value=new Date().toLocaleDateString("en-CA");
+  const today=new Date();
+  $("club-haver-manual-date").value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,"0"),String(today.getDate()).padStart(2,"0")].join("-");
   $("club-haver-manual-amount").value="";
   $("club-haver-manual-description").value="";
   message.textContent="Carregando etapas...";
