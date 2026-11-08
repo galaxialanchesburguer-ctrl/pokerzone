@@ -3761,7 +3761,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
  <div class="tournament-heading">
   <div class="tournament-header-actions">
    <button class="btn secondary" id="back-to-tournaments">← Voltar aos torneios</button>
-   <button class="btn secondary hidden" id="delete-tournament-btn">Excluir torneio</button>
+   <button class="btn danger hidden" id="delete-tournament-btn">Excluir torneio</button>
   </div>
   <div class="eyebrow">RANKING • ATUALIZADO</div>
   <h1>IPC<span>POKER</span></h1>
@@ -5943,7 +5943,7 @@ document.querySelectorAll("[data-delete-stage]").forEach(b => {
     if (!confirm(
       `Tem certeza que deseja excluir "${stageName}"?\n\n` +
       "Todos os resultados e pontuações desta etapa também serão apagados.\n\n" +
-      "Essa ação não poderá ser desfeita."
+      "Esta operação não poderá ser desfeita."
     )) {
       return;
     }
