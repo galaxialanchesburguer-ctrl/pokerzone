@@ -3593,7 +3593,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>JOGADOR</th><th>BUY-IN</th><th>REBUY</th><th>ADD-ON</th><th>TOTAL</th><th>PREMIAÇÃO</th><th></th></tr></thead>
+        <thead><tr><th>JOGADOR</th><th>BUY-IN</th><th>REBUY</th><th>ADD-ON</th><th>TOTAL</th><th>PREMIAÇÃO PAGA</th><th></th></tr></thead>
         <tbody id="tournament-entries-body"><tr><td colspan="7" class="empty">Carregando inscrições...</td></tr></tbody>
       </table>
     </div>
@@ -4815,14 +4815,15 @@ async function loadTournamentEntries(){
   activeTournamentStage=activeStage||null;
   if(!activeTournamentStage){body.innerHTML='<tr><td colspan="7" class="empty">Abra uma etapa na aba Etapas para iniciar a conferência.</td></tr>';return;}
   body.innerHTML='<tr><td colspan="7" class="empty">Carregando inscrições...</td></tr>';
-  const [{data:playerData,error:playerError},{data:entryData,error:entryError},{data:commandData,error:commandError},{data:details,error:detailsError}]=await Promise.all([
+  const [{data:playerData,error:playerError},{data:entryData,error:entryError},{data:commandData,error:commandError},{data:details,error:detailsError},{data:payoutData,error:payoutError}]=await Promise.all([
     db.from("players").select("id,display_name").eq("tournament_id",tournament.id).eq("is_active",true).order("display_name"),
     db.from("tournament_entries").select("id,tournament_id,stage_id,ledger_entry_id,player_id,entry_type,amount,prize_amount,ranking_amount,club_fee_amount,created_at").eq("tournament_id",tournament.id).eq("stage_id",activeTournamentStage.id).order("created_at"),
     db.from("stage_commands").select("id,command_number,club_player_id,tournament_player_id").eq("stage_id",activeTournamentStage.id).order("command_number"),
-    db.from("tournament_details").select("buy_in,tournament_fee,club_fee_type,ranking_contribution,rebuy_amount,rebuy_limit,addon_amount").eq("tournament_id",tournament.id).maybeSingle()
+    db.from("tournament_details").select("buy_in,tournament_fee,club_fee_type,ranking_contribution,rebuy_amount,rebuy_limit,addon_amount").eq("tournament_id",tournament.id).maybeSingle(),
+    db.from("club_player_ledger").select("id,stage_command_id,amount,entry_type,category").eq("stage_id",activeTournamentStage.id).eq("entry_type","payment").eq("category","Premiação")
   ]);
-  if(playerError || entryError || commandError || detailsError){
-    body.innerHTML='<tr><td colspan="7" class="empty">Erro ao carregar inscrições e comandas: '+esc((playerError||entryError||commandError||detailsError).message)+'</td></tr>';
+  if(playerError || entryError || commandError || detailsError || payoutError){
+    body.innerHTML='<tr><td colspan="7" class="empty">Erro ao carregar inscrições e comandas: '+esc((playerError||entryError||commandError||detailsError||payoutError).message)+'</td></tr>';
     return;
   }
   const commands=(commandData||[]).filter(c=>c.club_player_id||c.tournament_player_id);
@@ -4855,7 +4856,8 @@ async function loadTournamentEntries(){
   $("entry-player-search").value=selectedPlayer?.display_name||"";
   renderTournamentEntryPlayerSearch("");
 
-  const groups=new Map(tournamentEntryPlayers.map((p,index)=>[p.command_id,{player:p,buyins:0,rebuys:0,addons:0,gross:0,prize:0,fees:0,ranking:0,rows:[]}]));
+  const payoutRows=payoutData||[];
+  const groups=new Map(tournamentEntryPlayers.map((p,index)=>[p.command_id,{player:p,buyins:0,rebuys:0,addons:0,gross:0,prize:0,payout:payoutRows.filter(row=>row.stage_command_id===p.command_id).reduce((sum,row)=>sum+Number(row.amount||0),0),fees:0,ranking:0,rows:[]}]));
   tournamentEntryRows.forEach(row=>{
     const commandPlayer=tournamentEntryPlayers.find(p=>p.id===row.player_id);
     if(!commandPlayer)return;
@@ -4877,9 +4879,49 @@ async function loadTournamentEntries(){
   $("entries-prize-total").textContent=moneyBRL(totals.prize);
   const q=($("entries-search").value||"").trim().toLocaleLowerCase("pt-BR");
   const filtered=all.filter(g=>g.player.display_name.toLocaleLowerCase("pt-BR").includes(q));
-  body.innerHTML=filtered.length?filtered.map(g=>'<tr><td class="player-cell">'+esc(g.player.display_name)+'</td><td>'+g.buyins+'</td><td>'+g.rebuys+'</td><td>'+g.addons+'</td><td>'+moneyBRL(g.gross)+'</td><td>'+moneyBRL(g.prize)+'</td><td>'+(g.player.id?'<button class="btn secondary" data-entry-player="'+g.player.id+'">Ver ficha</button>':'—')+'</td></tr>').join(""):'<tr><td colspan="7" class="empty">Nenhuma comanda encontrada nesta etapa.</td></tr>';
+  body.innerHTML=filtered.length?filtered.map(g=>'<tr><td class="player-cell">'+esc(g.player.display_name)+'</td><td>'+g.buyins+'</td><td>'+g.rebuys+'</td><td>'+g.addons+'</td><td>'+moneyBRL(g.gross)+'</td><td><div style="display:flex;gap:5px;align-items:center;min-width:150px"><input type="number" min="0" step="0.01" value="'+(g.payout||0).toFixed(2)+'" data-entry-payout="'+esc(g.player.command_id)+'" style="width:95px;padding:6px"><button type="button" class="btn secondary" data-save-payout="'+esc(g.player.command_id)+'" style="padding:6px 9px">Salvar</button></div></td><td>'+(g.player.id?'<button class="btn secondary" data-entry-player="'+g.player.id+'">Ver ficha</button>':'—')+'</td></tr>').join(""):'<tr><td colspan="7" class="empty">Nenhuma comanda encontrada nesta etapa.</td></tr>';
   body.querySelectorAll("[data-entry-player]").forEach(btn=>btn.addEventListener("click",()=>renderTournamentEntryPlayer(btn.dataset.entryPlayer)));
+  body.querySelectorAll("[data-save-payout]").forEach(btn=>btn.addEventListener("click",()=>saveTournamentPrizePayout(btn.dataset.savePayout,btn)));
   if(selectedTournamentEntryPlayerId) renderTournamentEntryPlayer(selectedTournamentEntryPlayerId);
+}
+async function saveTournamentPrizePayout(commandId,button){
+  const message=$("entry-action-message");
+  const input=$("tournament-entries-body").querySelector('[data-entry-payout="'+commandId+'"]');
+  if(!input)return;
+  const value=Number(String(input.value||"").replace(",","."));
+  if(!Number.isFinite(value)||value<0){message.textContent="Informe um valor de premiação válido.";return;}
+  const player=tournamentEntryPlayers.find(item=>item.command_id===commandId);
+  if(!player?.club_player_id){message.textContent="Esta comanda não possui cliente vinculado.";return;}
+  button.disabled=true;
+  message.textContent="Salvando premiação na comanda...";
+  const {data:existing,error:existingError}=await db.from("club_player_ledger").select("id,amount").eq("stage_id",activeTournamentStage.id).eq("stage_command_id",commandId).eq("entry_type","payment").eq("category","Premiação").order("created_at");
+  if(existingError){message.textContent="Não foi possível consultar a premiação: "+existingError.message;button.disabled=false;return;}
+  const rows=existing||[];
+  if(value===0){
+    if(rows.length){
+      const {error}=await db.from("club_player_ledger").delete().in("id",rows.map(row=>row.id)).eq("stage_id",activeTournamentStage.id);
+      if(error){message.textContent="Não foi possível remover a premiação: "+error.message;button.disabled=false;return;}
+    }
+  }else if(rows.length){
+    const {error}=await db.from("club_player_ledger").update({amount:value,description:"Premiação do torneio"}).eq("id",rows[0].id).eq("stage_id",activeTournamentStage.id);
+    if(error){message.textContent="Não foi possível atualizar a premiação: "+error.message;button.disabled=false;return;}
+    if(rows.length>1){
+      const {error:extraError}=await db.from("club_player_ledger").delete().in("id",rows.slice(1).map(row=>row.id)).eq("stage_id",activeTournamentStage.id);
+      if(extraError){message.textContent="Valor atualizado, mas não foi possível remover lançamentos duplicados: "+extraError.message;button.disabled=false;await loadTournamentEntries();return;}
+    }
+  }else{
+    const {data:userData}=await db.auth.getUser();
+    const {error}=await db.from("club_player_ledger").insert({
+      club_player_id:player.club_player_id,tournament_player_id:player.id,stage_command_id:commandId,
+      entry_type:"payment",category:"Premiação",description:"Premiação do torneio",amount:value,
+      tournament_id:tournament.id,stage_id:activeTournamentStage.id,created_by:userData?.user?.id||null
+    });
+    if(error){message.textContent="Não foi possível lançar a premiação na comanda: "+error.message;button.disabled=false;return;}
+  }
+  await loadTournamentEntries();
+  selectedTournamentEntryPlayerId=player.id;
+  renderTournamentEntryPlayer(player.id);
+  message.textContent=value>0?"Premiação salva e descontada do saldo da comanda.":"Premiação removida da comanda.";
 }
 async function ensureConferenceCustomer(customer){
   if(!customer?.id||!activeTournamentStage?.id||!tournament?.id)return;
