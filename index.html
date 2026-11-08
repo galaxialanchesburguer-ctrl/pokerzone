@@ -5437,12 +5437,20 @@ function handleAdminSidebarNavigation(key) {
   }
   if (key === "settings") {
     $("tournament-tree")?.classList.add("hidden");
+    $("tournament-app")?.classList.add("hidden");
+    $("nearby-tournaments-screen")?.classList.add("hidden");
     if (selectedClubId && !$("club-details-area").classList.contains("hidden")) {
-      $("club-settings-btn").click();
+      ["club-management-area","club-tournaments-area","club-clock-area","club-blinds-area","club-haver-area"].forEach(id => $(id)?.classList.add("hidden"));
+      $("club-details-area").classList.add("club-subview-active");
+      $("club-settings-area").classList.remove("hidden");
+      $("club-settings-name").value = $("club-details-title").textContent;
+      $("club-settings-city").value = $("club-details-city").textContent.split(" - ")[0];
+      $("club-settings-state").value = $("club-details-city").textContent.split(" - ")[1] || "";
+      $("club-settings-description").value = $("club-details-description").textContent;
       setAdminSidebarActive("settings");
     } else {
       openAdminClubs();
-      alert("Selecione um clube para abrir as configurações.");
+      alert("Abra o clube desejado e depois acesse Configurações.");
     }
     return;
   }
@@ -7614,7 +7622,7 @@ async function saveClubBlindStructure() {
 
 $("club-settings-btn").addEventListener("click", () => {
   $("club-details-area").classList.add("club-subview-active");
-  $("club-management-area").classList.add("hidden");
+  ["club-management-area","club-tournaments-area","club-clock-area","club-blinds-area","club-haver-area"].forEach(id => $(id)?.classList.add("hidden"));
   $("club-settings-area").classList.remove("hidden");
 
   $("club-settings-name").value = $("club-details-title").textContent;
