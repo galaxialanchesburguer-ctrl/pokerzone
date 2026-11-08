@@ -4914,7 +4914,7 @@ function renderTournamentEntryPlayer(playerId){
   const prize=rows.reduce((n,r)=>n+(Number(r.prize_amount)||0),0);
   $("entry-player-detail-title").textContent="HISTÓRICO • "+groupPlayer.display_name;
   $("entry-player-detail").innerHTML='<div class="club-haver-summary"><div class="club-haver-stat"><span>BUY-IN</span><strong>'+counts.buyin+'</strong></div><div class="club-haver-stat"><span>REBUYS</span><strong>'+counts.rebuy+'</strong></div><div class="club-haver-stat"><span>ADD-ON</span><strong>'+counts.addon+'</strong></div><div class="club-haver-stat"><span>TOTAL PAGO</span><strong>'+moneyBRL(gross)+'</strong></div><div class="club-haver-stat paid"><span>PARA PREMIAÇÃO</span><strong>'+moneyBRL(prize)+'</strong></div></div>'+
-    (rows.length?'<div class="table-wrap"><table><thead><tr><th>LANÇAMENTO</th><th>DATA / HORA</th><th>VALOR</th><th>PREMIAÇÃO</th><th>AÇÃO</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+({buyin:"Buy-in",rebuy:"Rebuy",addon:"Add-on"}[r.entry_type]||r.entry_type)+'</td><td>'+new Date(r.created_at).toLocaleString("pt-BR")+'</td><td>'+moneyBRL(r.amount)+'</td><td>'+moneyBRL(r.prize_amount)+'</td><td><button type="button" class="btn secondary" data-edit-entry="'+r.id+'">Editar</button></td></tr>').join("")+'</tbody></table></div>':'<div class="empty">Nenhuma inscrição lançada para este jogador.</div>');
+    (rows.length?'<div class="table-wrap"><table><thead><tr><th>LANÇAMENTO</th><th>DATA / HORA</th><th>VALOR</th><th>PREMIAÇÃO</th><th>AÇÃO</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+({buyin:"Buy-in",rebuy:"Rebuy",addon:"Add-on"}[r.entry_type]||r.entry_type)+'</td><td>'+new Date(r.created_at).toLocaleString("pt-BR")+'</td><td>'+moneyBRL(r.amount)+'</td><td>'+moneyBRL(r.prize_amount)+'</td><td><button type="button" class="btn secondary" data-edit-entry="'+r.id+'">Editar</button> <button type="button" class="btn danger" data-remove-entry="'+r.id+'">Remover</button></td></tr>').join("")+'</tbody></table></div>':'<div class="empty">Nenhuma inscrição lançada para este jogador.</div>');
   $("entry-player-detail").querySelectorAll("[data-edit-entry]").forEach(button=>button.addEventListener("click",async()=>{
     const entry=tournamentEntryRows.find(item=>item.id===button.dataset.editEntry);
     if(!entry)return;
@@ -4947,6 +4947,36 @@ function renderTournamentEntryPlayer(playerId){
     selectedTournamentEntryPlayerId=playerId;
     renderTournamentEntryPlayer(playerId);
     alert("Lançamento atualizado na Conferência e na comanda.");
+  }));
+  $("entry-player-detail").querySelectorAll("[data-remove-entry]").forEach(button=>button.addEventListener("click",async()=>{
+    const entry=tournamentEntryRows.find(item=>item.id===button.dataset.removeEntry);
+    if(!entry)return;
+    const label=({buyin:"Buy-in",rebuy:"Rebuy",addon:"Add-on"}[entry.entry_type]||entry.entry_type);
+    if(!confirm("Tem certeza que deseja remover este "+label+"? O registro também será removido da comanda e dos totais da etapa."))return;
+    button.disabled=true;
+    const {error:entryDeleteError}=await db.from("tournament_entries").delete()
+      .eq("id",entry.id).eq("stage_id",activeTournamentStage.id);
+    if(entryDeleteError){alert("Não foi possível remover da Conferência: "+entryDeleteError.message);button.disabled=false;return;}
+    if(entry.ledger_entry_id){
+      const {error:ledgerDeleteError}=await db.from("club_player_ledger").delete()
+        .eq("id",entry.ledger_entry_id).eq("stage_id",activeTournamentStage.id);
+      if(ledgerDeleteError){
+        const {error:restoreError}=await db.from("tournament_entries").insert({
+          tournament_id:entry.tournament_id,stage_id:entry.stage_id,ledger_entry_id:entry.ledger_entry_id,
+          player_id:entry.player_id,entry_type:entry.entry_type,amount:entry.amount,prize_amount:entry.prize_amount,
+          ranking_amount:entry.ranking_amount,club_fee_amount:entry.club_fee_amount,created_at:entry.created_at
+        });
+        alert("Não foi possível remover da comanda: "+ledgerDeleteError.message+(restoreError?" (e a restauração da Conferência falhou: "+restoreError.message+")":""));
+        await loadTournamentEntries();
+        selectedTournamentEntryPlayerId=playerId;
+        renderTournamentEntryPlayer(playerId);
+        return;
+      }
+    }
+    await loadTournamentEntries();
+    selectedTournamentEntryPlayerId=playerId;
+    renderTournamentEntryPlayer(playerId);
+    alert("Lançamento removido da Conferência e da comanda. Os totais foram atualizados.");
   }));
 }
 async function addTournamentEntry(type){
