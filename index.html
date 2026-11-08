@@ -4914,7 +4914,40 @@ function renderTournamentEntryPlayer(playerId){
   const prize=rows.reduce((n,r)=>n+(Number(r.prize_amount)||0),0);
   $("entry-player-detail-title").textContent="HISTÓRICO • "+groupPlayer.display_name;
   $("entry-player-detail").innerHTML='<div class="club-haver-summary"><div class="club-haver-stat"><span>BUY-IN</span><strong>'+counts.buyin+'</strong></div><div class="club-haver-stat"><span>REBUYS</span><strong>'+counts.rebuy+'</strong></div><div class="club-haver-stat"><span>ADD-ON</span><strong>'+counts.addon+'</strong></div><div class="club-haver-stat"><span>TOTAL PAGO</span><strong>'+moneyBRL(gross)+'</strong></div><div class="club-haver-stat paid"><span>PARA PREMIAÇÃO</span><strong>'+moneyBRL(prize)+'</strong></div></div>'+
-    (rows.length?'<div class="table-wrap"><table><thead><tr><th>LANÇAMENTO</th><th>DATA / HORA</th><th>VALOR</th><th>PREMIAÇÃO</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+({buyin:"Buy-in",rebuy:"Rebuy",addon:"Add-on"}[r.entry_type]||r.entry_type)+'</td><td>'+new Date(r.created_at).toLocaleString("pt-BR")+'</td><td>'+moneyBRL(r.amount)+'</td><td>'+moneyBRL(r.prize_amount)+'</td></tr>').join("")+'</tbody></table></div>':'<div class="empty">Nenhuma inscrição lançada para este jogador.</div>');
+    (rows.length?'<div class="table-wrap"><table><thead><tr><th>LANÇAMENTO</th><th>DATA / HORA</th><th>VALOR</th><th>PREMIAÇÃO</th><th>AÇÃO</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+({buyin:"Buy-in",rebuy:"Rebuy",addon:"Add-on"}[r.entry_type]||r.entry_type)+'</td><td>'+new Date(r.created_at).toLocaleString("pt-BR")+'</td><td>'+moneyBRL(r.amount)+'</td><td>'+moneyBRL(r.prize_amount)+'</td><td><button type="button" class="btn secondary" data-edit-entry="'+r.id+'">Editar</button></td></tr>').join("")+'</tbody></table></div>':'<div class="empty">Nenhuma inscrição lançada para este jogador.</div>');
+  $("entry-player-detail").querySelectorAll("[data-edit-entry]").forEach(button=>button.addEventListener("click",async()=>{
+    const entry=tournamentEntryRows.find(item=>item.id===button.dataset.editEntry);
+    if(!entry)return;
+    const parseMoney=value=>Number(String(value||"").trim().replace(/\./g,"").replace(",","."));
+    const currentAmount=Number(entry.amount)||0;
+    const currentPrize=Number(entry.prize_amount)||0;
+    const amountInput=prompt("Editar valor total cobrado (R$):",currentAmount.toFixed(2).replace(".",","));
+    if(amountInput===null)return;
+    const newAmount=parseMoney(amountInput);
+    if(!Number.isFinite(newAmount)||newAmount<0){alert("Informe um valor válido.");return;}
+    const prizeInput=prompt("Editar valor destinado à premiação (R$):",currentPrize.toFixed(2).replace(".",","));
+    if(prizeInput===null)return;
+    const newPrize=parseMoney(prizeInput);
+    if(!Number.isFinite(newPrize)||newPrize<0||newPrize>newAmount){alert("O valor da premiação deve ser válido e não pode superar o valor total.");return;}
+    button.disabled=true;
+    const {error:updateEntryError}=await db.from("tournament_entries").update({
+      amount:newAmount,prize_amount:newPrize,ranking_amount:Math.max(0,newAmount-newPrize)
+    }).eq("id",entry.id).eq("stage_id",activeTournamentStage.id);
+    if(updateEntryError){alert("Não foi possível editar a Conferência: "+updateEntryError.message);button.disabled=false;return;}
+    if(entry.ledger_entry_id){
+      const {error:updateLedgerError}=await db.from("club_player_ledger").update({amount:newAmount})
+        .eq("id",entry.ledger_entry_id).eq("stage_id",activeTournamentStage.id);
+      if(updateLedgerError){
+        await db.from("tournament_entries").update({amount:currentAmount,prize_amount:currentPrize,ranking_amount:Number(entry.ranking_amount)||0}).eq("id",entry.id);
+        alert("Não foi possível atualizar a comanda: "+updateLedgerError.message+". A alteração da Conferência foi revertida.");
+        button.disabled=false;return;
+      }
+    }
+    await loadTournamentEntries();
+    selectedTournamentEntryPlayerId=playerId;
+    renderTournamentEntryPlayer(playerId);
+    alert("Lançamento atualizado na Conferência e na comanda.");
+  }));
 }
 async function addTournamentEntry(type){
   if(!isStaff || !tournament)return;
