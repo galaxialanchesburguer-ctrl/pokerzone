@@ -2701,6 +2701,30 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
  body.admin-sidebar-active .header-tag{display:none}
 }
 
+
+
+/* Diretório de clientes inspirado no layout administrativo do Cardápio Web */
+.client-list-table{width:100%;overflow:hidden;border:1px solid #343434;border-radius:12px;background:#171717}
+.client-list-table-head,.client-list-card{display:grid;grid-template-columns:minmax(190px,1.35fr) minmax(130px,.75fr) minmax(220px,1.5fr) minmax(130px,.8fr);align-items:center;gap:18px}
+.client-list-table-head{padding:14px 20px;background:#202020;border-bottom:1px solid #383838;color:#aaa;font-size:10px;font-weight:800;letter-spacing:.8px}
+.client-list-card{margin:0!important;padding:17px 20px!important;border:0!important;border-bottom:1px solid #303030!important;border-radius:0!important;background:transparent!important;min-width:0}
+.client-list-card:last-child{border-bottom:0!important}
+.client-list-card:hover{background:#1d1d1d!important}
+.client-list-main strong{display:block;color:#f4f4f4;font-size:14px}
+.client-list-main small{display:block;color:#929292;font-size:12px;margin-top:4px}
+.client-list-info strong{display:block;color:#e8e8e8;font-size:13px;font-weight:700;line-height:1.45;overflow-wrap:anywhere}
+.client-list-info:nth-child(2) strong{color:#f0c14b}
+@media(max-width:900px){
+ .client-list-table-head{display:none}
+ .client-list-card{grid-template-columns:1fr 1fr!important;gap:12px!important;padding:16px!important}
+ .client-list-main,.client-list-last{grid-column:1/-1}
+ .client-list-info:before{display:block;color:#929292;font-size:9px;font-weight:800;letter-spacing:.7px;margin-bottom:4px}
+ .client-list-info:nth-child(2):before{content:"TOTAL GASTO"}
+ .client-list-last:before{content:"ÚLTIMO TORNEIO"}
+ .client-list-info:nth-child(4):before{content:"CADASTRADO EM"}
+}
+@media(max-width:520px){.client-directory-toolbar{align-items:stretch}.client-directory-toolbar input{min-width:0;width:100%}.client-directory-toolbar .btn{width:100%}}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -8359,7 +8383,7 @@ function renderClubHaverPlayers(){
     return;
   }
   const dateLabel=value=>value?new Date(value+"T00:00:00").toLocaleDateString("pt-BR"): "—";
-  list.innerHTML=visible.map(player=>{
+  const rowsHtml=visible.map(player=>{
     const rows=entries.filter(row=>row.club_player_id===player.id);
     const spent=rows.filter(row=>row.entry_type==="charge"&&row.category!=="Premiação paga").reduce((sum,row)=>sum+(Number(row.amount)||0),0);
     const playerLedgerIds=new Set(rows.map(row=>row.id));
@@ -8372,8 +8396,9 @@ function renderClubHaverPlayers(){
       const stageLabel=stage?(stage.stage_number?"Etapa "+stage.stage_number:stage.name||"Etapa"):"";
       lastTournament=[date,tournament?.name||"Torneio",stageLabel].filter(Boolean).join(" • ");
     }
-    return '<div class="club-haver-player client-list-card"><div class="client-list-main"><strong>'+esc(player.name)+'</strong><small>'+esc(player.phone||"Telefone não informado")+'</small></div><div class="client-list-info"><span class="client-list-label">TOTAL JÁ GASTO</span><strong>'+clubMoney(spent)+'</strong></div><div class="client-list-info client-list-last"><span class="client-list-label">ÚLTIMO TORNEIO</span><strong>'+esc(lastTournament)+'</strong></div><div class="client-list-info"><span class="client-list-label">CLIENTE DESDE</span><strong>'+dateLabel(player.created_at?player.created_at.slice(0,10):"")+'</strong></div></div>';
+    return '<div class="client-list-card"><div class="client-list-main"><strong>'+esc(player.name)+'</strong><small>'+esc(player.phone||"Telefone não informado")+'</small></div><div class="client-list-info"><strong>'+clubMoney(spent)+'</strong></div><div class="client-list-info client-list-last"><strong>'+esc(lastTournament)+'</strong></div><div class="client-list-info"><strong>'+dateLabel(player.created_at?player.created_at.slice(0,10):"")+'</strong></div></div>';
   }).join("");
+  list.innerHTML='<div class="client-list-table"><div class="client-list-table-head"><span>CLIENTE</span><span>TOTAL GASTO</span><span>ÚLTIMO TORNEIO</span><span>CADASTRADO EM</span></div>'+rowsHtml+'</div>';
 
 }
 async function saveClubHaverPlayer() {
