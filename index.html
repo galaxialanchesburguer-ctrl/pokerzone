@@ -2516,6 +2516,13 @@ body.clock-only-mode .blind-clock-ante{
   body.clock-only-mode .blind-clock-payout-total strong{color:#ffd34f!important}
 }
 
+/* Tela de clientes: usar toda a largura disponível, sem o limite global do conteúdo */
+main:has(#club-haver-area:not(.hidden)){max-width:none;width:100%;box-sizing:border-box;padding-left:28px;padding-right:28px}
+#club-details-area:has(#club-haver-area:not(.hidden)){width:100%;max-width:none;box-sizing:border-box}
+#club-haver-area{width:100%;max-width:none;box-sizing:border-box}
+#club-haver-overview,#club-haver-player-list{width:100%;max-width:none;box-sizing:border-box}
+.client-list-card{width:100%;grid-template-columns:minmax(220px,1.5fr) minmax(160px,.85fr) minmax(260px,1.6fr) minmax(150px,.9fr) auto}
+@media(max-width:900px){main:has(#club-haver-area:not(.hidden)){padding-left:14px;padding-right:14px}}
 /* ===== CONTAS DOS JOGADORES DO CLUBE ===== */
 .club-haver-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
 .club-haver-stat{background:linear-gradient(145deg,#202020,#111);border:1px solid #393030;border-radius:11px;padding:17px}
