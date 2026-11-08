@@ -4800,8 +4800,17 @@ function moneyBRL(value){return Number(value||0).toLocaleString("pt-BR",{style:"
 async function loadTournamentEntries(){
   if(!tournament || !isStaff) return;
   const body=$("tournament-entries-body");
-  const {data:activeStage,error:activeStageError}=await db.from("stages").select("id,season_id,stage_number,name,played_at").eq("season_id",season?.id || "").eq("is_open",true).maybeSingle();
-  if(activeStageError){body.innerHTML='<tr><td colspan="7" class="empty">Erro ao identificar a etapa aberta: '+esc(activeStageError.message)+'</td></tr>';return;}
+  // Prioriza a etapa que o administrador abriu/selecionou no editor.
+  // Só usa a etapa marcada como aberta quando nenhuma etapa específica estiver selecionada.
+  let activeStage=null,activeStageError=null;
+  if(currentStage?.id && currentStage.season_id===season?.id){
+    const {data:selectedStage,error}=await db.from("stages").select("id,season_id,stage_number,name,played_at").eq("id",currentStage.id).eq("season_id",season.id).maybeSingle();
+    activeStage=selectedStage;activeStageError=error;
+  }else{
+    const {data:openedStage,error}=await db.from("stages").select("id,season_id,stage_number,name,played_at").eq("season_id",season?.id || "").eq("is_open",true).maybeSingle();
+    activeStage=openedStage;activeStageError=error;
+  }
+  if(activeStageError){body.innerHTML='<tr><td colspan="7" class="empty">Erro ao identificar a etapa selecionada: '+esc(activeStageError.message)+'</td></tr>';return;}
   activeTournamentStage=activeStage||null;
   if(!activeTournamentStage){body.innerHTML='<tr><td colspan="7" class="empty">Abra uma etapa na aba Etapas para iniciar a conferência.</td></tr>';return;}
   body.innerHTML='<tr><td colspan="7" class="empty">Carregando inscrições...</td></tr>';
