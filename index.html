@@ -5268,7 +5268,6 @@ async function loadStages() {
 
   <div class="actions">
     <span class="tag">👥 ${s.participant_count || 0} participantes</span>
-    ${isStaff ? `<button class="btn ${s.is_open ? "secondary" : ""}" data-open-stage="${s.id}">${s.is_open ? "Etapa aberta ✓" : "Abrir etapa"}</button>` : ""}
 
     <button class="btn" data-edit-stage="${s.id}">
       ${isStaff ? "Editar etapa" : "Ver etapa →"}
