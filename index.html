@@ -2523,6 +2523,7 @@ body.clock-only-mode .blind-clock-ante{
 .club-haver-stat strong{display:block;font-size:24px;margin-top:8px}
 .club-haver-stat.debt strong{color:#ff626b}.club-haver-stat.paid strong{color:#55d69a}
 .club-haver-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}
+.client-directory-toolbar{margin:0 0 16px;display:flex;gap:12px;align-items:center}.client-directory-toolbar input{flex:1;min-width:220px;height:44px}.client-directory-toolbar .btn{height:44px;white-space:nowrap}.client-directory-actions{margin:0 0 14px}
 .club-haver-toolbar input{flex:1;min-width:190px}
 .club-haver-player{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:15px 17px;border:1px solid #343030;background:#171717;border-radius:10px;margin:9px 0}
 .client-list-card{display:grid;width:100%;box-sizing:border-box;grid-template-columns:minmax(190px,1.45fr) minmax(145px,.9fr) minmax(230px,1.5fr) minmax(135px,.9fr) auto;align-items:center;gap:22px;padding:18px 22px}
@@ -3127,16 +3128,18 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <button class="btn secondary" id="club-haver-back">Voltar ao clube</button>
     </div>
     <div id="club-haver-overview">
+      <div class="club-haver-toolbar client-directory-toolbar">
+        <input id="club-haver-search" type="search" placeholder="Buscar cliente por nome ou telefone..." aria-label="Buscar cliente por nome ou telefone">
+        <button class="btn" id="club-haver-new-player-toggle" type="button">+ Novo cliente</button>
+      </div>
       <div class="club-haver-summary">
         <div class="club-haver-stat"><span>TOTAL LANÇADO</span><strong id="club-haver-total-charged">R$ 0,00</strong></div>
         <div class="club-haver-stat paid"><span>TOTAL RECEBIDO</span><strong id="club-haver-total-paid">R$ 0,00</strong></div>
         <div class="club-haver-stat debt"><span>TOTAL EM ABERTO</span><strong id="club-haver-total-open">R$ 0,00</strong></div>
       </div>
-      <div class="club-haver-toolbar">
-        <input id="club-haver-search" type="search" placeholder="Buscar jogador...">
+      <div class="club-haver-toolbar client-directory-actions">
         <button class="btn secondary" id="club-haver-import-ranking" type="button">Importar ranking geral</button>
-        <button class="btn secondary" id="club-haver-report-toggle">📊 Relatórios</button>
-        <button class="btn" id="club-haver-new-player-toggle">+ Cadastrar jogador</button>
+        <button class="btn secondary" id="club-haver-report-toggle" type="button">📊 Relatórios</button>
       </div>
       <div id="club-haver-import-ranking-message" class="season-info" style="margin:0 0 12px"></div>
       <div id="club-haver-report" class="club-haver-form hidden">
