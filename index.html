@@ -2669,6 +2669,14 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .club-haver-balance span{display:block;color:#aaa;font-size:11px;letter-spacing:1px}.club-haver-balance strong{display:block;font-size:29px;margin-top:7px;color:#ff747b}
 .club-haver-entry{display:flex;justify-content:space-between;gap:12px;padding:13px 15px;border-top:1px solid #302a2a;align-items:center}
 .club-haver-entry small{display:block;color:#999;margin-top:4px}.club-haver-entry .charge{color:#ff737b;font-weight:800}.club-haver-entry .payment{color:#55d69a;font-weight:800}
+.club-haver-notebook-row{border-left:4px solid transparent;margin:0 10px}
+.club-haver-notebook-row.negative{border-left-color:#ef4b54;background:rgba(239,75,84,.055)}
+.club-haver-notebook-row.positive{border-left-color:#36c982;background:rgba(54,201,130,.055)}
+.club-haver-notebook-main{min-width:0}
+.club-haver-notebook-main strong{display:block;overflow-wrap:anywhere}
+.club-haver-notebook-result{display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap}
+.club-haver-notebook-result small{font-size:10px;letter-spacing:.5px;color:#ff858b;font-weight:800}
+@media(max-width:520px){.club-haver-notebook-row{margin:0 6px;padding:12px 9px}.club-haver-notebook-main strong{font-size:12px}.club-haver-notebook-main small{font-size:10px}.club-haver-notebook-result strong{font-size:12px}}
 @media(max-width:650px){.club-haver-summary{grid-template-columns:1fr}.club-haver-stat{padding:13px}.club-haver-stat strong{font-size:21px}.club-haver-form{grid-template-columns:1fr}.club-haver-form .wide{grid-column:auto}.club-haver-player{padding:12px;align-items:flex-start}.club-haver-player .btn{padding:9px 10px;font-size:11px}}
 
 
@@ -3368,9 +3376,10 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         <div id="club-haver-player-stages" class="box"><div class="empty">Carregando etapas...</div></div>
       </section>
       <section id="club-haver-notebook-panel" class="club-haver-tab-panel hidden" role="tabpanel" aria-labelledby="club-haver-tab-notebook">
-        <h4>Débitos do cliente</h4>
-        <div class="club-haver-stat debt" style="margin:10px 0"><span>TOTAL DE DÉBITOS LANÇADOS</span><strong id="club-haver-notebook-total">R$ 0,00</strong></div>
-        <div id="club-haver-notebook-list" class="box"><div class="empty">Carregando débitos...</div></div>
+        <h4>Histórico financeiro</h4>
+        <p class="season-info">Acompanhe comandas pendentes e pagamentos realizados por este jogador.</p>
+        <div class="club-haver-stat debt" style="margin:10px 0"><span>SALDO PENDENTE</span><strong id="club-haver-notebook-total">R$ 0,00</strong></div>
+        <div id="club-haver-notebook-list" class="box"><div class="empty">Carregando histórico...</div></div>
       </section>
 
       <div id="club-haver-profile-edit-modal" class="club-profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="club-profile-edit-title">
@@ -8615,20 +8624,87 @@ async function loadClubHaverNotebook(){
   const target=$("club-haver-notebook-list");
   const total=$("club-haver-notebook-total");
   if(!target||!clubHaverSelectedPlayer)return;
-  target.innerHTML='<div class="empty">Carregando débitos...</div>';
-  const {data,error}=await db.from("club_player_ledger")
-    .select("id,entry_type,category,description,amount,created_at")
+  target.innerHTML='<div class="empty">Carregando histórico...</div>';
+  const {data:ledger,error}=await db.from("club_player_ledger")
+    .select("id,stage_command_id,stage_id,tournament_id,entry_type,category,description,amount,created_at")
     .eq("club_player_id",clubHaverSelectedPlayer.id)
-    .eq("entry_type","charge")
     .order("created_at",{ascending:false});
-  if(error){target.innerHTML='<div class="notice">Erro ao carregar débitos: '+esc(error.message)+'</div>';return;}
-  const debits=data||[];
-  const sum=debits.reduce((value,row)=>value+(Number(row.amount)||0),0);
-  total.textContent=clubMoney(sum);
-  target.innerHTML=debits.length?debits.map(row=>{
-    const date=new Date(row.created_at).toLocaleString("pt-BR");
-    return '<div class="club-haver-entry"><div><strong>'+esc(row.description||"Débito")+'</strong><small>'+esc(row.category||"Consumo")+' • '+date+'</small></div><span class="charge">+ '+clubMoney(row.amount)+'</span></div>';
-  }).join(""):'<div class="empty">Nenhum débito registrado para este cliente.</div>';
+  if(error){target.innerHTML='<div class="notice">Erro ao carregar histórico: '+esc(error.message)+'</div>';return;}
+  const rows=ledger||[];
+  const stageIds=[...new Set(rows.map(row=>row.stage_id).filter(Boolean))];
+  const commandIds=[...new Set(rows.map(row=>row.stage_command_id).filter(Boolean))];
+  const [{data:stageRows,error:stageError},{data:commandRows,error:commandError}]=await Promise.all([
+    stageIds.length?db.from("stages").select("id,stage_number,name,played_at").in("id",stageIds):Promise.resolve({data:[],error:null}),
+    commandIds.length?db.from("stage_commands").select("id,command_number,stage_id").in("id",commandIds):Promise.resolve({data:[],error:null})
+  ]);
+  if(stageError||commandError){
+    const err=stageError||commandError;
+    target.innerHTML='<div class="notice">Erro ao carregar etapas e comandas: '+esc(err.message)+'</div>';
+    return;
+  }
+  const stageMap=new Map((stageRows||[]).map(stage=>[stage.id,stage]));
+  const commandMap=new Map((commandRows||[]).map(command=>[command.id,command]));
+  const formatDate=value=>{
+    if(!value)return "Data não informada";
+    const parsed=new Date(value);
+    return Number.isNaN(parsed.getTime())?"Data não informada":parsed.toLocaleDateString("pt-BR");
+  };
+  const stageDetails=(stageId,fallbackDate)=>{
+    const stage=stageMap.get(stageId);
+    return {
+      label:stage?(stage.stage_number!=null?"Etapa "+stage.stage_number:stage.name||"Etapa"):"Etapa não informada",
+      date:stage?.played_at?formatDate(String(stage.played_at).slice(0,10)):formatDate(fallbackDate)
+    };
+  };
+  const groups=new Map();
+  rows.filter(row=>row.stage_command_id).forEach(row=>{
+    if(!groups.has(row.stage_command_id))groups.set(row.stage_command_id,[]);
+    groups.get(row.stage_command_id).push(row);
+  });
+  const history=[];
+  groups.forEach((commandRowsForPlayer,commandId)=>{
+    const command=commandMap.get(commandId);
+    const charges=commandRowsForPlayer.filter(row=>row.entry_type==="charge"&&row.category!=="Premiação paga");
+    const payments=commandRowsForPlayer.filter(row=>row.entry_type==="payment"&&row.category!=="Premiação");
+    const prizes=commandRowsForPlayer.filter(row=>row.entry_type==="payment"&&row.category==="Premiação");
+    const prizesPaid=commandRowsForPlayer.filter(row=>row.entry_type==="charge"&&row.category==="Premiação paga");
+    const charged=charges.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+    const paid=payments.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+    const prize=prizes.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+    const prizePaid=prizesPaid.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+    const balance=charged-paid-prize+prizePaid;
+    const latest=commandRowsForPlayer.reduce((a,b)=>new Date(a.created_at||0)>new Date(b.created_at||0)?a:b);
+    const info=stageDetails(command?.stage_id||latest.stage_id,latest.created_at);
+    const isPaid=balance<=0.009;
+    history.push({
+      kind:isPaid?"positive":"negative",
+      date:info.date,stage:info.label,
+      amount:isPaid?charged:Math.max(0,balance),
+      title:command?.command_number!=null?"Comanda Nº "+command.command_number:"Comanda",
+      sortDate:latest.created_at||""
+    });
+  });
+  // A transferência para o caderno é uma dívida nova, mesmo que a comanda original tenha sido fechada.
+  rows.filter(row=>!row.stage_command_id&&row.entry_type==="charge"&&row.category==="Caderno").forEach(row=>{
+    const info=stageDetails(row.stage_id,row.created_at);
+    history.push({
+      kind:"negative",date:info.date,stage:info.label,
+      amount:Number(row.amount)||0,
+      title:row.description||"Débito transferido para o caderno",
+      sortDate:row.created_at||""
+    });
+  });
+  history.sort((a,b)=>new Date(b.sortDate||0)-new Date(a.sortDate||0));
+  const pending=history.filter(item=>item.kind==="negative").reduce((sum,item)=>sum+item.amount,0);
+  total.textContent=clubMoney(pending);
+  target.innerHTML=history.length?history.map(item=>
+    '<div class="club-haver-entry club-haver-notebook-row '+item.kind+'">'+
+      '<div class="club-haver-notebook-main"><strong>'+esc(item.title)+'</strong>'+
+      '<small>'+esc(item.date)+' • '+esc(item.stage)+'</small></div>'+
+      '<div class="club-haver-notebook-result"><strong class="'+(item.kind==="positive"?"payment":"charge")+'">'+
+      (item.kind==="positive"?"PAGO":clubMoney(item.amount))+'</strong>'+
+      (item.kind==="negative"?'<small>PENDENTE</small>':'')+'</div></div>'
+  ).join(""):'<div class="empty">Nenhuma movimentação financeira registrada para este jogador.</div>';
 }
 async function openClubHaverPlayer(playerId) {
   clubHaverSelectedPlayer = clubHaverPlayers.find(p=>p.id===playerId);
