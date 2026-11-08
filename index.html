@@ -2556,6 +2556,17 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .client-list-info strong{display:block;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
 .client-list-open{white-space:nowrap}
 @media(max-width:900px){.client-list-card{grid-template-columns:1fr 1fr;gap:12px}.client-list-main{grid-column:1/-1}.client-list-last{grid-column:1/-1}.client-list-open{justify-self:start}}
+
+/* Abas do perfil do cliente */
+#club-haver-player-detail .club-haver-tabs{display:flex;gap:8px;border-bottom:1px solid #393030;margin:10px 0 14px;padding-bottom:8px}
+#club-haver-player-detail .club-haver-tab{background:transparent;border:1px solid #454040;color:#bbb;border-radius:8px;padding:9px 18px;font-weight:700;cursor:pointer}
+#club-haver-player-detail .club-haver-tab.active{background:#f5443b;border-color:#f5443b;color:#fff}
+#club-haver-player-detail .club-haver-tab-panel{display:block}
+#club-haver-player-detail .club-haver-tab-panel.hidden{display:none!important}
+#club-haver-player-stages .club-haver-stage-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid #302929}
+#club-haver-player-stages .club-haver-stage-row:last-child{border-bottom:0}
+#club-haver-player-stages .club-haver-stage-meta{color:#aaa;font-size:12px;margin-top:4px}
+
 /* Perfil do jogador em painel lateral */
 #club-haver-player-drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:1200;backdrop-filter:blur(2px)}
 #club-haver-player-detail{position:fixed;z-index:1201;top:0;right:0;width:50vw;max-width:900px;min-width:520px;height:100vh;height:100dvh;overflow-y:auto;overscroll-behavior:contain;background:#111;border-left:1px solid #393030;box-shadow:-18px 0 55px rgba(0,0,0,.38);padding:16px 18px;box-sizing:border-box;transform:translateX(105%);transition:transform .25s ease}
@@ -3268,6 +3279,11 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
           <button class="btn secondary" id="club-haver-back-list">✕ Fechar perfil</button>
         </div>
       </div>
+      <div class="club-haver-tabs" role="tablist" aria-label="Informações do cliente">
+        <button type="button" class="club-haver-tab active" id="club-haver-tab-profile" role="tab" aria-selected="true" aria-controls="club-haver-profile-panel">Perfil</button>
+        <button type="button" class="club-haver-tab" id="club-haver-tab-stages" role="tab" aria-selected="false" aria-controls="club-haver-stages-panel">Etapas</button>
+      </div>
+      <section id="club-haver-profile-panel" class="club-haver-tab-panel">
       <div class="club-haver-summary">
         <div class="club-haver-stat"><span>TOTAL CONSUMIDO</span><strong id="club-haver-player-charged">R$ 0,00</strong></div>
         <div class="club-haver-stat paid"><span>TOTAL PAGO</span><strong id="club-haver-player-paid">R$ 0,00</strong></div>
@@ -3300,6 +3316,12 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       </div>
       <h4>Histórico de movimentações</h4>
       <div id="club-haver-history" class="box"><div class="empty">Nenhuma movimentação registrada.</div></div>
+      </section>
+      <section id="club-haver-stages-panel" class="club-haver-tab-panel hidden" role="tabpanel" aria-labelledby="club-haver-tab-stages">
+        <h4>Etapas disputadas</h4>
+        <p class="season-info">Histórico das etapas em que este cliente teve movimentações vinculadas.</p>
+        <div id="club-haver-player-stages" class="box"><div class="empty">Carregando etapas...</div></div>
+      </section>
     </div>
   </div>
 
@@ -8460,6 +8482,39 @@ async function saveClubHaverPlayer() {
   message.textContent = "Jogador cadastrado!";
   await loadClubHaver();
 }
+async function loadClubHaverPlayerStages(){
+  const target=$("club-haver-player-stages");
+  if(!target||!clubHaverSelectedPlayer)return;
+  target.innerHTML='<div class="empty">Carregando etapas...</div>';
+  const {data:ledger,error}=await db.from("club_player_ledger")
+    .select("id,stage_id,tournament_id,entry_type,category,description,amount,created_at")
+    .eq("club_player_id",clubHaverSelectedPlayer.id).not("stage_id","is",null).order("created_at",{ascending:false});
+  if(error){target.innerHTML='<div class="empty">Erro ao carregar etapas: '+esc(error.message)+'</div>';return;}
+  const rows=ledger||[];
+  const stageIds=[...new Set(rows.map(row=>row.stage_id).filter(Boolean))];
+  if(!stageIds.length){target.innerHTML='<div class="empty">Este cliente ainda não possui movimentações vinculadas a etapas.</div>';return;}
+  const [{data:stages,error:stagesError},{data:tournaments,error:tournamentsError}]=await Promise.all([
+    db.from("stages").select("id,stage_number,name,played_at,tournament_id").in("id",stageIds),
+    db.from("tournaments").select("id,name").in("id",[...new Set(rows.map(row=>row.tournament_id).filter(Boolean))])
+  ]);
+  if(stagesError||tournamentsError){const err=stagesError||tournamentsError;target.innerHTML='<div class="empty">Erro ao carregar dados das etapas: '+esc(err.message)+'</div>';return;}
+  const stageMap=new Map((stages||[]).map(stage=>[stage.id,stage]));
+  const tournamentMap=new Map((tournaments||[]).map(item=>[item.id,item]));
+  const grouped=new Map();
+  rows.forEach(row=>{
+    const stage=stageMap.get(row.stage_id);if(!stage)return;
+    if(!grouped.has(row.stage_id))grouped.set(row.stage_id,{stage,rows:[],total:0});
+    const group=grouped.get(row.stage_id);group.rows.push(row);
+    if(row.entry_type==="charge")group.total+=Number(row.amount)||0;
+  });
+  const list=[...grouped.values()].sort((a,b)=>new Date(b.stage.played_at||b.rows[0].created_at)-new Date(a.stage.played_at||a.rows[0].created_at));
+  target.innerHTML=list.map(group=>{
+    const stage=group.stage,tournament=tournamentMap.get(stage.tournament_id)||tournamentMap.get(group.rows.find(row=>row.tournament_id)?.tournament_id);
+    const label=stage.name||("Etapa "+(stage.stage_number??""));
+    const date=stage.played_at?dateLabel(String(stage.played_at).slice(0,10)):dateLabel(String(group.rows[0].created_at||"").slice(0,10));
+    return '<div class="club-haver-stage-row"><div><strong>'+esc(label)+'</strong><div class="club-haver-stage-meta">'+esc(tournament?.name||"Torneio")+' • '+esc(date)+' • '+group.rows.length+' movimentação(ões)</div></div><strong>'+formatMoney(group.total)+'</strong></div>';
+  }).join("")||'<div class="empty">Nenhuma etapa encontrada.</div>';
+}
 async function openClubHaverPlayer(playerId) {
   clubHaverSelectedPlayer = clubHaverPlayers.find(p=>p.id===playerId);
   if (!clubHaverSelectedPlayer) return;
@@ -8468,8 +8523,28 @@ async function openClubHaverPlayer(playerId) {
   $("club-haver-player-detail").classList.add("drawer-open");
   $("club-haver-player-drawer-backdrop").classList.remove("hidden");
   $("club-haver-selected-name").textContent = clubHaverSelectedPlayer.name;
+  $("club-haver-tab-profile")?.classList.add("active");
+  $("club-haver-tab-stages")?.classList.remove("active");
+  $("club-haver-tab-profile")?.setAttribute("aria-selected","true");
+  $("club-haver-tab-stages")?.setAttribute("aria-selected","false");
+  $("club-haver-profile-panel")?.classList.remove("hidden");
+  $("club-haver-stages-panel")?.classList.add("hidden");
   await loadClubHaverQuickProducts();
   await loadClubHaverLedger();
+  if($("club-haver-tab-stages")&&!$("club-haver-tab-stages").dataset.bound){
+    $("club-haver-tab-profile").addEventListener("click",()=>{
+      $("club-haver-tab-profile").classList.add("active");$("club-haver-tab-stages").classList.remove("active");
+      $("club-haver-tab-profile").setAttribute("aria-selected","true");$("club-haver-tab-stages").setAttribute("aria-selected","false");
+      $("club-haver-profile-panel").classList.remove("hidden");$("club-haver-stages-panel").classList.add("hidden");
+    });
+    $("club-haver-tab-stages").addEventListener("click",async()=>{
+      $("club-haver-tab-stages").classList.add("active");$("club-haver-tab-profile").classList.remove("active");
+      $("club-haver-tab-stages").setAttribute("aria-selected","true");$("club-haver-tab-profile").setAttribute("aria-selected","false");
+      $("club-haver-stages-panel").classList.remove("hidden");$("club-haver-profile-panel").classList.add("hidden");
+      await loadClubHaverPlayerStages();
+    });
+    $("club-haver-tab-stages").dataset.bound="1";
+  }
 }
 async function deleteClubHaverPlayer(){
   if(!isStaff||!clubHaverSelectedPlayer||!selectedClubId)return;
