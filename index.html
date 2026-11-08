@@ -4935,14 +4935,33 @@ async function addTournamentEntry(type){
   const rankingAmount=Math.min(amount,Number(tournamentEntryDetails.ranking_contribution)||0);
   const feeValue=Number(tournamentEntryDetails.tournament_fee)||0;
   const fee=tournamentEntryDetails.club_fee_type==="percent"?amount*feeValue/100:(type==="buyin"?feeValue:0);
+  const commandPlayer=tournamentEntryPlayers.find(p=>p.id===playerId);
+  const command=commandPlayer?.command_id
+    ?(await db.from("stage_commands").select("id,club_player_id,tournament_player_id").eq("id",commandPlayer.command_id).eq("stage_id",activeTournamentStage.id).maybeSingle()).data
+    :null;
+  if(!command?.id||!command.club_player_id){
+    message.textContent="Este jogador não possui uma comanda vinculada nesta etapa. Vincule o jogador a uma comanda antes de lançar pela Conferência.";
+    return;
+  }
   const {data:userData}=await db.auth.getUser();
+  const label={buyin:"Buy-in",rebuy:"Rebuy",addon:"Add-on"}[type];
+  const {data:ledgerRow,error:ledgerError}=await db.from("club_player_ledger").insert({
+    club_player_id:command.club_player_id,tournament_player_id:playerId,stage_command_id:command.id,
+    attendant_name:null,entry_type:"charge",category:"Inscrição",description:label,amount:amount+fee,
+    tournament_id:tournament.id,stage_id:activeTournamentStage.id,created_by:userData?.user?.id||null
+  }).select("id").single();
+  if(ledgerError){message.textContent="Não foi possível lançar na comanda: "+ledgerError.message;return;}
   const {error}=await db.from("tournament_entries").insert({
-    tournament_id:tournament.id,stage_id:activeTournamentStage.id,player_id:playerId,entry_type:type,
+    tournament_id:tournament.id,stage_id:activeTournamentStage.id,ledger_entry_id:ledgerRow.id,player_id:playerId,entry_type:type,
     amount:amount+fee,prize_amount:Math.max(0,amount-rankingAmount),
     ranking_amount:rankingAmount,club_fee_amount:fee,created_by:userData?.user?.id||null
   });
-  if(error){message.textContent="Não foi possível registrar: "+error.message;return;}
-  message.textContent=({buyin:"Buy-in registrado",rebuy:"Rebuy registrado",addon:"Add-on registrado"}[type])+" para "+player.display_name+".";
+  if(error){
+    await db.from("club_player_ledger").delete().eq("id",ledgerRow.id);
+    message.textContent="Não foi possível registrar na Conferência: "+error.message+" (o lançamento da comanda foi desfeito).";
+    return;
+  }
+  message.textContent=label+" registrado para "+player.display_name+" e lançado na comanda.";
   await loadTournamentEntries();
   selectedTournamentEntryPlayerId=playerId;
   $("entry-player-search").value=player.display_name;
