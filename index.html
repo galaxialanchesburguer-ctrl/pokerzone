@@ -4959,7 +4959,7 @@ function renderTournamentEntryPlayer(playerId){
     await loadTournamentEntries();
     selectedTournamentEntryPlayerId=targetPlayer.id;
     renderTournamentEntryPlayer(targetPlayer.id);
-    alert("Lançamento atualizado na Conferência e na comanda"+(targetPlayer.id!==entry.player_id+". Jogador alterado para "+targetPlayer.display_name+".":"."));
+    alert("Lançamento atualizado na Conferência e na comanda"+(targetPlayer.id!==entry.player_id?". Jogador alterado para "+targetPlayer.display_name+".":"."));
   }));
   $("entry-player-detail").querySelectorAll("[data-remove-entry]").forEach(button=>button.addEventListener("click",async()=>{
     const entry=tournamentEntryRows.find(item=>item.id===button.dataset.removeEntry);
