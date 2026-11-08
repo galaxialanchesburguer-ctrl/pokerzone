@@ -4658,9 +4658,13 @@ async function loadRanking(){
   return;
  }
 
- const cutoffStageNumber = Number.isFinite(Number(rankingThroughStageNumber))
-   ? Number(rankingThroughStageNumber)
-   : null;
+ const cutoffStageNumber =
+   rankingThroughStageNumber !== null &&
+   rankingThroughStageNumber !== undefined &&
+   rankingThroughStageNumber !== "" &&
+   Number.isFinite(Number(rankingThroughStageNumber))
+     ? Number(rankingThroughStageNumber)
+     : null;
 
  const {data:s,error:se}=await db
   .from("seasons")
