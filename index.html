@@ -3762,7 +3762,7 @@ const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let tournament=null, season=null, players=[], stages=[], currentStage=null, editorResults=[], isStaff=false, isAdmin=false, selectedClubId=null;
 let rankingThroughStageNumber = null;
 let managedClubId=null, isClubManager=false;
-let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}, activeTournamentStage=null, selectedTournamentEntryPlayerId="";
+let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}, tournamentEntryCustomers=[], activeTournamentStage=null, selectedTournamentEntryPlayerId="";
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function msg(text){$("connection-status").textContent=text}
@@ -4826,13 +4826,16 @@ async function loadTournamentEntries(){
     return;
   }
   const commands=(commandData||[]).filter(c=>c.club_player_id||c.tournament_player_id);
-  const customerIds=[...new Set(commands.map(c=>c.club_player_id).filter(Boolean))];
-  const {data:customerData,error:customerError}=customerIds.length
-    ?await db.from("club_players").select("id,name").in("id",customerIds)
+  const {data:stageClub,error:stageClubError}=await db.from("stages").select("club_id").eq("id",activeTournamentStage.id).maybeSingle();
+  if(stageClubError){body.innerHTML='<tr><td colspan="7" class="empty">Erro ao identificar o clube da etapa: '+esc(stageClubError.message)+'</td></tr>';return;}
+  const conferenceClubId=stageClub?.club_id||tournament.club_id||selectedClubId||managedClubId;
+  const {data:customerData,error:customerError}=conferenceClubId
+    ?await db.from("club_players").select("id,name,phone,notes,club_id").eq("club_id",conferenceClubId).order("name")
     :{data:[],error:null};
-  if(customerError){body.innerHTML='<tr><td colspan="7" class="empty">Erro ao carregar clientes das comandas: '+esc(customerError.message)+'</td></tr>';return;}
+  if(customerError){body.innerHTML='<tr><td colspan="7" class="empty">Erro ao carregar clientes: '+esc(customerError.message)+'</td></tr>';return;}
+  tournamentEntryCustomers=customerData||[];
+  const customersById=new Map(tournamentEntryCustomers.map(c=>[c.id,c]));
   const normalizeEntryName=value=>String(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLocaleLowerCase("pt-BR").replace(/\\s+/g," ").trim();
-  const customersById=new Map((customerData||[]).map(c=>[c.id,c]));
   const playersById=new Map((playerData||[]).map(p=>[p.id,p]));
   const playersByName=new Map((playerData||[]).map(p=>[normalizeEntryName(p.display_name),p]));
   const commandPlayers=[];
@@ -4878,32 +4881,87 @@ async function loadTournamentEntries(){
   body.querySelectorAll("[data-entry-player]").forEach(btn=>btn.addEventListener("click",()=>renderTournamentEntryPlayer(btn.dataset.entryPlayer)));
   if(selectedTournamentEntryPlayerId) renderTournamentEntryPlayer(selectedTournamentEntryPlayerId);
 }
+async function ensureConferenceCustomer(customer){
+  if(!customer?.id||!activeTournamentStage?.id||!tournament?.id)return;
+  const message=$("entry-action-message");
+  message.textContent="Preparando jogador e comanda...";
+  const normalize=value=>String(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLocaleLowerCase("pt-BR").replace(/\\s+/g," ").trim();
+  let player=(players||[]).find(p=>normalize(p.display_name)===normalize(customer.name));
+  if(!player){
+    const {data:newPlayer,error:newPlayerError}=await db.from("players").insert({
+      full_name:customer.name,display_name:customer.name,is_active:true,tournament_id:tournament.id
+    }).select("id,display_name").single();
+    if(newPlayerError){message.textContent="Não foi possível cadastrar o jogador no torneio: "+newPlayerError.message;return;}
+    player=newPlayer;
+    players.push(player);
+  }
+  let command=(await db.from("stage_commands").select("id,command_number,club_player_id,tournament_player_id")
+    .eq("stage_id",activeTournamentStage.id).eq("club_player_id",customer.id).order("command_number").limit(1).maybeSingle()).data;
+  if(!command){
+    const {data:lastCommands,error:lastError}=await db.from("stage_commands").select("command_number")
+      .eq("stage_id",activeTournamentStage.id).order("command_number",{ascending:false}).limit(1);
+    if(lastError){message.textContent="Não foi possível consultar as comandas: "+lastError.message;return;}
+    const next=Number(lastCommands?.[0]?.command_number||0)+1;
+    const {data:newCommand,error:newCommandError}=await db.from("stage_commands").insert({
+      stage_id:activeTournamentStage.id,club_id:customer.club_id||tournament.club_id||selectedClubId||managedClubId,
+      command_number:next,club_player_id:customer.id,tournament_player_id:player.id
+    }).select("id,command_number,club_player_id,tournament_player_id").single();
+    if(newCommandError){message.textContent="Não foi possível criar a comanda: "+newCommandError.message;return;}
+    command=newCommand;
+  }else if(command.tournament_player_id!==player.id){
+    const {error:linkError}=await db.from("stage_commands").update({tournament_player_id:player.id})
+      .eq("id",command.id).eq("stage_id",activeTournamentStage.id);
+    if(linkError){message.textContent="Não foi possível vincular o jogador à comanda: "+linkError.message;return;}
+    command.tournament_player_id=player.id;
+  }
+  await loadTournamentEntries();
+  selectedTournamentEntryPlayerId=player.id;
+  $("entry-player-search").value=customer.name;
+  renderTournamentEntryPlayer(player.id);
+  message.textContent="Jogador selecionado e comanda vinculada. Agora escolha Buy-in, Rebuy ou Add-on.";
+}
 function renderTournamentEntryPlayerSearch(term=""){
   const box=$("entry-player-search-results");
   if(!box)return;
   const q=String(term||"").trim().toLocaleLowerCase("pt-BR");
-  if(!q){box.innerHTML="";return;}
-  const matches=tournamentEntryPlayers.filter(p=>p.id && p.display_name.toLocaleLowerCase("pt-BR").includes(q)).slice(0,12);
-  box.innerHTML=matches.length?matches.map(p=>'<button type="button" class="btn secondary" data-select-entry-player="'+p.id+'" style="display:block;width:100%;text-align:left;margin:4px 0">'+esc(p.display_name)+'</button>').join(""):'<div class="empty">Nenhum jogador encontrado.</div>';
-  box.querySelectorAll("[data-select-entry-player]").forEach(btn=>btn.addEventListener("click",()=>{
-    const player=tournamentEntryPlayers.find(p=>p.id===btn.dataset.selectEntryPlayer);
-    if(!player)return;
-    selectedTournamentEntryPlayerId=player.id;
-    $("entry-player-search").value=player.display_name;
-    box.innerHTML="";
-    renderTournamentEntryPlayer(player.id);
+  const normalize=value=>String(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLocaleLowerCase("pt-BR");
+  const matches=q?tournamentEntryCustomers.filter(c=>normalize(c.name).includes(normalize(q))||String(c.phone||"").replace(/\\D/g,"").includes(q.replace(/\\D/g,""))).slice(0,12):[];
+  box.innerHTML=(matches.length?matches.map(c=>'<button type="button" class="btn secondary" data-select-entry-customer="'+c.id+'" style="display:block;width:100%;text-align:left;margin:4px 0">'+esc(c.name)+(c.phone?' <small>• '+esc(c.phone)+'</small>':'')+'</button>').join(""):'')+
+    (q?'<button type="button" class="btn secondary" id="entry-new-customer" style="display:block;width:100%;margin-top:8px">+ Cadastrar "'+esc(term)+'" como novo cliente</button>':'');
+  box.querySelectorAll("[data-select-entry-customer]").forEach(btn=>btn.addEventListener("click",async()=>{
+    const customer=tournamentEntryCustomers.find(c=>c.id===btn.dataset.selectEntryCustomer);
+    if(customer)await ensureConferenceCustomer(customer);
   }));
+  box.querySelector("#entry-new-customer")?.addEventListener("click",()=>renderConferenceNewCustomer(term));
 }
-$("entry-player-search").addEventListener("input",e=>{
-  const value=e.target.value.trim().toLocaleLowerCase("pt-BR");
-  const selected=tournamentEntryPlayers.find(p=>p.id===selectedTournamentEntryPlayerId);
-  if(!selected||value!==selected.display_name.toLocaleLowerCase("pt-BR")){
-    selectedTournamentEntryPlayerId="";
-    $("entry-player-detail-title").textContent="HISTÓRICO INDIVIDUAL";
-    $("entry-player-detail").innerHTML='<div class="empty">Busque e selecione um jogador para conferir os lançamentos individuais.</div>';
-  }
-  renderTournamentEntryPlayerSearch(e.target.value);
-});
+function renderConferenceNewCustomer(initialName=""){
+  const box=$("entry-player-search-results");
+  box.innerHTML='<div class="stage-command-modal-section" style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:8px">'+
+    '<h4>NOVO CLIENTE</h4>'+
+    '<label>Nome<input id="entry-new-customer-name" type="text" maxlength="120" value="'+esc(initialName)+'" placeholder="Nome do cliente"></label>'+
+    '<label>Telefone<input id="entry-new-customer-phone" type="tel" maxlength="30" placeholder="(00) 00000-0000"></label>'+
+    '<label>Anotações<textarea id="entry-new-customer-notes" rows="3" maxlength="1000" placeholder="Informações adicionais (opcional)"></textarea></label>'+
+    '<div class="actions"><button type="button" class="btn" id="entry-save-new-customer">Cadastrar e selecionar</button><button type="button" class="btn secondary" id="entry-cancel-new-customer">Cancelar</button></div></div>';
+  box.querySelector("#entry-cancel-new-customer").addEventListener("click",()=>renderTournamentEntryPlayerSearch($("entry-player-search").value));
+  box.querySelector("#entry-save-new-customer").addEventListener("click",async()=>{
+    const name=box.querySelector("#entry-new-customer-name").value.trim();
+    const phone=box.querySelector("#entry-new-customer-phone").value.trim();
+    const notes=box.querySelector("#entry-new-customer-notes").value.trim();
+    if(!name){alert("Informe o nome do cliente.");return;}
+    const button=box.querySelector("#entry-save-new-customer");button.disabled=true;
+    const {data:stageInfo,error:stageInfoError}=await db.from("stages").select("club_id").eq("id",activeTournamentStage.id).maybeSingle();
+    if(stageInfoError){alert("Não foi possível identificar o clube: "+stageInfoError.message);button.disabled=false;return;}
+    const {data:userData}=await db.auth.getUser();
+    const {data:customer,error}=await db.from("club_players").insert({
+      club_id:stageInfo?.club_id||tournament.club_id||selectedClubId||managedClubId,
+      name,phone:phone||null,notes:notes||null,created_by:userData?.user?.id||null
+    }).select("id,name,phone,notes,club_id").single();
+    if(error){alert("Não foi possível cadastrar o cliente: "+error.message);button.disabled=false;return;}
+    tournamentEntryCustomers.push(customer);
+    await ensureConferenceCustomer(customer);
+    renderTournamentEntryPlayerSearch("");
+  });
+}
 function renderTournamentEntryPlayer(playerId){
   const groupPlayer=tournamentEntryPlayers.find(p=>p.id===playerId);
   if(!groupPlayer)return;
