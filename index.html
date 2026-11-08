@@ -2557,12 +2557,14 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .client-list-open{white-space:nowrap}
 @media(max-width:900px){.client-list-card{grid-template-columns:1fr 1fr;gap:12px}.client-list-main{grid-column:1/-1}.client-list-last{grid-column:1/-1}.client-list-open{justify-self:start}}
 
-/* Abas do perfil do cliente */
-#club-haver-player-detail .club-haver-tabs{display:flex;gap:8px;border-bottom:1px solid #393030;margin:10px 0 14px;padding-bottom:8px}
-#club-haver-player-detail .club-haver-tab{background:transparent;border:1px solid #454040;color:#bbb;border-radius:8px;padding:9px 18px;font-weight:700;cursor:pointer}
-#club-haver-player-detail .club-haver-tab.active{background:#f5443b;border-color:#f5443b;color:#fff}
+/* Abas do perfil do cliente: mesma navegação moderna do Ranking Geral/Final/Conferência */
+#club-haver-player-detail .club-haver-tabs{display:flex;gap:8px;padding:7px;background:#141414;border:1px solid #302727;border-radius:10px;width:fit-content;max-width:100%;margin:10px 0 14px}
+#club-haver-player-detail .club-haver-tab{border:0;border-radius:7px;padding:13px 22px;color:#999;background:transparent;white-space:nowrap;transition:.2s ease;font-weight:700;cursor:pointer}
+#club-haver-player-detail .club-haver-tab:hover{color:#fff;background:#292020}
+#club-haver-player-detail .club-haver-tab.active{color:#fff;background:linear-gradient(135deg,#ed3038,#a90d18);box-shadow:0 4px 14px rgba(237,48,56,.2);border:0}
 #club-haver-player-detail .club-haver-tab-panel{display:block}
 #club-haver-player-detail .club-haver-tab-panel.hidden{display:none!important}
+@media(max-width:700px){#club-haver-player-detail .club-haver-tabs{width:100%;overflow-x:auto}#club-haver-player-detail .club-haver-tab{flex:1;padding:13px 12px;font-size:12px}}
 #club-haver-player-stages .club-haver-stage-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid #302929}
 #club-haver-player-stages .club-haver-stage-row:last-child{border-bottom:0}
 #club-haver-player-stages .club-haver-stage-meta{color:#aaa;font-size:12px;margin-top:4px}
@@ -8557,30 +8559,20 @@ async function openClubHaverPlayer(playerId) {
   $("club-haver-notebook-panel")?.classList.add("hidden");
   await loadClubHaverQuickProducts();
   await loadClubHaverLedger();
-  if($("club-haver-tab-stages")&&!$("club-haver-tab-stages").dataset.bound){
-    $("club-haver-tab-profile").addEventListener("click",()=>{
-      $("club-haver-tab-profile").classList.add("active");$("club-haver-tab-stages").classList.remove("active");
-      $("club-haver-tab-profile").setAttribute("aria-selected","true");$("club-haver-tab-stages").setAttribute("aria-selected","false");
-      $("club-haver-profile-panel").classList.remove("hidden");$("club-haver-stages-panel").classList.add("hidden");
-    });
-    $("club-haver-tab-stages").addEventListener("click",async()=>{
-      ["profile","stages","notebook"].forEach(tab=>{
-        $("club-haver-tab-"+tab).classList.toggle("active",tab==="stages");
-        $("club-haver-tab-"+tab).setAttribute("aria-selected",tab==="stages"?"true":"false");
-        $("club-haver-"+(tab==="profile"?"profile":tab==="stages"?"stages":"notebook")+"-panel").classList.toggle("hidden",tab!=="stages");
+  if($("club-haver-tab-profile")&&!$("club-haver-tab-profile").dataset.bound){
+    const switchClubHaverTab=async tab=>{
+      ["profile","stages","notebook"].forEach(name=>{
+        $("club-haver-tab-"+name).classList.toggle("active",name===tab);
+        $("club-haver-tab-"+name).setAttribute("aria-selected",name===tab?"true":"false");
+        $("club-haver-"+name+"-panel").classList.toggle("hidden",name!==tab);
       });
-      await loadClubHaverPlayerStages();
+      if(tab==="stages")await loadClubHaverPlayerStages();
+      if(tab==="notebook")await loadClubHaverNotebook();
+    };
+    ["profile","stages","notebook"].forEach(tab=>{
+      $("club-haver-tab-"+tab).addEventListener("click",()=>switchClubHaverTab(tab));
+      $("club-haver-tab-"+tab).dataset.bound="1";
     });
-    $("club-haver-tab-notebook").addEventListener("click",async()=>{
-      ["profile","stages","notebook"].forEach(tab=>{
-        $("club-haver-tab-"+tab).classList.toggle("active",tab==="notebook");
-        $("club-haver-tab-"+tab).setAttribute("aria-selected",tab==="notebook"?"true":"false");
-        $("club-haver-"+(tab==="profile"?"profile":tab==="stages"?"stages":"notebook")+"-panel").classList.toggle("hidden",tab!=="notebook");
-      });
-      await loadClubHaverNotebook();
-    });
-    $("club-haver-tab-stages").dataset.bound="1";
-    $("club-haver-tab-notebook").dataset.bound="1";
   }
 }
 async function deleteClubHaverPlayer(){
