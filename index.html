@@ -1756,6 +1756,12 @@ input:focus,select:focus {
 .recent-clubs-history .empty{padding:12px 0;color:#888;font-size:13px}
 
 /* Perfil do clube */
+/* Nas telas internas, mostrar somente o conteúdo da aba selecionada. */
+#club-details-area.club-subview-active > .club-profile-header,
+#club-details-area.club-subview-active > .panel-pad > #club-details-city,
+#club-details-area.club-subview-active > .panel-pad > #club-details-address,
+#club-details-area.club-subview-active > .panel-pad > #club-details-description,
+#club-details-area.club-subview-active > .panel-pad > .club-clock-launch{display:none!important}
 .club-profile-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 24px;border-bottom:1px solid #303030;flex-wrap:wrap}
 .club-profile-brand{display:flex;align-items:center;gap:17px;min-width:0}
 .club-profile-logo-frame{width:104px;height:104px;flex:0 0 104px;display:grid;place-items:center;overflow:hidden;border-radius:18px;background:linear-gradient(145deg,#242424,#111);border:1px solid #3b3b3b;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:10px}
@@ -4310,6 +4316,7 @@ async function openBlindClockControls(tournamentId) {
     alert("Selecione um torneio primeiro.");
     return;
   }
+  $("club-details-area").classList.add("club-subview-active");
   $("club-management-area").classList.add("hidden");
   $("club-tournaments-area").classList.add("hidden");
   $("club-settings-area").classList.add("hidden");
@@ -4432,6 +4439,7 @@ document.addEventListener("fullscreenchange", () => {
 $("club-live-clock-btn").addEventListener("click", () => openStandaloneBlindClock(selectedClubId));
 $("club-clock-back-btn").addEventListener("click", () => {
   $("club-clock-area").classList.add("hidden");
+  $("club-details-area").classList.remove("club-subview-active");
   $("club-management-area").classList.toggle("hidden", !isStaff);
   if (!isStaff) $("club-tournaments-area").classList.remove("hidden");
 });
@@ -7222,6 +7230,8 @@ $("close-club-details").addEventListener("click", () => {
 });
 
 $("club-tournaments-btn").addEventListener("click", async () => {
+  $("club-details-area").classList.add("club-subview-active");
+  $("club-management-area").classList.add("hidden");
   $("club-tournaments-area").classList.remove("hidden");
   await loadClubTournaments();
 });
@@ -7231,6 +7241,8 @@ $("club-blinds-btn").addEventListener("click", async () => {
     alert("Acesso restrito à equipe do clube.");
     return;
   }
+  $("club-details-area").classList.add("club-subview-active");
+  $("club-management-area").classList.add("hidden");
   $("club-blinds-area").classList.remove("hidden");
   await Promise.all([loadClubBlindStructures(), loadBlindStructureClockOptions()]);
   renderBlindPresets();
@@ -7239,6 +7251,8 @@ $("club-blinds-btn").addEventListener("click", async () => {
 
 $("club-blinds-back-btn").addEventListener("click", () => {
   $("club-blinds-area").classList.add("hidden");
+  $("club-details-area").classList.remove("club-subview-active");
+  $("club-management-area").classList.remove("hidden");
 });
 
 $("blind-add-level-btn").addEventListener("click", () => {
@@ -7599,6 +7613,8 @@ async function saveClubBlindStructure() {
 }
 
 $("club-settings-btn").addEventListener("click", () => {
+  $("club-details-area").classList.add("club-subview-active");
+  $("club-management-area").classList.add("hidden");
   $("club-settings-area").classList.remove("hidden");
 
   $("club-settings-name").value = $("club-details-title").textContent;
@@ -7609,10 +7625,14 @@ $("club-settings-btn").addEventListener("click", () => {
 
 $("club-tournaments-back-btn").addEventListener("click", () => {
   $("club-tournaments-area").classList.add("hidden");
+  $("club-details-area").classList.remove("club-subview-active");
+  $("club-management-area").classList.remove("hidden");
 });
 
 $("club-settings-back-btn").addEventListener("click", () => {
   $("club-settings-area").classList.add("hidden");
+  $("club-details-area").classList.remove("club-subview-active");
+  $("club-management-area").classList.remove("hidden");
 });
 
 $("club-settings-logo").addEventListener("change", () => {
@@ -8098,6 +8118,7 @@ async function openClub(clubId) {
 
 $("manage-clubs-area").classList.add("hidden");
 $("club-details-area").classList.remove("hidden");
+$("club-details-area").classList.remove("club-subview-active");
 $("tournament-search-area").classList.add("hidden");
 $("recent-tournaments-list").parentElement.classList.add("hidden");
 
@@ -8386,6 +8407,7 @@ async function saveClubHaverEntry() {
 }
 $("club-haver-btn").addEventListener("click",async()=>{
   if (!isStaff || !selectedClubId) { alert("Acesso restrito à equipe do clube."); return; }
+  $("club-details-area").classList.add("club-subview-active");
   $("club-management-area").classList.add("hidden");
   $("club-tournaments-area").classList.add("hidden");
   $("club-settings-area").classList.add("hidden");
@@ -8399,6 +8421,7 @@ $("club-haver-btn").addEventListener("click",async()=>{
 });
 $("club-haver-back").addEventListener("click",()=>{
   $("club-haver-area").classList.add("hidden");
+  $("club-details-area").classList.remove("club-subview-active");
   $("club-management-area").classList.remove("hidden");
 });
 $("club-haver-delete-player").addEventListener("click",deleteClubHaverPlayer);
