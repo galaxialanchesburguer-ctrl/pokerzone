@@ -2673,6 +2673,7 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .club-haver-manual-grid input,.club-haver-manual-grid select{width:100%;min-width:0;padding:11px;border:1px solid #454545;border-radius:8px;background:#171717;color:#fff}
 .club-haver-manual-grid .wide{grid-column:1/-1}
 .club-haver-manual-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.club-haver-manual-form textarea{width:100%;min-width:0;padding:11px;border:1px solid #454545;border-radius:8px;background:#171717;color:#fff;resize:vertical;font:inherit;line-height:1.5}.club-haver-bulk-preview-table{width:100%;margin-top:10px;border-collapse:collapse}.club-haver-bulk-preview-table td,.club-haver-bulk-preview-table th{padding:7px 9px;border-bottom:1px solid #333;font-size:12px}.club-haver-bulk-preview-table td:last-child{text-align:right}.club-haver-bulk-summary{margin-top:10px;padding:10px;border-radius:8px;background:#111;color:#ddd}
 .club-haver-notebook-table{width:100%;border-collapse:collapse}
 .club-haver-notebook-table th,.club-haver-notebook-table td{padding:12px 14px;text-align:left;border-bottom:1px solid #302a2a}
 .club-haver-notebook-table th:last-child,.club-haver-notebook-table td:last-child{text-align:right;white-space:nowrap}
@@ -3404,6 +3405,19 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
           </div>
           <div class="club-haver-manual-actions"><button type="button" class="btn secondary" id="club-haver-manual-cancel">Cancelar</button><button type="button" class="btn" id="club-haver-manual-save">Salvar lançamento</button></div>
           <p id="club-haver-manual-message" class="season-info" aria-live="polite"></p>
+        </div>
+        <div class="club-haver-manual-actions" style="justify-content:flex-start;margin:0 0 12px"><button type="button" class="btn secondary" id="club-haver-notebook-bulk-toggle">Importar vários lançamentos</button></div>
+        <div id="club-haver-notebook-bulk-form" class="club-haver-manual-form hidden">
+          <h4>IMPORTAÇÃO EM LOTE</h4>
+          <p class="season-info" style="margin:8px 0 12px">Cole uma movimentação por linha no formato: <strong>DD/MM/AAAA valor</strong>. Valor positivo = POS; negativo = NEG. Ex.: 22/06/2026 -710</p>
+          <div class="club-haver-manual-grid">
+            <label>Saldo inicial (R$), se houver<input type="number" id="club-haver-bulk-opening" min="0" step="0.01" placeholder="0,00"></label>
+            <label>Data do saldo inicial<input type="date" id="club-haver-bulk-opening-date"></label>
+            <label class="wide">Lançamentos<textarea id="club-haver-bulk-lines" rows="8" placeholder="22/06/2026 -710&#10;06/07/2026 -205&#10;27/07/2026 2160"></textarea></label>
+          </div>
+          <div class="club-haver-manual-actions"><button type="button" class="btn secondary" id="club-haver-bulk-cancel">Cancelar</button><button type="button" class="btn secondary" id="club-haver-bulk-preview">Conferir lançamentos</button><button type="button" class="btn" id="club-haver-bulk-save" disabled>Salvar todos</button></div>
+          <div id="club-haver-bulk-preview-area" class="season-info" style="margin-top:12px" aria-live="polite"></div>
+          <p id="club-haver-bulk-message" class="season-info" aria-live="polite"></p>
         </div>
         <div class="club-haver-stat debt" style="margin:10px 0"><span>SALDO FINAL</span><strong id="club-haver-notebook-total">R$ 0,00</strong></div>
         <div id="club-haver-notebook-list" class="box"><div class="empty">Carregando histórico...</div></div>
@@ -8826,6 +8840,58 @@ async function saveClubHaverManualEntry(){
   await loadClubHaverNotebook();
 }
 
+function parseClubHaverBulkLines(raw){
+  const currentYear=new Date().getFullYear(),parsed=[],errors=[];
+  String(raw||"").split(/\r?\n/).forEach((line,index)=>{
+    const value=line.trim();if(!value)return;
+    const match=value.match(/^(\d{1,2})[\/.-](\d{1,2})(?:[\/.-](\d{4}))?\s+([+-]?)\s*(?:R\$\s*)?([\d.,]+)\s*(.*)$/i);
+    if(!match){errors.push("Linha "+(index+1)+": formato inválido.");return;}
+    const day=Number(match[1]),month=Number(match[2]),year=Number(match[3]||currentYear);
+    const date=new Date(year,month-1,day,12,0,0);
+    if(date.getFullYear()!==year||date.getMonth()!==month-1||date.getDate()!==day){errors.push("Linha "+(index+1)+": data inválida.");return;}
+    let amountText=match[5];
+    if(amountText.includes(","))amountText=amountText.replace(/\./g,"").replace(",",".");
+    const amount=Number(amountText);
+    if(!Number.isFinite(amount)||amount<=0){errors.push("Linha "+(index+1)+": valor inválido.");return;}
+    parsed.push({date:[year,String(month).padStart(2,"0"),String(day).padStart(2,"0")].join("-"),movement:(match[4]==="-"?-1:1)*amount,description:match[6].trim()||"Importação em lote"});
+  });
+  return {parsed,errors};
+}
+function previewClubHaverBulkImport(){
+  const preview=$("club-haver-bulk-preview-area"),save=$("club-haver-bulk-save"),message=$("club-haver-bulk-message");
+  const {parsed,errors}=parseClubHaverBulkLines($("club-haver-bulk-lines").value);
+  const opening=Number($("club-haver-bulk-opening").value)||0,openingDate=$("club-haver-bulk-opening-date").value;
+  save.disabled=true;save.dataset.ready="";
+  if(opening<0||(opening>0&&!openingDate)){preview.textContent="Informe uma data válida para o saldo inicial.";return;}
+  if(!parsed.length&&!opening){preview.textContent="Nenhum lançamento válido para importar.";return;}
+  if(errors.length){preview.innerHTML='<span style="color:#ff858b">'+errors.map(esc).join("<br>")+'</span>';return;}
+  const rows=[];if(opening)rows.push({date:openingDate,movement:opening});
+  rows.push(...parsed);
+  const net=rows.reduce((sum,item)=>sum+item.movement,0);
+  preview.innerHTML='<strong>'+rows.length+' lançamento(s) pronto(s) para salvar.</strong><table class="club-haver-bulk-preview-table"><thead><tr><th>Data</th><th>POS / NEG</th></tr></thead><tbody>'+rows.map(item=>'<tr><td>'+new Date(item.date+"T12:00:00").toLocaleDateString("pt-BR")+'</td><td style="color:'+(item.movement>=0?"#55d69a":"#ff737b")+'">'+(item.movement>0?"+":"")+clubMoney(item.movement)+'</td></tr>').join("")+'</tbody></table><div class="club-haver-bulk-summary">Saldo líquido dos lançamentos: <strong>'+clubMoney(net)+'</strong></div>';
+  message.textContent="Confira os dados antes de salvar. Se não informar o ano, será usado "+new Date().getFullYear()+".";
+  save.disabled=false;save.dataset.ready="1";
+}
+async function saveClubHaverBulkImport(){
+  const player=clubHaverSelectedPlayer,button=$("club-haver-bulk-save"),message=$("club-haver-bulk-message");
+  if(!player||!button||button.disabled||button.dataset.ready!=="1")return;
+  const {parsed,errors}=parseClubHaverBulkLines($("club-haver-bulk-lines").value);
+  const opening=Number($("club-haver-bulk-opening").value)||0,openingDate=$("club-haver-bulk-opening-date").value;
+  if(errors.length||(!parsed.length&&!opening)||(opening>0&&!openingDate)){message.textContent="Confira os dados e gere a prévia novamente.";return;}
+  const records=[];if(opening)records.push({date:openingDate,movement:opening,description:"Saldo inicial"});
+  parsed.forEach(item=>records.push(item));
+  if(!confirm("Salvar "+records.length+" lançamento(s) no caderno de "+player.name+"? Não repita a importação para evitar duplicidade."))return;
+  button.disabled=true;message.textContent="Salvando lançamentos...";
+  const {data:userData}=await db.auth.getUser();
+  const payload=records.map(item=>({club_player_id:player.id,stage_id:null,entry_type:item.movement>=0?"payment":"charge",category:item.movement>=0?"Ajuste manual":"Caderno",description:item.description,amount:Math.abs(item.movement),created_at:new Date(item.date+"T12:00:00").toISOString(),created_by:userData?.user?.id||null}));
+  const {error}=await db.from("club_player_ledger").insert(payload);
+  if(error){message.textContent="Não foi possível salvar: "+error.message;button.disabled=false;return;}
+  $("club-haver-notebook-bulk-form").classList.add("hidden");
+  $("club-haver-bulk-lines").value="";$("club-haver-bulk-opening").value="";$("club-haver-bulk-opening-date").value="";
+  button.disabled=false;button.dataset.ready="";
+  await loadClubHaverNotebook();
+}
+
 async function openClubHaverPlayer(playerId) {
   clubHaverSelectedPlayer = clubHaverPlayers.find(p=>p.id===playerId);
   if (!clubHaverSelectedPlayer) return;
@@ -8843,6 +8909,13 @@ async function openClubHaverPlayer(playerId) {
   $("club-haver-notebook-panel")?.classList.add("hidden");
   if($("club-haver-notebook-add")&&!$("club-haver-notebook-add").dataset.bound){
     $("club-haver-notebook-add").addEventListener("click",openClubHaverManualForm);
+    $("club-haver-notebook-bulk-toggle").addEventListener("click",()=>{
+      $("club-haver-notebook-bulk-form").classList.toggle("hidden");
+      $("club-haver-bulk-message").textContent="";
+    });
+    $("club-haver-bulk-cancel").addEventListener("click",()=>$("club-haver-notebook-bulk-form").classList.add("hidden"));
+    $("club-haver-bulk-preview").addEventListener("click",previewClubHaverBulkImport);
+    $("club-haver-bulk-save").addEventListener("click",saveClubHaverBulkImport);
     $("club-haver-manual-cancel").addEventListener("click",()=>$("club-haver-notebook-manual-form").classList.add("hidden"));
     $("club-haver-manual-save").addEventListener("click",saveClubHaverManualEntry);
     $("club-haver-notebook-add").dataset.bound="1";
