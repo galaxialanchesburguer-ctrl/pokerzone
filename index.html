@@ -3564,8 +3564,9 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   <section class="box">
     <div class="box-head"><h2>LANÇAR INSCRIÇÃO / REBUY / ADD-ON</h2></div>
     <div class="panel-pad">
-      <label for="entry-player-select">Jogador</label>
-      <select id="entry-player-select" style="width:100%;max-width:520px"><option value="">Selecione um jogador</option></select>
+      <label for="entry-player-search">Buscar jogador</label>
+      <input id="entry-player-search" type="search" style="width:100%;max-width:520px" placeholder="Digite o nome do jogador..." autocomplete="off">
+      <div id="entry-player-search-results" style="width:100%;max-width:520px;margin-top:8px"></div>
       <div class="actions" style="margin-top:14px">
         <button class="btn" id="entry-add-buyin">+ Buy-in</button>
         <button class="btn secondary" id="entry-add-rebuy">+ Rebuy</button>
@@ -3761,7 +3762,7 @@ const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let tournament=null, season=null, players=[], stages=[], currentStage=null, editorResults=[], isStaff=false, isAdmin=false, selectedClubId=null;
 let rankingThroughStageNumber = null;
 let managedClubId=null, isClubManager=false;
-let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}, activeTournamentStage=null;
+let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}, activeTournamentStage=null, selectedTournamentEntryPlayerId="";
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 function msg(text){$("connection-status").textContent=text}
@@ -4816,10 +4817,11 @@ async function loadTournamentEntries(){
   tournamentEntryPlayers=playerData||[];
   tournamentEntryRows=entryData||[];
   tournamentEntryDetails=details||{};
-  const select=$("entry-player-select");
-  const selected=select.value;
-  select.innerHTML='<option value="">Selecione um jogador</option>'+tournamentEntryPlayers.map(p=>'<option value="'+p.id+'">'+esc(p.display_name)+'</option>').join("");
-  if(tournamentEntryPlayers.some(p=>p.id===selected)) select.value=selected;
+  if(!tournamentEntryPlayers.some(p=>p.id===selectedTournamentEntryPlayerId)) selectedTournamentEntryPlayerId="";
+  const selectedPlayer=tournamentEntryPlayers.find(p=>p.id===selectedTournamentEntryPlayerId);
+  $("entry-player-search").value=selectedPlayer?.display_name||"";
+  renderTournamentEntryPlayerSearch("");
+
   const groups=new Map(tournamentEntryPlayers.map(p=>[p.id,{player:p,buyins:0,rebuys:0,addons:0,gross:0,prize:0,fees:0,ranking:0,rows:[]}]));
   tournamentEntryRows.forEach(row=>{
     const g=groups.get(row.player_id); if(!g)return;
@@ -4842,8 +4844,34 @@ async function loadTournamentEntries(){
   const filtered=all.filter(g=>g.player.display_name.toLocaleLowerCase("pt-BR").includes(q));
   body.innerHTML=filtered.length?filtered.map(g=>'<tr><td class="player-cell">'+esc(g.player.display_name)+'</td><td>'+g.buyins+'</td><td>'+g.rebuys+'</td><td>'+g.addons+'</td><td>'+moneyBRL(g.gross)+'</td><td>'+moneyBRL(g.prize)+'</td><td><button class="btn secondary" data-entry-player="'+g.player.id+'">Ver ficha</button></td></tr>').join(""):'<tr><td colspan="7" class="empty">Nenhum jogador encontrado.</td></tr>';
   body.querySelectorAll("[data-entry-player]").forEach(btn=>btn.addEventListener("click",()=>renderTournamentEntryPlayer(btn.dataset.entryPlayer)));
-  if(select.value) renderTournamentEntryPlayer(select.value);
+  if(selectedTournamentEntryPlayerId) renderTournamentEntryPlayer(selectedTournamentEntryPlayerId);
 }
+function renderTournamentEntryPlayerSearch(term=""){
+  const box=$("entry-player-search-results");
+  if(!box)return;
+  const q=String(term||"").trim().toLocaleLowerCase("pt-BR");
+  if(!q){box.innerHTML="";return;}
+  const matches=tournamentEntryPlayers.filter(p=>p.display_name.toLocaleLowerCase("pt-BR").includes(q)).slice(0,12);
+  box.innerHTML=matches.length?matches.map(p=>'<button type="button" class="btn secondary" data-select-entry-player="'+p.id+'" style="display:block;width:100%;text-align:left;margin:4px 0">'+esc(p.display_name)+'</button>').join(""):'<div class="empty">Nenhum jogador encontrado.</div>';
+  box.querySelectorAll("[data-select-entry-player]").forEach(btn=>btn.addEventListener("click",()=>{
+    const player=tournamentEntryPlayers.find(p=>p.id===btn.dataset.selectEntryPlayer);
+    if(!player)return;
+    selectedTournamentEntryPlayerId=player.id;
+    $("entry-player-search").value=player.display_name;
+    box.innerHTML="";
+    renderTournamentEntryPlayer(player.id);
+  }));
+}
+$("entry-player-search").addEventListener("input",e=>{
+  const value=e.target.value.trim().toLocaleLowerCase("pt-BR");
+  const selected=tournamentEntryPlayers.find(p=>p.id===selectedTournamentEntryPlayerId);
+  if(!selected||value!==selected.display_name.toLocaleLowerCase("pt-BR")){
+    selectedTournamentEntryPlayerId="";
+    $("entry-player-detail-title").textContent="HISTÓRICO INDIVIDUAL";
+    $("entry-player-detail").innerHTML='<div class="empty">Busque e selecione um jogador para conferir os lançamentos individuais.</div>';
+  }
+  renderTournamentEntryPlayerSearch(e.target.value);
+});
 function renderTournamentEntryPlayer(playerId){
   const groupPlayer=tournamentEntryPlayers.find(p=>p.id===playerId);
   if(!groupPlayer)return;
@@ -4858,9 +4886,9 @@ function renderTournamentEntryPlayer(playerId){
 }
 async function addTournamentEntry(type){
   if(!isStaff || !tournament)return;
-  const playerId=$("entry-player-select").value;
+  const playerId=selectedTournamentEntryPlayerId;
   const message=$("entry-action-message");
-  if(!playerId){message.textContent="Selecione um jogador primeiro.";return;}
+  if(!playerId){message.textContent="Busque e selecione um jogador primeiro.";return;}
   const player=tournamentEntryPlayers.find(p=>p.id===playerId);
   if(!activeTournamentStage){message.textContent="Abra uma etapa antes de lançar inscrições.";return;}
   const playerRows=tournamentEntryRows.filter(r=>r.player_id===playerId && r.stage_id===activeTournamentStage.id);
@@ -4884,13 +4912,13 @@ async function addTournamentEntry(type){
   if(error){message.textContent="Não foi possível registrar: "+error.message;return;}
   message.textContent=({buyin:"Buy-in registrado",rebuy:"Rebuy registrado",addon:"Add-on registrado"}[type])+" para "+player.display_name+".";
   await loadTournamentEntries();
-  $("entry-player-select").value=playerId;
+  selectedTournamentEntryPlayerId=playerId;
+  $("entry-player-search").value=player.display_name;
   renderTournamentEntryPlayer(playerId);
 }
 $("entry-add-buyin").addEventListener("click",()=>addTournamentEntry("buyin"));
 $("entry-add-rebuy").addEventListener("click",()=>addTournamentEntry("rebuy"));
 $("entry-add-addon").addEventListener("click",()=>addTournamentEntry("addon"));
-$("entry-player-select").addEventListener("change",e=>{if(e.target.value)renderTournamentEntryPlayer(e.target.value);});
 $("entries-search").addEventListener("input",()=>loadTournamentEntries());
 function filterRanking(){const q=$("search").value.toLowerCase().trim();renderRanking(players.filter(p=>p.name.toLowerCase().includes(q)))}
 $("search").addEventListener("input",filterRanking);
