@@ -8762,10 +8762,15 @@ async function loadClubHaverPlayerStages(){
   const playerName=normalizeName(clubHaverSelectedPlayer.name);
   const clubId=clubHaverSelectedPlayer.club_id||selectedClubId||managedClubId;
   if(!clubId){target.innerHTML='<div class="empty">Não foi possível identificar o clube deste cliente.</div>';return;}
-  const {data:clubStages,error:stagesError}=await db.from("stages").select("id,season_id,tournament_id,stage_number,name,played_at,status,club_id").eq("club_id",clubId).order("played_at",{ascending:false});
+  // Usa os torneios do clube como escopo principal. Etapas antigas podem não ter club_id preenchido.
+  const {data:clubTournaments,error:tournamentScopeError}=await db.from("tournaments").select("id").eq("club_id",clubId);
+  if(tournamentScopeError){target.innerHTML='<div class="notice">Erro ao localizar torneios do clube: '+esc(tournamentScopeError.message)+'</div>';return;}
+  const tournamentIds=[...(clubTournaments||[])].map(item=>item.id).filter(Boolean);
+  if(!tournamentIds.length){target.innerHTML='<div class="empty">Nenhum torneio encontrado para este clube.</div>';return;}
+  const {data:clubStages,error:stagesError}=await db.from("stages").select("id,season_id,tournament_id,stage_number,name,played_at,status,club_id").in("tournament_id",tournamentIds).order("played_at",{ascending:false});
   if(stagesError){target.innerHTML='<div class="notice">Erro ao localizar etapas: '+esc(stagesError.message)+'</div>';return;}
-  const stages=clubStages||[], stageIds=stages.map(stage=>stage.id), tournamentIds=[...new Set(stages.map(stage=>stage.tournament_id).filter(Boolean))];
-  if(!stageIds.length||!tournamentIds.length){target.innerHTML='<div class="empty">Nenhuma etapa encontrada para este clube.</div>';return;}
+  const stages=clubStages||[], stageIds=stages.map(stage=>stage.id);
+  if(!stageIds.length){target.innerHTML='<div class="empty">Nenhuma etapa encontrada para os torneios deste clube.</div>';return;}
   const [{data:players,error:playersError},{data:commands,error:commandsError},{data:ledger,error:ledgerError}]=await Promise.all([
     db.from("players").select("id,display_name,tournament_id").in("tournament_id",tournamentIds),
     db.from("stage_commands").select("id,stage_id,club_player_id,tournament_player_id").eq("club_player_id",clubHaverSelectedPlayer.id).in("stage_id",stageIds),
