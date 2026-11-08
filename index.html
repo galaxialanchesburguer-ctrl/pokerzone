@@ -2621,7 +2621,10 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .club-profile-modal-card>p{color:#ddd;line-height:1.5}
 .club-profile-modal-card .club-profile-delete-warning{color:#ff858b;font-size:13px}
 .club-profile-modal-card label{display:grid;gap:7px;margin:13px 0;color:#bbb;font-size:12px}
-.club-profile-modal-card input{width:100%;box-sizing:border-box;padding:11px;border:1px solid #484040;border-radius:8px;background:#0f0f0f;color:#fff}
+.club-profile-modal-card input,.club-profile-modal-card select,.club-profile-modal-card textarea{width:100%;box-sizing:border-box;padding:11px;border:1px solid #484040;border-radius:8px;background:#0f0f0f;color:#fff;font:inherit}
+.club-profile-modal-card textarea{resize:vertical;min-height:82px}
+.club-profile-modal-card .club-profile-edit-wide{grid-column:1/-1}
+.club-profile-modal-card{width:min(100%,520px);max-height:90vh;overflow-y:auto}
 .club-profile-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px;flex-wrap:wrap}
 .club-profile-modal-actions .btn:disabled{opacity:.55;cursor:not-allowed}
 /* Perfil do jogador em painel lateral */
@@ -3348,13 +3351,13 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
           </div></div>
           <div class="club-profile-grid">
           <div><span>Telefone</span><strong id="club-profile-phone">Não informado</strong></div>
-          <div><span>E-mail</span><strong>Não informado</strong></div>
+          <div><span>E-mail</span><strong id="club-profile-email">Não informado</strong></div>
           <div><span>Origem do cadastro</span><strong>Não informado</strong></div>
-          <div><span>Sexo</span><strong>Não informado</strong></div>
-          <div><span>Data de nascimento</span><strong>Não informado</strong></div>
+          <div><span>Gênero</span><strong id="club-profile-gender">Não informado</strong></div>
+          <div><span>Data de nascimento</span><strong id="club-profile-birth-date">Não informado</strong></div>
           <div><span>Cliente desde</span><strong id="club-profile-since">—</strong></div>
         </div></section>
-        <section class="club-profile-section"><h4>Anotações internas</h4><p class="club-profile-muted">Sem anotações</p></section>
+        <section class="club-profile-section"><h4>Anotações internas</h4><p id="club-profile-notes" class="club-profile-muted">Sem anotações</p></section>
         <section class="club-profile-section"><h4>Preferências de notificações</h4><div class="club-profile-preference"><span>Deseja receber disparos via WhatsApp</span><strong>Não informado</strong></div></section>
         <section class="club-profile-section"><h4>Preferências gerais</h4><div class="club-profile-preference"><span>Bloquear cliente</span><strong>Não configurado</strong></div></section>
         <section class="club-profile-section"><h4>Endereços</h4><p class="club-profile-muted">Nenhum endereço cadastrado</p></section>
@@ -3372,9 +3375,13 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 
       <div id="club-haver-profile-edit-modal" class="club-profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="club-profile-edit-title">
         <div class="club-profile-modal-card">
-          <h3 id="club-profile-edit-title">Editar informações pessoais</h3>
-          <label>Nome do jogador<input id="club-profile-edit-name" type="text" maxlength="100"></label>
-          <label>Telefone<input id="club-profile-edit-phone" type="tel" maxlength="30" placeholder="Telefone"></label>
+          <h3 id="club-profile-edit-title">Atualizar cliente</h3>
+          <label>Nome do cliente<input id="club-profile-edit-name" type="text" maxlength="100" autocomplete="name"></label>
+          <label>Telefone<input id="club-profile-edit-phone" type="tel" maxlength="30" placeholder="Telefone" autocomplete="tel"></label>
+          <label>E-mail<input id="club-profile-edit-email" type="email" maxlength="150" placeholder="E-mail" autocomplete="email"></label>
+          <label>Data de nascimento<input id="club-profile-edit-birth-date" type="date"></label>
+          <label>Gênero<select id="club-profile-edit-gender"><option value="">Selecione</option><option value="Masculino">Masculino</option><option value="Feminino">Feminino</option><option value="Outro">Outro</option><option value="Prefere não informar">Prefere não informar</option></select></label>
+          <label class="club-profile-edit-wide">Anotações internas<textarea id="club-profile-edit-notes" rows="3" maxlength="2000" placeholder="Observações sobre o cliente"></textarea></label>
           <p id="club-profile-edit-message" class="season-info"></p>
           <div class="club-profile-modal-actions"><button type="button" class="btn secondary" id="club-profile-edit-cancel">Cancelar</button><button type="button" class="btn" id="club-profile-edit-save">Salvar alterações</button></div>
         </div>
@@ -8463,7 +8470,7 @@ async function loadClubHaver() {
   if (!selectedClubId || !isStaff) return;
   $("club-haver-player-list").innerHTML = '<div class="empty">Carregando clientes...</div>';
   const {data:playersData,error:playersError}=await db.from("club_players")
-    .select("id,name,phone,created_at").eq("club_id",selectedClubId).order("name");
+    .select("id,name,phone,email,birth_date,gender,notes,created_at").eq("club_id",selectedClubId).order("name");
   if(playersError){
     $("club-haver-player-list").innerHTML='<div class="notice">Não foi possível carregar os clientes: '+esc(playersError.message)+'</div>';
     return;
@@ -8694,6 +8701,10 @@ function openClubHaverProfileEdit(){
   if(!isStaff||!clubHaverSelectedPlayer)return;
   $("club-profile-edit-name").value=clubHaverSelectedPlayer.name||"";
   $("club-profile-edit-phone").value=clubHaverSelectedPlayer.phone||"";
+  $("club-profile-edit-email").value=clubHaverSelectedPlayer.email||"";
+  $("club-profile-edit-birth-date").value=clubHaverSelectedPlayer.birth_date||"";
+  $("club-profile-edit-gender").value=clubHaverSelectedPlayer.gender||"";
+  $("club-profile-edit-notes").value=clubHaverSelectedPlayer.notes||"";
   $("club-profile-edit-message").textContent="";
   $("club-haver-profile-edit-modal").classList.remove("hidden");
   $("club-profile-edit-name").focus();
@@ -8702,19 +8713,26 @@ async function saveClubHaverProfileEdit(){
   if(!isStaff||!clubHaverSelectedPlayer)return;
   const name=$("club-profile-edit-name").value.trim();
   const phone=$("club-profile-edit-phone").value.trim();
+  const email=$("club-profile-edit-email").value.trim();
+  const birthDate=$("club-profile-edit-birth-date").value||null;
+  const gender=$("club-profile-edit-gender").value||null;
+  const notes=$("club-profile-edit-notes").value.trim();
   const message=$("club-profile-edit-message");
   const button=$("club-profile-edit-save");
   if(!name){message.textContent="Informe o nome do jogador.";return;}
   button.disabled=true;
   message.textContent="Salvando...";
   const playerId=clubHaverSelectedPlayer.id;
-  const {error}=await db.from("club_players").update({name,phone:phone||null}).eq("id",playerId).eq("club_id",selectedClubId);
+  const {error}=await db.from("club_players").update({name,phone:phone||null,email:email||null,birth_date:birthDate,gender,notes:notes||null}).eq("id",playerId).eq("club_id",selectedClubId);
   if(error){message.textContent="Não foi possível salvar: "+error.message;button.disabled=false;return;}
-  clubHaverSelectedPlayer.name=name;
-  clubHaverSelectedPlayer.phone=phone||null;
-  clubHaverPlayers=clubHaverPlayers.map(player=>player.id===playerId?{...player,name,phone:phone||null}:player);
+  Object.assign(clubHaverSelectedPlayer,{name,phone:phone||null,email:email||null,birth_date:birthDate,gender,notes:notes||null});
+  clubHaverPlayers=clubHaverPlayers.map(player=>player.id===playerId?{...player,name,phone:phone||null,email:email||null,birth_date:birthDate,gender,notes:notes||null}:player);
   $("club-haver-selected-name").textContent=name;
   $("club-profile-phone").textContent=phone||"Não informado";
+  $("club-profile-email").textContent=email||"Não informado";
+  $("club-profile-gender").textContent=gender||"Não informado";
+  $("club-profile-birth-date").textContent=birthDate?new Date(birthDate+"T12:00:00").toLocaleDateString("pt-BR"):"Não informado";
+  $("club-profile-notes").textContent=notes||"Sem anotações";
   $("club-haver-profile-edit-modal").classList.add("hidden");
   button.disabled=false;
   renderClubHaverPlayers();
@@ -8729,6 +8747,11 @@ async function loadClubHaverLedger() {
   const phone=$("club-profile-phone");
   const since=$("club-profile-since");
   if(phone)phone.textContent=clubHaverSelectedPlayer.phone||"Não informado";
+  const email=$("club-profile-email"),gender=$("club-profile-gender"),birthDate=$("club-profile-birth-date"),notes=$("club-profile-notes");
+  if(email)email.textContent=clubHaverSelectedPlayer.email||"Não informado";
+  if(gender)gender.textContent=clubHaverSelectedPlayer.gender||"Não informado";
+  if(birthDate)birthDate.textContent=clubHaverSelectedPlayer.birth_date?new Date(clubHaverSelectedPlayer.birth_date+"T12:00:00").toLocaleDateString("pt-BR"):"Não informado";
+  if(notes)notes.textContent=clubHaverSelectedPlayer.notes||"Sem anotações";
   if(since)since.textContent=clubHaverSelectedPlayer.created_at?new Date(clubHaverSelectedPlayer.created_at).toLocaleDateString("pt-BR"):"—";
 }
 async function saveClubHaverEntry() {
