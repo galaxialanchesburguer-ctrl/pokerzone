@@ -8583,6 +8583,67 @@ async function importGeneralRankingPlayersToClients(){
     button.disabled=false;
   }
 }
+async function syncClubHaverCustomersToTournamentPlayers(customers){
+  if(!customers?.length||!selectedClubId)return;
+  const normalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLocaleLowerCase("pt-BR").replace(/\s+/g," ");
+  const customerGroups=new Map();
+  customers.forEach(customer=>{
+    const key=normalize(customer.name);
+    if(!key)return;
+    if(!customerGroups.has(key))customerGroups.set(key,[]);
+    customerGroups.get(key).push(customer);
+  });
+  const {data:stages,error:stagesError}=await db.from("stages").select("id,tournament_id").eq("club_id",selectedClubId);
+  if(stagesError)throw stagesError;
+  const stageRows=stages||[];
+  if(!stageRows.length)return;
+  const stageIds=stageRows.map(stage=>stage.id);
+  const tournamentIds=[...new Set(stageRows.map(stage=>stage.tournament_id).filter(Boolean))];
+  if(!tournamentIds.length)return;
+  const [{data:players,error:playersError},{data:commands,error:commandsError}]=await Promise.all([
+    db.from("players").select("id,display_name,tournament_id").in("tournament_id",tournamentIds),
+    db.from("stage_commands").select("id,stage_id,club_player_id,tournament_player_id").in("stage_id",stageIds)
+  ]);
+  if(playersError||commandsError)throw(playersError||commandsError);
+  const playerGroups=new Map();
+  (players||[]).forEach(player=>{
+    const key=player.tournament_id+"|"+normalize(player.display_name);
+    if(!normalize(player.display_name))return;
+    if(!playerGroups.has(key))playerGroups.set(key,[]);
+    playerGroups.get(key).push(player);
+  });
+  const stageTournament=new Map(stageRows.map(stage=>[stage.id,stage.tournament_id]));
+  for(const command of commands||[]){
+    const tournamentId=stageTournament.get(command.stage_id);
+    if(!tournamentId)continue;
+    let customer=command.club_player_id?customers.find(item=>item.id===command.club_player_id):null;
+    let tournamentPlayer=command.tournament_player_id?(players||[]).find(item=>item.id===command.tournament_player_id):null;
+    if(customer&&!tournamentPlayer){
+      const matches=playerGroups.get(tournamentId+"|"+normalize(customer.name))||[];
+      if(matches.length===1)tournamentPlayer=matches[0];
+    }else if(!customer&&tournamentPlayer){
+      const matches=customerGroups.get(normalize(tournamentPlayer.display_name))||[];
+      if(matches.length===1)customer=matches[0];
+    }else if(!customer&&!tournamentPlayer){
+      const possiblePlayers=[...(players||[])].filter(item=>item.tournament_id===tournamentId);
+      const nameMatches=possiblePlayers.filter(item=>{
+        const matches=customerGroups.get(normalize(item.display_name))||[];
+        return matches.length===1;
+      });
+      if(nameMatches.length===1){
+        tournamentPlayer=nameMatches[0];
+        customer=customerGroups.get(normalize(tournamentPlayer.display_name))[0];
+      }
+    }
+    const patch={};
+    if(!command.club_player_id&&customer)patch.club_player_id=customer.id;
+    if(!command.tournament_player_id&&tournamentPlayer)patch.tournament_player_id=tournamentPlayer.id;
+    if(Object.keys(patch).length){
+      const {error:updateError}=await db.from("stage_commands").update(patch).eq("id",command.id);
+      if(updateError)throw updateError;
+    }
+  }
+}
 async function loadClubHaver() {
   if (!selectedClubId || !isStaff) return;
   $("club-haver-player-list").innerHTML = '<div class="empty">Carregando clientes...</div>';
@@ -8593,6 +8654,11 @@ async function loadClubHaver() {
     return;
   }
   clubHaverPlayers=playersData||[];
+  try{
+    await syncClubHaverCustomersToTournamentPlayers(clubHaverPlayers);
+  }catch(syncError){
+    console.error("Não foi possível concluir todos os vínculos automáticos cliente/jogador:",syncError);
+  }
   const ids=clubHaverPlayers.map(p=>p.id);
   let entries=[];
   if(ids.length){
