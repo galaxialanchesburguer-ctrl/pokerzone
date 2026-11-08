@@ -2681,6 +2681,7 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .club-haver-notebook-table td{font-size:13px}
 .club-haver-notebook-table .positive{color:#55d69a;font-weight:800}
 .club-haver-notebook-table .negative{color:#ff737b;font-weight:800}
+.club-haver-notebook-table td:last-child{width:58px;text-align:center}.club-haver-ledger-edit{padding:7px 10px;min-width:36px;font-size:14px}
 @media(max-width:520px){.club-haver-manual-grid{grid-template-columns:1fr}.club-haver-manual-grid .wide{grid-column:auto}.club-haver-notebook-table th,.club-haver-notebook-table td{padding:10px 8px;font-size:11px}}
 .club-haver-balance{padding:18px;border:1px solid #713238;background:linear-gradient(120deg,rgba(237,48,56,.13),#171717);border-radius:11px;margin:12px 0 18px}
 .club-haver-balance span{display:block;color:#aaa;font-size:11px;letter-spacing:1px}.club-haver-balance strong{display:block;font-size:29px;margin-top:7px;color:#ff747b}
@@ -8783,19 +8784,24 @@ async function loadClubHaverNotebook(){
   rows.filter(row=>!row.stage_command_id&&((row.entry_type==="charge"&&row.category==="Caderno")||(row.entry_type==="payment"&&row.category==="Ajuste manual"))).forEach(row=>{
     const info=stageDetails(row.stage_id,row.created_at);
     const movement=row.entry_type==="payment"?Number(row.amount)||0:-(Number(row.amount)||0);
-    history.push({kind:movement>=0?"positive":"negative",movement,date:formatDate(row.created_at),stage:info.label,sortDate:row.created_at||""});
+    history.push({kind:movement>=0?"positive":"negative",movement,date:formatDate(row.created_at),stage:info.label,sortDate:row.created_at||"",ledgerId:row.id,description:row.description||"",editable:true});
   });
   history.sort((a,b)=>new Date(a.sortDate||0)-new Date(b.sortDate||0));
   const finalBalance=history.reduce((sum,item)=>sum+item.movement,0);
   total.textContent=clubMoney(finalBalance);
   total.style.color=finalBalance>=0?"#55d69a":"#ff737b";
   target.innerHTML=history.length?
-    '<table class="club-haver-notebook-table"><thead><tr><th>DATA / ETAPA</th><th>POS / NEG</th></tr></thead><tbody>'+
-    history.map(item=>'<tr><td>'+esc(item.date)+' • '+esc(item.stage)+'</td><td class="'+item.kind+'">'+(item.movement>0?"+":"")+clubMoney(item.movement)+'</td></tr>').join("")+
+    '<table class="club-haver-notebook-table"><thead><tr><th>DATA / ETAPA</th><th>POS / NEG</th><th>AÇÃO</th></tr></thead><tbody>'+
+    history.map(item=>'<tr><td>'+esc(item.date)+' • '+esc(item.stage)+(item.description?'<small style="display:block;color:#888;margin-top:4px">'+esc(item.description)+'</small>':'')+'</td><td class="'+item.kind+'">'+(item.movement>0?"+":"")+clubMoney(item.movement)+'</td><td>'+(item.editable?'<button type="button" class="btn secondary club-haver-ledger-edit" data-edit-ledger="'+esc(item.ledgerId)+'" title="Editar lançamento" aria-label="Editar lançamento">✏️</button>':'—')+'</td></tr>').join("")+
     '</tbody></table>':
     '<div class="empty">Nenhuma movimentação financeira registrada para este jogador.</div>';
+  target.querySelectorAll("[data-edit-ledger]").forEach(button=>button.addEventListener("click",()=>openClubHaverEditEntry(button.dataset.editLedger)));
 }
+let clubHaverEditingLedgerId=null;
 async function openClubHaverManualForm(){
+  clubHaverEditingLedgerId=null;
+  $("club-haver-notebook-manual-form").querySelector("h4").textContent="NOVO LANÇAMENTO";
+  $("club-haver-manual-save").textContent="Salvar lançamento";
   if(!clubHaverSelectedPlayer)return;
   const form=$("club-haver-notebook-manual-form");
   const stageSelect=$("club-haver-manual-stage");
@@ -8826,18 +8832,40 @@ async function saveClubHaverManualEntry(){
   if(!Number.isFinite(amount)||amount<=0){message.textContent="Informe um valor maior que zero.";return;}
   button.disabled=true;message.textContent="Salvando lançamento...";
   const {data:userData}=await db.auth.getUser();
-  const {error}=await db.from("club_player_ledger").insert({
-    club_player_id:player.id,stage_id:stageId,
+  const values={
+    stage_id:stageId,
     entry_type:kind==="positive"?"payment":"charge",
     category:kind==="positive"?"Ajuste manual":"Caderno",
     description,amount,
-    created_at:new Date(date+"T12:00:00").toISOString(),
-    created_by:userData?.user?.id||null
-  });
-  if(error){message.textContent="Não foi possível salvar: "+error.message;button.disabled=false;return;}
+    created_at:new Date(date+"T12:00:00").toISOString()
+  };
+  const result=clubHaverEditingLedgerId
+    ?await db.from("club_player_ledger").update(values).eq("id",clubHaverEditingLedgerId).eq("club_player_id",player.id)
+    :await db.from("club_player_ledger").insert({...values,club_player_id:player.id,created_by:userData?.user?.id||null});
+  if(result.error){message.textContent="Não foi possível salvar: "+result.error.message;button.disabled=false;return;}
+  clubHaverEditingLedgerId=null;
   $("club-haver-notebook-manual-form").classList.add("hidden");
   button.disabled=false;
   await loadClubHaverNotebook();
+}
+async function openClubHaverEditEntry(entryId){
+  if(!clubHaverSelectedPlayer||!entryId)return;
+  await openClubHaverManualForm();
+  const {data:entry,error}=await db.from("club_player_ledger")
+    .select("id,stage_id,entry_type,category,description,amount,created_at")
+    .eq("id",entryId).eq("club_player_id",clubHaverSelectedPlayer.id).maybeSingle();
+  const message=$("club-haver-manual-message");
+  if(error||!entry){message.textContent="Não foi possível carregar este lançamento para edição.";return;}
+  clubHaverEditingLedgerId=entry.id;
+  $("club-haver-notebook-manual-form").querySelector("h4").textContent="EDITAR LANÇAMENTO";
+  $("club-haver-manual-save").textContent="Salvar alterações";
+  const d=new Date(entry.created_at);
+  $("club-haver-manual-date").value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+  $("club-haver-manual-stage").value=entry.stage_id||"";
+  $("club-haver-manual-kind").value=entry.entry_type==="payment"?"positive":"negative";
+  $("club-haver-manual-amount").value=Number(entry.amount)||"";
+  $("club-haver-manual-description").value=entry.description||"";
+  message.textContent="";
 }
 
 function parseClubHaverBulkLines(raw){
