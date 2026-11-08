@@ -8767,10 +8767,21 @@ async function loadClubHaverPlayerStages(){
   if(tournamentScopeError){target.innerHTML='<div class="notice">Erro ao localizar torneios do clube: '+esc(tournamentScopeError.message)+'</div>';return;}
   const tournamentIds=[...(clubTournaments||[])].map(item=>item.id).filter(Boolean);
   if(!tournamentIds.length){target.innerHTML='<div class="empty">Nenhum torneio encontrado para este clube.</div>';return;}
-  const {data:clubStages,error:stagesError}=await db.from("stages").select("id,season_id,tournament_id,stage_number,name,played_at,status,club_id").in("tournament_id",tournamentIds).order("played_at",{ascending:false});
-  if(stagesError){target.innerHTML='<div class="notice">Erro ao localizar etapas: '+esc(stagesError.message)+'</div>';return;}
-  const stages=clubStages||[], stageIds=stages.map(stage=>stage.id);
-  if(!stageIds.length){target.innerHTML='<div class="empty">Nenhuma etapa encontrada para os torneios deste clube.</div>';return;}
+  // O vínculo oficial das etapas com o torneio é feito pela temporada (season_id).
+  // Algumas etapas antigas não têm tournament_id preenchido diretamente.
+  const {data:clubSeasons,error:seasonsError}=await db.from("seasons").select("id,tournament_id").in("tournament_id",tournamentIds);
+  if(seasonsError){target.innerHTML='<div class="notice">Erro ao localizar temporadas do clube: '+esc(seasonsError.message)+'</div>';return;}
+  const seasonIds=[...(clubSeasons||[])].map(item=>item.id).filter(Boolean);
+  const [seasonStageResult,tournamentStageResult]=await Promise.all([
+    seasonIds.length?db.from("stages").select("id,season_id,tournament_id,stage_number,name,played_at,status,club_id").in("season_id",seasonIds):Promise.resolve({data:[],error:null}),
+    db.from("stages").select("id,season_id,tournament_id,stage_number,name,played_at,status,club_id").in("tournament_id",tournamentIds)
+  ]);
+  if(seasonStageResult.error||tournamentStageResult.error){const err=seasonStageResult.error||tournamentStageResult.error;target.innerHTML='<div class="notice">Erro ao localizar etapas: '+esc(err.message)+'</div>';return;}
+  const stageMap=new Map();
+  [...(seasonStageResult.data||[]),...(tournamentStageResult.data||[])].forEach(stage=>stageMap.set(stage.id,stage));
+  const stages=[...stageMap.values()].sort((a,b)=>String(b.played_at||"").localeCompare(String(a.played_at||"")));
+  const stageIds=stages.map(stage=>stage.id);
+  if(!stageIds.length){target.innerHTML='<div class="empty">Nenhuma etapa encontrada nas temporadas deste clube.</div>';return;}
   const [{data:players,error:playersError},{data:commands,error:commandsError},{data:ledger,error:ledgerError}]=await Promise.all([
     db.from("players").select("id,display_name,tournament_id").in("tournament_id",tournamentIds),
     db.from("stage_commands").select("id,stage_id,club_player_id,tournament_player_id").eq("club_player_id",clubHaverSelectedPlayer.id).in("stage_id",stageIds),
