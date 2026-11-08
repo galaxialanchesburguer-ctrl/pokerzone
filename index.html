@@ -2525,6 +2525,15 @@ body.clock-only-mode .blind-clock-ante{
 .club-haver-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}
 .club-haver-toolbar input{flex:1;min-width:190px}
 .club-haver-player{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:15px 17px;border:1px solid #343030;background:#171717;border-radius:10px;margin:9px 0}
+.client-list-card{display:grid;grid-template-columns:minmax(150px,1.3fr) minmax(120px,.8fr) minmax(190px,1.4fr) minmax(110px,.8fr) auto;align-items:center;gap:18px}
+.client-list-main strong{font-size:16px;font-weight:850}
+.client-list-main small{font-size:12px;color:#aaa}
+.client-list-info{min-width:0}
+.client-list-label{display:block;color:#999;font-size:9px;font-weight:800;letter-spacing:.8px;margin-bottom:5px}
+.client-list-info strong{display:block;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.client-list-open{white-space:nowrap}
+@media(max-width:900px){.client-list-card{grid-template-columns:1fr 1fr;gap:12px}.client-list-main{grid-column:1/-1}.client-list-last{grid-column:1/-1}.client-list-open{justify-self:start}}
+
 .club-haver-player strong{display:block;font-size:14px}.club-haver-player small{display:block;color:#999;margin-top:5px}
 .club-haver-player .debt-value{font-size:16px;font-weight:900;color:#ff737b;white-space:nowrap}
 .club-haver-player .debt-value.zero{color:#55d69a}
@@ -8264,48 +8273,81 @@ async function importGeneralRankingPlayersToClients(){
 }
 async function loadClubHaver() {
   if (!selectedClubId || !isStaff) return;
-  $("club-haver-player-list").innerHTML = '<div class="empty">Carregando jogadores...</div>';
-  const {data: playersData,error: playersError} = await db.from("club_players")
-    .select("id,name,created_at").eq("club_id",selectedClubId).order("name");
-  if (playersError) {
-    $("club-haver-player-list").innerHTML = '<div class="notice">Não foi possível carregar o caderno. Verifique se as tabelas do Contas dos Jogadores já foram criadas no Supabase. Detalhe: ' + esc(playersError.message) + '</div>';
+  $("club-haver-player-list").innerHTML = '<div class="empty">Carregando clientes...</div>';
+  const {data:playersData,error:playersError}=await db.from("club_players")
+    .select("id,name,phone,created_at").eq("club_id",selectedClubId).order("name");
+  if(playersError){
+    $("club-haver-player-list").innerHTML='<div class="notice">Não foi possível carregar os clientes: '+esc(playersError.message)+'</div>';
     return;
   }
-  clubHaverPlayers = playersData || [];
-  const ids = clubHaverPlayers.map(p=>p.id);
-  let entries = [];
-  if (ids.length) {
-    const {data,error} = await db.from("club_player_ledger").select("id,club_player_id,entry_type,category,description,amount,payment_method,created_at").in("club_player_id",ids);
-    if (error) {
-      $("club-haver-player-list").innerHTML = '<div class="notice">Erro ao carregar movimentações: ' + esc(error.message) + '</div>';
-      return;
-    }
-    entries = data || [];
+  clubHaverPlayers=playersData||[];
+  const ids=clubHaverPlayers.map(p=>p.id);
+  let entries=[];
+  if(ids.length){
+    const {data,error}=await db.from("club_player_ledger")
+      .select("id,club_player_id,entry_type,category,description,amount,payment_method,created_at").in("club_player_id",ids);
+    if(error){$("club-haver-player-list").innerHTML='<div class="notice">Erro ao carregar movimentações: '+esc(error.message)+'</div>';return;}
+    entries=data||[];
   }
-  const totals = entries.reduce((acc,row) => {
-    if (row.entry_type === "payment") acc.paid += Number(row.amount);
-    else acc.charged += Number(row.amount);
+  const ledgerIds=entries.map(row=>row.id);
+  let tournamentEntries=[],stages=[],tournaments=[];
+  if(ledgerIds.length){
+    const {data,error}=await db.from("tournament_entries")
+      .select("ledger_entry_id,tournament_id,stage_id,created_at").in("ledger_entry_id",ledgerIds);
+    if(error){$("club-haver-player-list").innerHTML='<div class="notice">Erro ao carregar o último torneio dos clientes: '+esc(error.message)+'</div>';return;}
+    tournamentEntries=data||[];
+    const stageIds=[...new Set(tournamentEntries.map(row=>row.stage_id).filter(Boolean))];
+    const tournamentIds=[...new Set(tournamentEntries.map(row=>row.tournament_id).filter(Boolean))];
+    if(stageIds.length){
+      const result=await db.from("stages").select("id,stage_number,name,played_at").in("id",stageIds);
+      if(result.error){$("club-haver-player-list").innerHTML='<div class="notice">Erro ao carregar as etapas: '+esc(result.error.message)+'</div>';return;}
+      stages=result.data||[];
+    }
+    if(tournamentIds.length){
+      const result=await db.from("tournaments").select("id,name").in("id",tournamentIds);
+      if(result.error){$("club-haver-player-list").innerHTML='<div class="notice">Erro ao carregar os torneios: '+esc(result.error.message)+'</div>';return;}
+      tournaments=result.data||[];
+    }
+  }
+  const totals=entries.reduce((acc,row)=>{
+    if(row.entry_type==="payment")acc.paid+=Number(row.amount)||0;
+    else if(row.category!=="Premiação paga")acc.charged+=Number(row.amount)||0;
     return acc;
   },{charged:0,paid:0});
-  $("club-haver-total-charged").textContent = clubMoney(totals.charged);
-  $("club-haver-total-paid").textContent = clubMoney(totals.paid);
-  $("club-haver-total-open").textContent = clubMoney(totals.charged-totals.paid);
-  clubHaverAllEntries = entries;
+  $("club-haver-total-charged").textContent=clubMoney(totals.charged);
+  $("club-haver-total-paid").textContent=clubMoney(totals.paid);
+  $("club-haver-total-open").textContent=clubMoney(totals.charged-totals.paid);
+  clubHaverAllEntries=entries;
+  clubHaverTournamentEntries=tournamentEntries;
+  clubHaverStages=stages;
+  clubHaverTournaments=tournaments;
   renderClubHaverPlayers();
 }
-function renderClubHaverPlayers() {
-  const entries = clubHaverAllEntries;
-  const term = ($("club-haver-search").value || "").trim().toLowerCase();
-  const list = $("club-haver-player-list");
-  const visible = clubHaverPlayers.filter(p=>p.name.toLowerCase().includes(term));
-  if (!visible.length) {
-    list.innerHTML = '<div class="empty">' + (clubHaverPlayers.length ? "Nenhum jogador encontrado." : "Nenhum jogador cadastrado. Use “Cadastrar jogador” para começar.") + '</div>';
+let clubHaverTournamentEntries=[],clubHaverStages=[],clubHaverTournaments=[];
+function renderClubHaverPlayers(){
+  const entries=clubHaverAllEntries;
+  const term=($("club-haver-search").value||"").trim().toLocaleLowerCase("pt-BR");
+  const list=$("club-haver-player-list");
+  const visible=clubHaverPlayers.filter(p=>(p.name||"").toLocaleLowerCase("pt-BR").includes(term)||String(p.phone||"").includes(term));
+  if(!visible.length){
+    list.innerHTML='<div class="empty">'+(clubHaverPlayers.length?"Nenhum cliente encontrado.":"Nenhum cliente cadastrado. Use “Cadastrar jogador” para começar.")+'</div>';
     return;
   }
-  list.innerHTML = visible.map(player => {
-    const rows = entries.filter(row=>row.club_player_id===player.id);
-    const balance = clubHaverBalance(rows);
-    return '<div class="club-haver-player"><div><strong>' + esc(player.name) + '</strong><small>' + rows.length + ' movimentação(ões)</small></div><div style="display:flex;align-items:center;gap:12px"><span class="debt-value ' + (balance<=0?'zero':'') + '">' + clubMoney(balance) + '</span><button class="btn secondary" data-haver-player="' + esc(player.id) + '">Abrir conta</button></div></div>';
+  const dateLabel=value=>value?new Date(value+"T00:00:00").toLocaleDateString("pt-BR"): "—";
+  list.innerHTML=visible.map(player=>{
+    const rows=entries.filter(row=>row.club_player_id===player.id);
+    const spent=rows.filter(row=>row.entry_type==="charge"&&row.category!=="Premiação paga").reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+    const playerLedgerIds=new Set(rows.map(row=>row.id));
+    const lastEntry=clubHaverTournamentEntries.filter(row=>playerLedgerIds.has(row.ledger_entry_id)).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
+    let lastTournament="—";
+    if(lastEntry){
+      const stage=clubHaverStages.find(item=>item.id===lastEntry.stage_id);
+      const tournament=clubHaverTournaments.find(item=>item.id===lastEntry.tournament_id);
+      const date=stage?.played_at?dateLabel(stage.played_at):new Date(lastEntry.created_at).toLocaleDateString("pt-BR");
+      const stageLabel=stage?(stage.stage_number?"Etapa "+stage.stage_number:stage.name||"Etapa"):"";
+      lastTournament=[date,tournament?.name||"Torneio",stageLabel].filter(Boolean).join(" • ");
+    }
+    return '<div class="club-haver-player client-list-card"><div class="client-list-main"><strong>'+esc(player.name)+'</strong><small>'+esc(player.phone||"Telefone não informado")+'</small></div><div class="client-list-info"><span class="client-list-label">TOTAL JÁ GASTO</span><strong>'+clubMoney(spent)+'</strong></div><div class="client-list-info client-list-last"><span class="client-list-label">ÚLTIMO TORNEIO</span><strong>'+esc(lastTournament)+'</strong></div><div class="client-list-info"><span class="client-list-label">CLIENTE DESDE</span><strong>'+dateLabel(player.created_at?player.created_at.slice(0,10):"")+'</strong></div><button class="btn secondary client-list-open" data-haver-player="'+esc(player.id)+'">Abrir ficha</button></div>';
   }).join("");
   list.querySelectorAll("[data-haver-player]").forEach(button=>button.addEventListener("click",()=>openClubHaverPlayer(button.dataset.haverPlayer)));
 }
