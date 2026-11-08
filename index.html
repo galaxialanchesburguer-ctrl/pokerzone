@@ -2681,7 +2681,7 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .club-haver-notebook-table td{font-size:13px}
 .club-haver-notebook-table .positive{color:#55d69a;font-weight:800}
 .club-haver-notebook-table .negative{color:#ff737b;font-weight:800}
-.club-haver-notebook-table td:last-child{width:58px;text-align:center}.club-haver-ledger-edit{padding:7px 10px;min-width:36px;font-size:14px}
+.club-haver-notebook-table td:last-child{width:96px;text-align:center;white-space:nowrap}.club-haver-ledger-edit,.club-haver-ledger-delete{padding:7px 9px;min-width:34px;font-size:14px;margin:0 2px}.club-haver-ledger-delete{color:#ff737b;border-color:rgba(255,115,123,.45)}
 @media(max-width:520px){.club-haver-manual-grid{grid-template-columns:1fr}.club-haver-manual-grid .wide{grid-column:auto}.club-haver-notebook-table th,.club-haver-notebook-table td{padding:10px 8px;font-size:11px}}
 .club-haver-balance{padding:18px;border:1px solid #713238;background:linear-gradient(120deg,rgba(237,48,56,.13),#171717);border-radius:11px;margin:12px 0 18px}
 .club-haver-balance span{display:block;color:#aaa;font-size:11px;letter-spacing:1px}.club-haver-balance strong{display:block;font-size:29px;margin-top:7px;color:#ff747b}
@@ -8791,10 +8791,26 @@ async function loadClubHaverNotebook(){
   total.style.color=finalBalance>=0?"#55d69a":"#ff737b";
   target.innerHTML=history.length?
     '<table class="club-haver-notebook-table"><thead><tr><th>DATA / ETAPA</th><th>POS / NEG</th><th>AÇÃO</th></tr></thead><tbody>'+
-    history.map(item=>'<tr><td>'+esc(item.date)+' • '+esc(item.stage)+(item.description?'<small style="display:block;color:#888;margin-top:4px">'+esc(item.description)+'</small>':'')+'</td><td class="'+item.kind+'">'+(item.movement>0?"+":"")+clubMoney(item.movement)+'</td><td>'+(item.editable?'<button type="button" class="btn secondary club-haver-ledger-edit" data-edit-ledger="'+esc(item.ledgerId)+'" title="Editar lançamento" aria-label="Editar lançamento">✏️</button>':'—')+'</td></tr>').join("")+
+    history.map(item=>'<tr><td>'+esc(item.date)+' • '+esc(item.stage)+(item.description?'<small style="display:block;color:#888;margin-top:4px">'+esc(item.description)+'</small>':'')+'</td><td class="'+item.kind+'">'+(item.movement>0?"+":"")+clubMoney(item.movement)+'</td><td>'+(item.editable?'<button type="button" class="btn secondary club-haver-ledger-edit" data-edit-ledger="'+esc(item.ledgerId)+'" title="Editar lançamento" aria-label="Editar lançamento">✏️</button><button type="button" class="btn secondary club-haver-ledger-delete" data-delete-ledger="'+esc(item.ledgerId)+'" title="Excluir lançamento" aria-label="Excluir lançamento">✕</button>':'—')+'</td></tr>').join("")+
     '</tbody></table>':
     '<div class="empty">Nenhuma movimentação financeira registrada para este jogador.</div>';
   target.querySelectorAll("[data-edit-ledger]").forEach(button=>button.addEventListener("click",()=>openClubHaverEditEntry(button.dataset.editLedger)));
+  target.querySelectorAll("[data-delete-ledger]").forEach(button=>button.addEventListener("click",async()=>{
+    const ledgerId=button.dataset.deleteLedger;
+    if(!ledgerId||!clubHaverSelectedPlayer)return;
+    if(!confirm("Tem certeza que deseja excluir este lançamento?\n\nO saldo final será recalculado. Esta ação não poderá ser desfeita."))return;
+    button.disabled=true;
+    const {data:linkedEntries,error:linkedError}=await db.from("tournament_entries").select("id").eq("ledger_entry_id",ledgerId);
+    if(linkedError){alert("Não foi possível verificar vínculos do lançamento: "+linkedError.message);button.disabled=false;return;}
+    if(linkedEntries?.length){
+      const {error:deleteLinkedError}=await db.from("tournament_entries").delete().in("id",linkedEntries.map(item=>item.id));
+      if(deleteLinkedError){alert("Não foi possível remover os vínculos do lançamento: "+deleteLinkedError.message);button.disabled=false;return;}
+    }
+    const {error}=await db.from("club_player_ledger").delete().eq("id",ledgerId).eq("club_player_id",clubHaverSelectedPlayer.id);
+    if(error){alert("Não foi possível excluir o lançamento: "+error.message);button.disabled=false;return;}
+    await loadClubHaverNotebook();
+    await loadClubHaverLedger();
+  }));
 }
 let clubHaverEditingLedgerId=null;
 async function openClubHaverManualForm(){
