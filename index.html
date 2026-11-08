@@ -4824,7 +4824,7 @@ async function loadTournamentEntries(){
     body.innerHTML='<tr><td colspan="7" class="empty">Erro ao carregar inscrições e comandas: '+esc((playerError||entryError||commandError||detailsError).message)+'</td></tr>';
     return;
   }
-  const commands=commandData||[];
+  const commands=(commandData||[]).filter(c=>c.club_player_id||c.tournament_player_id);
   const customerIds=[...new Set(commands.map(c=>c.club_player_id).filter(Boolean))];
   const {data:customerData,error:customerError}=customerIds.length
     ?await db.from("club_players").select("id,name").in("id",customerIds)
@@ -4882,7 +4882,7 @@ function renderTournamentEntryPlayerSearch(term=""){
   if(!box)return;
   const q=String(term||"").trim().toLocaleLowerCase("pt-BR");
   if(!q){box.innerHTML="";return;}
-  const matches=tournamentEntryPlayers.filter(p=>p.display_name.toLocaleLowerCase("pt-BR").includes(q)).slice(0,12);
+  const matches=tournamentEntryPlayers.filter(p=>p.id && p.display_name.toLocaleLowerCase("pt-BR").includes(q)).slice(0,12);
   box.innerHTML=matches.length?matches.map(p=>'<button type="button" class="btn secondary" data-select-entry-player="'+p.id+'" style="display:block;width:100%;text-align:left;margin:4px 0">'+esc(p.display_name)+'</button>').join(""):'<div class="empty">Nenhum jogador encontrado.</div>';
   box.querySelectorAll("[data-select-entry-player]").forEach(btn=>btn.addEventListener("click",()=>{
     const player=tournamentEntryPlayers.find(p=>p.id===btn.dataset.selectEntryPlayer);
