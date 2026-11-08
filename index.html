@@ -5241,7 +5241,7 @@ async function loadStages() {
     stages = data || [];
 
     const stageListBox = $("stage-list-box");
-    if (stageListBox) stageListBox.classList.toggle("hidden", isStaff);
+    if (stageListBox) stageListBox.classList.remove("hidden");
 
    $("stage-list").innerHTML = stages.length
   ? stages.map(s => `
