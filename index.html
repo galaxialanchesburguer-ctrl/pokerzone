@@ -2516,6 +2516,13 @@ body.clock-only-mode .blind-clock-ante{
   body.clock-only-mode .blind-clock-payout-total strong{color:#ffd34f!important}
 }
 
+/* Alinhar o painel de clientes à esquerda, compensando o recuo interno do perfil do clube */
+#club-details-area.club-subview-active{padding-left:0!important;padding-right:0!important}
+#club-details-area.club-subview-active > .panel-pad{padding-left:0!important;padding-right:0!important}
+#club-haver-area{margin-left:-24px!important;width:calc(100% + 48px)!important}
+#club-haver-area > .club-haver-detail-head,#club-haver-overview,#club-haver-player-detail{width:100%;box-sizing:border-box}
+#club-haver-player-list{margin-left:0!important}
+@media(max-width:760px){#club-haver-area{margin-left:-12px!important;width:calc(100% + 24px)!important}}
 /* Tela de clientes: usar toda a largura disponível, sem o limite global do conteúdo */
 main:has(#club-haver-area:not(.hidden)){max-width:none;width:100%;box-sizing:border-box;padding-left:28px;padding-right:28px}
 #club-details-area:has(#club-haver-area:not(.hidden)){width:100%;max-width:none;box-sizing:border-box}
