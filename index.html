@@ -4800,11 +4800,12 @@ function moneyBRL(value){return Number(value||0).toLocaleString("pt-BR",{style:"
 async function loadTournamentEntries(){
   if(!tournament || !isStaff) return;
   const body=$("tournament-entries-body");
-  // Prioriza a etapa que o administrador abriu/selecionou no editor.
-  // Só usa a etapa marcada como aberta quando nenhuma etapa específica estiver selecionada.
+  // A conferência deve acompanhar exatamente a etapa selecionada na lista,
+  // mesmo que ela não pertença à temporada atualmente marcada como ativa.
+  // Só recorre à etapa aberta quando nenhuma etapa foi selecionada.
   let activeStage=null,activeStageError=null;
-  if(currentStage?.id && currentStage.season_id===season?.id){
-    const {data:selectedStage,error}=await db.from("stages").select("id,season_id,stage_number,name,played_at").eq("id",currentStage.id).eq("season_id",season.id).maybeSingle();
+  if(currentStage?.id){
+    const {data:selectedStage,error}=await db.from("stages").select("id,season_id,stage_number,name,played_at").eq("id",currentStage.id).maybeSingle();
     activeStage=selectedStage;activeStageError=error;
   }else{
     const {data:openedStage,error}=await db.from("stages").select("id,season_id,stage_number,name,played_at").eq("season_id",season?.id || "").eq("is_open",true).maybeSingle();
