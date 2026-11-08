@@ -5646,7 +5646,7 @@ function renderSidebarTournamentList(data, emptyMessage="") {
   $("sidebar-create-tournament")?.addEventListener("click",openSidebarTournamentCreation);
 }
 async function loadSidebarTournaments() {
-  const { data, error } = await db.from("tournaments").select("id,name").eq("club_id",selectedClubId).order("name");
+  const { data, error } = await db.from("tournaments").select("id,name,club_id").eq("club_id",selectedClubId).order("name");
   if (error) {
     renderSidebarTournamentList([], "Erro ao carregar torneios.");
     return;
@@ -9370,7 +9370,7 @@ async function loadClubTournaments() {
 
   const { data: tournaments, error } = await db
     .from("tournaments")
-    .select("id, name, description")
+    .select("id, name, description, club_id")
     .eq("club_id", selectedClubId)
     .order("name");
 
@@ -9398,7 +9398,7 @@ async function loadClubTournaments() {
     button.addEventListener("click", async () => {
       const { data, error } = await db
         .from("tournaments")
-        .select("id, name, description")
+        .select("id, name, description, club_id")
         .eq("id", button.dataset.id)
         .single();
 
