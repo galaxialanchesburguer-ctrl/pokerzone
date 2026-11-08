@@ -4841,7 +4841,7 @@ async function loadTournamentEntries(){
     const linked=playersById.get(command.tournament_player_id)||playersByName.get(normalizeEntryName(customer?.name));
     const displayName=customer?.name||linked?.display_name||("Comanda "+command.command_number);
     if(!commandPlayers.some(p=>p.id=== (linked?.id||null) && p.command_id===command.id)){
-      commandPlayers.push({id:linked?.id||null,display_name:displayName,command_id:command.id});
+      commandPlayers.push({id:linked?.id||null,display_name:displayName,command_id:command.id,club_player_id:command.club_player_id,command_number:command.command_number});
     }
   });
   tournamentEntryPlayers=commandPlayers;
@@ -4921,6 +4921,18 @@ function renderTournamentEntryPlayer(playerId){
     const parseMoney=value=>Number(String(value||"").trim().replace(/\./g,"").replace(",","."));
     const currentAmount=Number(entry.amount)||0;
     const currentPrize=Number(entry.prize_amount)||0;
+    const currentPlayer=tournamentEntryPlayers.find(p=>p.id===entry.player_id);
+    const choices=tournamentEntryPlayers.filter(p=>p.id&&p.command_id&&p.club_player_id);
+    const choiceText=choices.map((p,index)=>(index+1)+". "+p.display_name+" (Comanda "+p.command_number+")").join("\\n");
+    const selectedNumber=prompt("Se quiser trocar o jogador/comanda, digite o número correspondente.\n\n"+choiceText+"\n\nDeixe em branco para manter "+(currentPlayer?.display_name||"o jogador atual")+".","");
+    if(selectedNumber===null)return;
+    let targetPlayer=currentPlayer;
+    if(String(selectedNumber).trim()){
+      const choiceIndex=Number(selectedNumber)-1;
+      if(!Number.isInteger(choiceIndex)||choiceIndex<0||choiceIndex>=choices.length){alert("Número de jogador inválido.");return;}
+      targetPlayer=choices[choiceIndex];
+    }
+    if(!targetPlayer?.id||!targetPlayer.command_id||!targetPlayer.club_player_id){alert("O jogador escolhido não possui uma comanda válida nesta etapa.");return;}
     const amountInput=prompt("Editar valor total cobrado (R$):",currentAmount.toFixed(2).replace(".",","));
     if(amountInput===null)return;
     const newAmount=parseMoney(amountInput);
@@ -4931,22 +4943,23 @@ function renderTournamentEntryPlayer(playerId){
     if(!Number.isFinite(newPrize)||newPrize<0||newPrize>newAmount){alert("O valor da premiação deve ser válido e não pode superar o valor total.");return;}
     button.disabled=true;
     const {error:updateEntryError}=await db.from("tournament_entries").update({
-      amount:newAmount,prize_amount:newPrize,ranking_amount:Math.max(0,newAmount-newPrize)
+      player_id:targetPlayer.id,amount:newAmount,prize_amount:newPrize,ranking_amount:Math.max(0,newAmount-newPrize)
     }).eq("id",entry.id).eq("stage_id",activeTournamentStage.id);
     if(updateEntryError){alert("Não foi possível editar a Conferência: "+updateEntryError.message);button.disabled=false;return;}
     if(entry.ledger_entry_id){
-      const {error:updateLedgerError}=await db.from("club_player_ledger").update({amount:newAmount})
-        .eq("id",entry.ledger_entry_id).eq("stage_id",activeTournamentStage.id);
+      const {error:updateLedgerError}=await db.from("club_player_ledger").update({
+        amount:newAmount,club_player_id:targetPlayer.club_player_id,tournament_player_id:targetPlayer.id,stage_command_id:targetPlayer.command_id
+      }).eq("id",entry.ledger_entry_id).eq("stage_id",activeTournamentStage.id);
       if(updateLedgerError){
-        await db.from("tournament_entries").update({amount:currentAmount,prize_amount:currentPrize,ranking_amount:Number(entry.ranking_amount)||0}).eq("id",entry.id);
+        await db.from("tournament_entries").update({player_id:entry.player_id,amount:currentAmount,prize_amount:currentPrize,ranking_amount:Number(entry.ranking_amount)||0}).eq("id",entry.id);
         alert("Não foi possível atualizar a comanda: "+updateLedgerError.message+". A alteração da Conferência foi revertida.");
         button.disabled=false;return;
       }
     }
     await loadTournamentEntries();
-    selectedTournamentEntryPlayerId=playerId;
-    renderTournamentEntryPlayer(playerId);
-    alert("Lançamento atualizado na Conferência e na comanda.");
+    selectedTournamentEntryPlayerId=targetPlayer.id;
+    renderTournamentEntryPlayer(targetPlayer.id);
+    alert("Lançamento atualizado na Conferência e na comanda"+(targetPlayer.id!==entry.player_id+". Jogador alterado para "+targetPlayer.display_name+".":"."));
   }));
   $("entry-player-detail").querySelectorAll("[data-remove-entry]").forEach(button=>button.addEventListener("click",async()=>{
     const entry=tournamentEntryRows.find(item=>item.id===button.dataset.removeEntry);
