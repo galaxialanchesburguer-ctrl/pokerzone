@@ -2571,6 +2571,21 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 #club-haver-player-detail .club-profile-muted{color:#999;font-size:12px}
 #club-haver-player-detail .club-profile-preference{display:flex;justify-content:space-between;align-items:center;gap:12px}
 @media(max-width:700px){#club-haver-player-detail .club-profile-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#club-haver-player-detail .club-profile-grid{grid-template-columns:1fr}}
+
+/* Cartões de etapas no cadastro individual do cliente, inspirados na lista de pedidos */
+#club-haver-player-stages .club-haver-stage-card-compact{border:1px solid #373030;border-radius:11px;overflow:hidden;margin:9px 0;background:#171515}
+#club-haver-player-stages .club-haver-stage-card-compact .club-haver-stage-toggle{min-height:76px;padding:12px;display:flex;align-items:center;gap:11px;width:100%;border:0;background:transparent;color:#fff;text-align:left;cursor:pointer}
+#club-haver-player-stages .club-haver-stage-icon{width:40px;height:40px;flex:0 0 40px;border-radius:50%;display:grid;place-items:center;background:#292323;color:#ff858b;font-size:20px}
+#club-haver-player-stages .club-haver-stage-card-copy{min-width:0;flex:1}
+#club-haver-player-stages .club-haver-stage-card-copy strong{display:block;font-size:13px;color:#f5f5f5}
+#club-haver-player-stages .club-haver-stage-card-copy small{display:block;margin-top:4px;font-size:11px;color:#999}
+#club-haver-player-stages .club-haver-stage-card-compact .club-haver-stage-total{min-width:82px;text-align:right}
+#club-haver-player-stages .club-haver-stage-card-compact .club-haver-stage-total b{display:block;color:#ff858b;font-size:13px}
+#club-haver-player-stages .club-haver-stage-card-compact .club-haver-stage-total small{display:block;color:#999;font-size:10px;margin-top:3px}
+#club-haver-player-stages .club-haver-stage-card-compact .club-haver-stage-chevron{font-size:24px;color:#aaa;transition:transform .2s}
+#club-haver-player-stages .club-haver-stage-card-compact .club-haver-stage-toggle.expanded .club-haver-stage-chevron{transform:rotate(90deg)}
+#club-haver-player-stages .club-haver-stage-card-compact .club-haver-stage-details{padding:0 12px 12px;border-top:1px solid #302929}
+@media(max-width:520px){#club-haver-player-stages .club-haver-stage-card-compact .club-haver-stage-toggle{gap:8px;padding:10px 8px}#club-haver-player-stages .club-haver-stage-icon{width:34px;height:34px;flex-basis:34px}#club-haver-player-stages .club-haver-stage-card-copy small{font-size:10px}#club-haver-player-stages .club-haver-stage-card-compact .club-haver-stage-total{min-width:72px}}
 /* Abas do perfil do cliente: mesma navegação moderna do Ranking Geral/Final/Conferência */
 #club-haver-player-detail .club-haver-tabs{display:flex;gap:8px;padding:7px;background:#141414;border:1px solid #302727;border-radius:10px;width:fit-content;max-width:100%;margin:10px 0 14px}
 #club-haver-player-detail .club-haver-tab{border:0;border-radius:7px;padding:13px 22px;color:#999;background:transparent;white-space:nowrap;transition:.2s ease;font-weight:700;cursor:pointer}
@@ -8714,10 +8729,10 @@ async function loadClubHaverPlayerStages(){
       const dateTime=timestamp&&!Number.isNaN(timestamp.getTime())?timestamp.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"Data não informada";
       const type=row.category||(row.entry_type==="payment"?"Pagamento":row.entry_type==="charge"?"Consumo":row.entry_type||"Movimentação");
       const isPayment=row.entry_type==="payment";
-      const title=command?.command_number!=null?"Pedido Nº "+command.command_number:(row.description||"Lançamento financeiro");
-      return '<div class="club-haver-stage-finance-item"><div><strong>'+esc(title)+'</strong><small>Feito dia '+esc(dateTime)+'</small><small>Total: <b>'+clubMoney(row.amount)+'</b></small><small>Tipo: <b>'+esc(type)+'</b></small></div><span class="'+(isPayment?"payment":"charge")+'">'+(isPayment?"− ":"+ ")+clubMoney(row.amount)+'</span></div>';
+      const title=command?.command_number!=null?"Comanda Nº "+command.command_number:(row.description||"Lançamento financeiro");
+      return '<div class="club-haver-stage-finance-item"><div><strong>'+esc(title)+'</strong><small>'+esc(type)+' • '+esc(dateTime)+'</small>'+(row.description&&command?.command_number!=null?'<small>'+esc(row.description)+'</small>':'')+'</div><span class="'+(isPayment?"payment":"charge")+'">'+(isPayment?"− ":"+ ")+clubMoney(row.amount)+'</span></div>';
     }).join("");
-    return '<article class="club-haver-stage-card"><button type="button" class="club-haver-stage-toggle" aria-expanded="false" aria-controls="'+detailId+'" data-stage-detail="'+detailId+'"><span><strong>'+esc(label)+'</strong><small>'+esc(tournament?.name||"Torneio")+' • '+esc(date)+' • '+group.rows.length+' lançamento(s)</small></span><span class="club-haver-stage-total"><b>'+clubMoney(group.total)+'</b><small>Débitos</small></span><span class="club-haver-stage-chevron">⌄</span></button><div id="'+detailId+'" class="club-haver-stage-details hidden"><div class="club-haver-stage-finance-summary"><span>Total de débitos <b>'+clubMoney(group.total)+'</b></span><span>Total pago <b>'+clubMoney(group.paid)+'</b></span><span>Saldo <b>'+clubMoney(group.total-group.paid)+'</b></span></div>'+details+'</div></article>';
+    return '<article class="club-haver-stage-card club-haver-stage-card-compact"><button type="button" class="club-haver-stage-toggle" aria-expanded="false" aria-controls="'+detailId+'" data-stage-detail="'+detailId+'"><span class="club-haver-stage-icon" aria-hidden="true">♠</span><span class="club-haver-stage-card-copy"><strong>'+esc(label)+'</strong><small>'+esc(tournament?.name||"Torneio")+' • '+esc(date)+'</small><small>'+group.rows.length+' movimentação(ões)</small></span><span class="club-haver-stage-total"><b>'+clubMoney(group.total-group.paid)+'</b><small>Saldo</small></span><span class="club-haver-stage-chevron">›</span></button><div id="'+detailId+'" class="club-haver-stage-details hidden"><div class="club-haver-stage-finance-summary"><span>Total de débitos <b>'+clubMoney(group.total)+'</b></span><span>Total pago <b>'+clubMoney(group.paid)+'</b></span><span>Saldo <b>'+clubMoney(group.total-group.paid)+'</b></span></div>'+details+'</div></article>';
   }).join("")||'<div class="empty">Nenhuma etapa encontrada.</div>';
   target.querySelectorAll("[data-stage-detail]").forEach(button=>{
     button.addEventListener("click",()=>{
