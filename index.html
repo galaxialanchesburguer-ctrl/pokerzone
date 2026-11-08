@@ -8755,36 +8755,23 @@ async function loadClubHaverNotebook(){
       date:stage?.played_at?formatDate(String(stage.played_at).slice(0,10)):formatDate(fallbackDate)
     };
   };
-  const groups=new Map();
-  rows.filter(row=>row.stage_command_id).forEach(row=>{
-    if(!groups.has(row.stage_command_id))groups.set(row.stage_command_id,[]);
-    groups.get(row.stage_command_id).push(row);
-  });
-  const history=[];
-  groups.forEach((commandRowsForPlayer,commandId)=>{
-    const command=commandMap.get(commandId);
-    const charges=commandRowsForPlayer.filter(row=>row.entry_type==="charge"&&row.category!=="Premiação paga");
-    const payments=commandRowsForPlayer.filter(row=>row.entry_type==="payment"&&row.category!=="Premiação");
-    const prizes=commandRowsForPlayer.filter(row=>row.entry_type==="payment"&&row.category==="Premiação");
-    const prizesPaid=commandRowsForPlayer.filter(row=>row.entry_type==="charge"&&row.category==="Premiação paga");
-    const charged=charges.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
-    const paid=payments.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
-    const prize=prizes.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
-    const prizePaid=prizesPaid.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
-    const movement=-(charged-paid-prize+prizePaid);
-    const latest=commandRowsForPlayer.reduce((a,b)=>new Date(a.created_at||0)>new Date(b.created_at||0)?a:b);
-    const info=stageDetails(command?.stage_id||latest.stage_id,latest.created_at);
-    if(Math.abs(movement)>0.009)history.push({
-      kind:movement>0?"positive":"negative",movement,
-      date:info.date,stage:info.label,
-      sortDate:latest.created_at||""
-    });
-  });
-  // Lançamentos avulsos no caderno, incluindo ajustes manuais POS e NEG.
-  rows.filter(row=>!row.stage_command_id&&((row.entry_type==="charge"&&row.category==="Caderno")||(row.entry_type==="payment"&&row.category==="Ajuste manual"))).forEach(row=>{
+  // Exibe cada lançamento do banco em sua própria linha, sem agrupar por comanda.
+  const history=rows.map(row=>{
     const info=stageDetails(row.stage_id,row.created_at);
-    const movement=row.entry_type==="payment"?Number(row.amount)||0:-(Number(row.amount)||0);
-    history.push({kind:movement>=0?"positive":"negative",movement,date:formatDate(row.created_at),stage:info.label,sortDate:row.created_at||"",ledgerId:row.id,description:row.description||"",editable:true});
+    const movement=row.entry_type==="payment"?(Number(row.amount)||0):-(Number(row.amount)||0);
+    const isManual=!row.stage_command_id&&((row.entry_type==="charge"&&row.category==="Caderno")||(row.entry_type==="payment"&&row.category==="Ajuste manual"));
+    const command=row.stage_command_id?commandMap.get(row.stage_command_id):null;
+    const stageLabel=command?.command_number!=null?"Comanda "+command.command_number:info.label;
+    return {
+      kind:movement>=0?"positive":"negative",
+      movement,
+      date:formatDate(row.created_at),
+      stage:stageLabel,
+      sortDate:row.created_at||"",
+      ledgerId:row.id,
+      description:row.description||row.category||"",
+      editable:isManual
+    };
   });
   history.sort((a,b)=>new Date(a.sortDate||0)-new Date(b.sortDate||0));
   const finalBalance=history.reduce((sum,item)=>sum+item.movement,0);
