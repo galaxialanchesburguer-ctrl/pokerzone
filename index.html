@@ -2530,6 +2530,14 @@ main:has(#club-haver-area:not(.hidden)){max-width:none;width:100%;box-sizing:bor
 #club-haver-overview,#club-haver-player-list{width:100%;max-width:none;box-sizing:border-box}
 .client-list-card{width:100%;grid-template-columns:minmax(220px,1.5fr) minmax(160px,.85fr) minmax(260px,1.6fr) minmax(150px,.9fr) auto}
 @media(max-width:900px){main:has(#club-haver-area:not(.hidden)){padding-left:14px;padding-right:14px}}
+/* Centralizar a área de clientes dentro do espaço disponível ao lado do menu lateral */
+body.admin-sidebar-active main:has(#club-haver-area:not(.hidden)){display:flex;justify-content:center}
+body.admin-sidebar-active main:has(#club-haver-area:not(.hidden)) > #club-details-area{width:100%;max-width:1500px;margin-left:auto!important;margin-right:auto!important}
+body.admin-sidebar-active #club-details-area:has(#club-haver-area:not(.hidden)){padding-left:0!important;padding-right:0!important}
+body.admin-sidebar-active #club-details-area:has(#club-haver-area:not(.hidden)) > .panel-pad{padding-left:24px!important;padding-right:24px!important}
+body.admin-sidebar-active #club-haver-area{width:100%!important;max-width:1500px!important;margin-left:0!important;margin-right:0!important}
+body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1.3fr) minmax(140px,.8fr) minmax(230px,1.5fr) minmax(130px,.8fr)}
+@media(max-width:900px){body.admin-sidebar-active .client-list-card{grid-template-columns:1fr 1fr}body.admin-sidebar-active .client-list-main,body.admin-sidebar-active .client-list-last{grid-column:1/-1}}
 /* ===== CONTAS DOS JOGADORES DO CLUBE ===== */
 .club-haver-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
 .club-haver-stat{background:linear-gradient(145deg,#202020,#111);border:1px solid #393030;border-radius:11px;padding:17px}
@@ -8364,9 +8372,9 @@ function renderClubHaverPlayers(){
       const stageLabel=stage?(stage.stage_number?"Etapa "+stage.stage_number:stage.name||"Etapa"):"";
       lastTournament=[date,tournament?.name||"Torneio",stageLabel].filter(Boolean).join(" • ");
     }
-    return '<div class="club-haver-player client-list-card"><div class="client-list-main"><strong>'+esc(player.name)+'</strong><small>'+esc(player.phone||"Telefone não informado")+'</small></div><div class="client-list-info"><span class="client-list-label">TOTAL JÁ GASTO</span><strong>'+clubMoney(spent)+'</strong></div><div class="client-list-info client-list-last"><span class="client-list-label">ÚLTIMO TORNEIO</span><strong>'+esc(lastTournament)+'</strong></div><div class="client-list-info"><span class="client-list-label">CLIENTE DESDE</span><strong>'+dateLabel(player.created_at?player.created_at.slice(0,10):"")+'</strong></div><button class="btn secondary client-list-open" data-haver-player="'+esc(player.id)+'">Abrir ficha</button></div>';
+    return '<div class="club-haver-player client-list-card"><div class="client-list-main"><strong>'+esc(player.name)+'</strong><small>'+esc(player.phone||"Telefone não informado")+'</small></div><div class="client-list-info"><span class="client-list-label">TOTAL JÁ GASTO</span><strong>'+clubMoney(spent)+'</strong></div><div class="client-list-info client-list-last"><span class="client-list-label">ÚLTIMO TORNEIO</span><strong>'+esc(lastTournament)+'</strong></div><div class="client-list-info"><span class="client-list-label">CLIENTE DESDE</span><strong>'+dateLabel(player.created_at?player.created_at.slice(0,10):"")+'</strong></div></div>';
   }).join("");
-  list.querySelectorAll("[data-haver-player]").forEach(button=>button.addEventListener("click",()=>openClubHaverPlayer(button.dataset.haverPlayer)));
+
 }
 async function saveClubHaverPlayer() {
   const name = $("club-haver-player-name").value.trim();
