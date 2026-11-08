@@ -7200,6 +7200,7 @@ async function openTournament(selectedTournament) {
  showTab("tournament-info-view");
 
   await refreshAll();
+  updateDeleteActionButton();
   $("admin-sidebar-tournament-group").classList.toggle("hidden", !isStaff || !tournament);
 
   // Carregar informações do torneio
@@ -8284,7 +8285,7 @@ async function deleteCurrentTournament() {
 function canManageCurrentTournament() {
   return Boolean(
     isAdmin ||
-    (isClubManager && managedClubId && tournament && tournament.club_id === managedClubId)
+    (isStaff && managedClubId && tournament && String(tournament.club_id) === String(managedClubId))
   );
 }
 
@@ -10290,7 +10291,7 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
   const ids = recent.map(t => t.id).filter(Boolean);
   const { data: updatedTournaments, error } = await db
     .from("tournaments")
-    .select("id, name, description")
+    .select("id, name, description, club_id")
     .in("id", ids);
 
   if (error) {
