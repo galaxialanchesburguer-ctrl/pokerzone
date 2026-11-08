@@ -5101,6 +5101,7 @@ async function addTournamentEntry(type){
   $("entry-player-search").value=player.display_name;
   renderTournamentEntryPlayer(playerId);
 }
+$("entry-player-search").addEventListener("input",event=>renderTournamentEntryPlayerSearch(event.target.value));
 $("entry-add-buyin").addEventListener("click",()=>addTournamentEntry("buyin"));
 $("entry-add-rebuy").addEventListener("click",()=>addTournamentEntry("rebuy"));
 $("entry-add-addon").addEventListener("click",()=>addTournamentEntry("addon"));
