@@ -2557,6 +2557,20 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .client-list-open{white-space:nowrap}
 @media(max-width:900px){.client-list-card{grid-template-columns:1fr 1fr;gap:12px}.client-list-main{grid-column:1/-1}.client-list-last{grid-column:1/-1}.client-list-open{justify-self:start}}
 
+/* Perfil do cliente - resumo e dados cadastrais */
+#club-haver-player-detail .club-profile-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 18px}
+#club-haver-player-detail .club-profile-metric{padding:15px;background:#191919;border:1px solid #303030;border-radius:9px;min-width:0}
+#club-haver-player-detail .club-profile-metric strong{display:block;font-size:21px;line-height:1.3;overflow-wrap:anywhere}
+#club-haver-player-detail .club-profile-metric span{display:block;margin-top:5px;color:#999;font-size:9px;font-weight:800;letter-spacing:.8px}
+#club-haver-player-detail .club-profile-section{padding:14px 15px;margin:12px 0;background:#171717;border:1px solid #302929;border-radius:9px}
+#club-haver-player-detail .club-profile-section h4{margin:0 0 13px;font-size:13px}
+#club-haver-player-detail .club-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 20px}
+#club-haver-player-detail .club-profile-grid div{min-width:0}
+#club-haver-player-detail .club-profile-grid span,.club-profile-preference span{display:block;color:#999;font-size:11px;margin-bottom:5px}
+#club-haver-player-detail .club-profile-grid strong,.club-profile-preference strong{display:block;color:#f5f5f5;font-size:13px;overflow-wrap:anywhere}
+#club-haver-player-detail .club-profile-muted{color:#999;font-size:12px}
+#club-haver-player-detail .club-profile-preference{display:flex;justify-content:space-between;align-items:center;gap:12px}
+@media(max-width:700px){#club-haver-player-detail .club-profile-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#club-haver-player-detail .club-profile-grid{grid-template-columns:1fr}}
 /* Abas do perfil do cliente: mesma navegação moderna do Ranking Geral/Final/Conferência */
 #club-haver-player-detail .club-haver-tabs{display:flex;gap:8px;padding:7px;background:#141414;border:1px solid #302727;border-radius:10px;width:fit-content;max-width:100%;margin:10px 0 14px}
 #club-haver-player-detail .club-haver-tab{border:0;border-radius:7px;padding:13px 22px;color:#999;background:transparent;white-space:nowrap;transition:.2s ease;font-weight:700;cursor:pointer}
@@ -3287,38 +3301,24 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         <button type="button" class="club-haver-tab" id="club-haver-tab-notebook" role="tab" aria-selected="false" aria-controls="club-haver-notebook-panel">Caderno</button>
       </div>
       <section id="club-haver-profile-panel" class="club-haver-tab-panel">
-      <div class="club-haver-summary">
-        <div class="club-haver-stat"><span>TOTAL CONSUMIDO</span><strong id="club-haver-player-charged">R$ 0,00</strong></div>
-        <div class="club-haver-stat paid"><span>TOTAL PAGO</span><strong id="club-haver-player-paid">R$ 0,00</strong></div>
-        <div class="club-haver-stat debt"><span>SALDO DEVEDOR</span><strong id="club-haver-player-balance">R$ 0,00</strong></div>
-      </div>
-      <div class="club-haver-stat" style="margin:12px 0"><span>GASTOU HOJE</span><strong id="club-haver-player-today">R$ 0,00</strong></div>
-      <h4>Consumo de hoje</h4>
-      <div id="club-haver-today-history" class="box"><div class="empty">Nenhum consumo registrado hoje.</div></div>
-      <section class="club-haver-quick-section">
-        <div class="club-haver-detail-head">
-          <div><h4>Consumo rápido</h4><p class="season-info">Toque no produto para lançar mais uma unidade na conta.</p></div>
-          <button class="btn secondary" id="club-haver-add-product-toggle" type="button">+ Cadastrar produto</button>
+        <div class="club-profile-metrics">
+          <div class="club-profile-metric"><strong id="club-profile-orders">0</strong><span>LANÇAMENTOS</span></div>
+          <div class="club-profile-metric"><strong id="club-profile-average">R$ 0,00</strong><span>TICKET MÉDIO</span></div>
+          <div class="club-profile-metric"><strong id="club-profile-last-order">—</strong><span>ÚLTIMO LANÇAMENTO</span></div>
+          <div class="club-profile-metric"><strong id="club-profile-rating">—</strong><span>AVALIAÇÃO MÉDIA</span></div>
         </div>
-        <div id="club-haver-quick-product-form" class="club-haver-form hidden">
-          <label>Nome do produto<input id="club-haver-quick-product-name" maxlength="100" placeholder="Ex.: Heineken"></label>
-          <label>Preço unitário (R$)<input id="club-haver-quick-product-price" type="number" min="0.01" step="0.01" placeholder="10,00"></label>
-          <label>Categoria<select id="club-haver-quick-product-category"><option value="Bebidas">Bebidas</option><option value="Alimentação">Alimentação</option><option value="Fichas">Fichas</option><option value="Inscrição">Inscrição</option><option value="Rebuy">Recompra</option><option value="Add-on">Add-on</option><option value="Outros">Outros</option></select></label>
-          <div><button class="btn" id="club-haver-quick-product-save" type="button">Salvar produto</button><span id="club-haver-quick-product-message" class="season-info"></span></div>
-        </div>
-        <div id="club-haver-quick-products" class="club-haver-quick-products"><div class="empty">Carregando produtos...</div></div>
-      </section>
-      <h4>Adicionar lançamento manual</h4>
-      <div class="club-haver-form">
-        <label>Tipo<select id="club-haver-entry-type"><option value="charge">Consumo / cobrança</option><option value="payment">Pagamento</option></select></label>
-        <label>Valor (R$)<input id="club-haver-entry-amount" type="number" min="0.01" step="0.01" placeholder="0,00"></label>
-        <label>Categoria<select id="club-haver-entry-category"><option value="Bebidas">Bebidas</option><option value="Alimentação">Alimentação</option><option value="Fichas">Fichas</option><option value="Inscrição">Inscrição</option><option value="Outros">Outros</option></select></label>
-        <label id="club-haver-payment-method-wrap" class="hidden">Forma de pagamento<select id="club-haver-payment-method"><option value="Pix">Pix</option><option value="Dinheiro">Dinheiro</option><option value="Cartão">Cartão</option><option value="Outro">Outro</option></select></label>
-        <label class="wide">Descrição<input id="club-haver-entry-description" maxlength="180" placeholder="Ex.: 2 refrigerantes, inscrição do torneio..."></label>
-        <div class="wide"><button class="btn" id="club-haver-save-entry">Registrar movimentação</button><span id="club-haver-entry-message" class="season-info"></span></div>
-      </div>
-      <h4>Histórico de movimentações</h4>
-      <div id="club-haver-history" class="box"><div class="empty">Nenhuma movimentação registrada.</div></div>
+        <section class="club-profile-section"><h4>Informações pessoais</h4><div class="club-profile-grid">
+          <div><span>Telefone</span><strong id="club-profile-phone">Não informado</strong></div>
+          <div><span>E-mail</span><strong>Não informado</strong></div>
+          <div><span>Origem do cadastro</span><strong>Não informado</strong></div>
+          <div><span>Sexo</span><strong>Não informado</strong></div>
+          <div><span>Data de nascimento</span><strong>Não informado</strong></div>
+          <div><span>Cliente desde</span><strong id="club-profile-since">—</strong></div>
+        </div></section>
+        <section class="club-profile-section"><h4>Anotações internas</h4><p class="club-profile-muted">Sem anotações</p></section>
+        <section class="club-profile-section"><h4>Preferências de notificações</h4><div class="club-profile-preference"><span>Deseja receber disparos via WhatsApp</span><strong>Não informado</strong></div></section>
+        <section class="club-profile-section"><h4>Preferências gerais</h4><div class="club-profile-preference"><span>Bloquear cliente</span><strong>Não configurado</strong></div></section>
+        <section class="club-profile-section"><h4>Endereços</h4><p class="club-profile-muted">Nenhum endereço cadastrado</p></section>
       </section>
       <section id="club-haver-stages-panel" class="club-haver-tab-panel hidden" role="tabpanel" aria-labelledby="club-haver-tab-stages">
         <h4>Etapas disputadas</h4>
@@ -8614,6 +8614,15 @@ async function loadClubHaverLedger() {
     return;
   }
   clubHaverTransactions = data || [];
+  const profileCharges=clubHaverTransactions.filter(row=>row.entry_type==="charge");
+  const profileTotal=profileCharges.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
+  const profileLast=profileCharges[0]?.created_at;
+  $("club-profile-orders").textContent=String(profileCharges.length);
+  $("club-profile-average").textContent=clubMoney(profileCharges.length?profileTotal/profileCharges.length:0);
+  $("club-profile-last-order").textContent=profileLast?new Date(profileLast).toLocaleDateString("pt-BR"):"—";
+  $("club-profile-rating").textContent="—";
+  $("club-profile-phone").textContent=clubHaverSelectedPlayer.phone||"Não informado";
+  $("club-profile-since").textContent=clubHaverSelectedPlayer.created_at?new Date(clubHaverSelectedPlayer.created_at).toLocaleDateString("pt-BR"):"—";
   const charged = clubHaverTransactions.filter(x=>x.entry_type==="charge").reduce((a,x)=>a+Number(x.amount),0);
   const paid = clubHaverTransactions.filter(x=>x.entry_type==="payment").reduce((a,x)=>a+Number(x.amount),0);
   $("club-haver-player-charged").textContent = clubMoney(charged);
