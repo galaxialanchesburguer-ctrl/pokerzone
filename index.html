@@ -3210,31 +3210,6 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         <input id="club-haver-search" type="search" placeholder="Buscar cliente por nome ou telefone..." aria-label="Buscar cliente por nome ou telefone">
         <button class="btn" id="club-haver-new-player-toggle" type="button">+ Novo cliente</button>
       </div>
-      <div class="club-haver-summary">
-        <div class="club-haver-stat"><span>TOTAL LANÇADO</span><strong id="club-haver-total-charged">R$ 0,00</strong></div>
-        <div class="club-haver-stat paid"><span>TOTAL RECEBIDO</span><strong id="club-haver-total-paid">R$ 0,00</strong></div>
-        <div class="club-haver-stat debt"><span>TOTAL EM ABERTO</span><strong id="club-haver-total-open">R$ 0,00</strong></div>
-      </div>
-      <div class="club-haver-toolbar client-directory-actions">
-        <button class="btn secondary" id="club-haver-import-ranking" type="button">Importar ranking geral</button>
-        <button class="btn secondary" id="club-haver-report-toggle" type="button">📊 Relatórios</button>
-      </div>
-      <div id="club-haver-import-ranking-message" class="season-info" style="margin:0 0 12px"></div>
-      <div id="club-haver-report" class="club-haver-form hidden">
-        <h4>Relatório geral de movimentações</h4>
-        <div class="club-haver-form">
-          <label>De <input type="date" id="club-haver-report-from"></label>
-          <label>Até <input type="date" id="club-haver-report-to"></label>
-          <label>Tipo <select id="club-haver-report-type"><option value="all">Tudo</option><option value="charge">Consumos / cobranças</option><option value="payment">Pagamentos</option></select></label>
-          <div><button class="btn" id="club-haver-report-apply" type="button">Gerar relatório</button></div>
-        </div>
-        <div class="club-haver-summary">
-          <div class="club-haver-stat"><span>CONSUMOS NO PERÍODO</span><strong id="club-haver-report-charged">R$ 0,00</strong></div>
-          <div class="club-haver-stat paid"><span>PAGAMENTOS NO PERÍODO</span><strong id="club-haver-report-paid">R$ 0,00</strong></div>
-          <div class="club-haver-stat debt"><span>SALDO DO PERÍODO</span><strong id="club-haver-report-net">R$ 0,00</strong></div>
-        </div>
-        <div id="club-haver-report-results" class="box"><div class="empty">Selecione o período e gere o relatório.</div></div>
-      </div>
       <div id="club-haver-new-player" class="club-haver-form hidden">
         <label class="wide">Nome do jogador<input id="club-haver-player-name" maxlength="100" placeholder="Nome completo"></label>
         <div class="wide"><button class="btn" id="club-haver-save-player">Salvar jogador</button> <span id="club-haver-player-message" class="season-info"></span></div>
@@ -8395,9 +8370,6 @@ async function loadClubHaver() {
     else if(row.category!=="Premiação paga")acc.charged+=Number(row.amount)||0;
     return acc;
   },{charged:0,paid:0});
-  $("club-haver-total-charged").textContent=clubMoney(totals.charged);
-  $("club-haver-total-paid").textContent=clubMoney(totals.paid);
-  $("club-haver-total-open").textContent=clubMoney(totals.charged-totals.paid);
   clubHaverAllEntries=entries;
   clubHaverTournamentEntries=tournamentEntries;
   clubHaverStages=stages;
@@ -8560,11 +8532,11 @@ $("club-haver-back-list").addEventListener("click",()=>{
   $("club-haver-player-detail").classList.add("hidden");
   $("club-haver-overview").classList.remove("hidden");
 });
-$("club-haver-import-ranking").addEventListener("click",importGeneralRankingPlayersToClients);
+
 $("club-haver-new-player-toggle").addEventListener("click",()=>$("club-haver-new-player").classList.toggle("hidden"));
 $("club-haver-save-player").addEventListener("click",saveClubHaverPlayer);
 $("club-haver-search").addEventListener("input",renderClubHaverPlayers);
-$("club-haver-report-toggle").addEventListener("click",()=>$("club-haver-report").classList.toggle("hidden"));
+
 function renderClubHaverReport() {
   const from = $("club-haver-report-from").value;
   const to = $("club-haver-report-to").value;
@@ -8584,7 +8556,7 @@ function renderClubHaverReport() {
     return '<div class="club-haver-entry"><div><strong>' + esc(playerNames[row.club_player_id] || "Jogador") + ' — ' + esc(row.description) + '</strong><small>' + esc(row.category || (payment?"Pagamento":"Consumo")) + (row.payment_method?' • '+esc(row.payment_method):'') + ' • ' + new Date(row.created_at).toLocaleString("pt-BR") + '</small></div><span class="' + (payment?'payment':'charge') + '">' + (payment?'- ':'+ ') + clubMoney(row.amount) + '</span></div>';
   }).join("") : '<div class="empty">Nenhuma movimentação encontrada nesse período.</div>';
 }
-$("club-haver-report-apply").addEventListener("click",renderClubHaverReport);
+
 $("club-haver-entry-type").addEventListener("change",()=>{
   const payment = $("club-haver-entry-type").value==="payment";
   $("club-haver-payment-method-wrap").classList.toggle("hidden",!payment);
