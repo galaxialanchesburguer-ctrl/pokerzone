@@ -8721,23 +8721,31 @@ async function openClubHaverPlayer(playerId) {
   $("club-haver-profile-panel")?.classList.remove("hidden");
   $("club-haver-stages-panel")?.classList.add("hidden");
   $("club-haver-notebook-panel")?.classList.add("hidden");
-  await loadClubHaverQuickProducts();
-  await loadClubHaverLedger();
   if($("club-haver-tab-profile")&&!$("club-haver-tab-profile").dataset.bound){
     const switchClubHaverTab=async tab=>{
       ["profile","stages","notebook"].forEach(name=>{
-        $("club-haver-tab-"+name).classList.toggle("active",name===tab);
-        $("club-haver-tab-"+name).setAttribute("aria-selected",name===tab?"true":"false");
-        $("club-haver-"+name+"-panel").classList.toggle("hidden",name!==tab);
+        const button=$("club-haver-tab-"+name),panel=$("club-haver-"+name+"-panel");
+        if(!button||!panel)return;
+        button.classList.toggle("active",name===tab);
+        button.setAttribute("aria-selected",name===tab?"true":"false");
+        panel.classList.toggle("hidden",name!==tab);
       });
-      if(tab==="stages")await loadClubHaverPlayerStages();
-      if(tab==="notebook")await loadClubHaverNotebook();
+      try{
+        if(tab==="stages")await loadClubHaverPlayerStages();
+        if(tab==="notebook")await loadClubHaverNotebook();
+      }catch(error){
+        console.error("Erro ao abrir a aba "+tab+":",error);
+        const target=tab==="notebook"?$("club-haver-notebook-list"):$("club-haver-player-stages");
+        if(target)target.innerHTML='<div class="notice">Não foi possível carregar os dados desta aba. Tente novamente.</div>';
+      }
     };
     ["profile","stages","notebook"].forEach(tab=>{
-      $("club-haver-tab-"+tab).addEventListener("click",()=>switchClubHaverTab(tab));
-      $("club-haver-tab-"+tab).dataset.bound="1";
+      $("club-haver-tab-"+tab)?.addEventListener("click",()=>switchClubHaverTab(tab));
+      if($("club-haver-tab-"+tab))$("club-haver-tab-"+tab).dataset.bound="1";
     });
   }
+  try{await loadClubHaverQuickProducts();}catch(error){console.error("Erro ao carregar produtos rápidos:",error);}
+  try{await loadClubHaverLedger();}catch(error){console.error("Erro ao carregar extrato do cliente:",error);}
 }
 async function deleteClubHaverPlayer(){
   if(!isStaff||!clubHaverSelectedPlayer||!selectedClubId)return;
