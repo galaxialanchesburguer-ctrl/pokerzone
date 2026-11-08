@@ -2573,6 +2573,22 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 @media(max-width:700px){#club-haver-player-detail .club-profile-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}#club-haver-player-detail .club-profile-grid{grid-template-columns:1fr}}
 
 /* Cartões de etapas no cadastro individual do cliente, inspirados na lista de pedidos */
+/* Histórico compacto de etapas no perfil do cliente */
+#club-haver-player-stages .club-haver-stage-card-button{width:100%;min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;margin:6px 0;border:1px solid #373030;border-radius:9px;background:#171515;color:#fff;text-align:left;cursor:pointer;transition:border-color .18s,background .18s}
+#club-haver-player-stages .club-haver-stage-card-button:hover{background:#211b1b;border-color:#a64a50}
+#club-haver-player-stages .club-haver-stage-card-copy{min-width:0;flex:1}
+#club-haver-player-stages .club-haver-stage-card-copy strong{display:block;font-size:13px;color:#f5f5f5}
+#club-haver-player-stages .club-haver-stage-card-copy small{display:block;margin-top:3px;font-size:11px;color:#999}
+#club-haver-player-stages .club-haver-stage-card-arrow{font-size:23px;color:#aaa}
+#club-haver-stage-info-modal .club-haver-stage-info-card{position:relative}
+#club-haver-stage-info-modal .club-haver-stage-info-close{position:absolute;right:14px;top:10px;border:0;background:transparent;color:#aaa;font-size:25px;cursor:pointer}
+#club-haver-stage-info-modal .club-haver-stage-info-tournament{margin:-8px 0 18px;color:#999;font-size:12px}
+#club-haver-stage-info-modal .club-haver-stage-info-grid{display:grid;grid-template-columns:1fr;gap:10px}
+#club-haver-stage-info-modal .club-haver-stage-info-grid div{padding:12px;border:1px solid #373030;border-radius:9px;background:#211d1d}
+#club-haver-stage-info-modal .club-haver-stage-info-grid span{display:block;margin-bottom:5px;color:#999;font-size:11px}
+#club-haver-stage-info-modal .club-haver-stage-info-grid strong{color:#fff;font-size:14px}
+@media(min-width:480px){#club-haver-stage-info-modal .club-haver-stage-info-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
 #club-haver-player-stages .club-haver-stage-card-compact{border:1px solid #373030;border-radius:11px;overflow:hidden;margin:9px 0;background:#171515}
 #club-haver-player-stages .club-haver-stage-card-compact .club-haver-stage-toggle{min-height:76px;padding:12px;display:flex;align-items:center;gap:11px;width:100%;border:0;background:transparent;color:#fff;text-align:left;cursor:pointer}
 #club-haver-player-stages .club-haver-stage-icon{width:40px;height:40px;flex:0 0 40px;border-radius:50%;display:grid;place-items:center;background:#292323;color:#ff858b;font-size:20px}
@@ -8779,9 +8795,6 @@ async function loadClubHaverPlayerStages(){
   const stages=[...stageMap.values()].sort((a,b)=>String(b.played_at||"").localeCompare(String(a.played_at||"")));
   const stageIds=stages.map(stage=>stage.id);
   if(!stageIds.length){target.innerHTML='<div class="empty">Nenhuma etapa encontrada.</div>';return;}
-
-  // A participação esportiva é definida exclusivamente pela presença do jogador em results.
-  // Comandas e lançamentos financeiros não determinam se uma etapa foi disputada.
   const {data:players,error:playersError}=await db.from("players").select("id,display_name,tournament_id").in("tournament_id",tournamentIds);
   if(playersError){target.innerHTML='<div class="notice">Erro ao localizar jogador: '+esc(playersError.message)+'</div>';return;}
   const playerIds=(players||[]).filter(player=>normalizeName(player.display_name)===playerName).map(player=>player.id).filter(Boolean);
@@ -8796,14 +8809,33 @@ async function loadClubHaverPlayerStages(){
   const {data:tournaments,error:tournamentsError}=await db.from("tournaments").select("id,name").in("id",idsForList);
   if(tournamentsError){target.innerHTML='<div class="notice">Erro ao carregar torneios: '+esc(tournamentsError.message)+'</div>';return;}
   const tournamentMap=new Map((tournaments||[]).map(item=>[item.id,item]));
-  target.innerHTML=playedStages.map(stage=>{
-    const tournament=tournamentMap.get(stage.tournament_id);
+  const modalId="club-haver-stage-info-modal";
+  let modal=document.getElementById(modalId);
+  if(!modal){modal=document.createElement("div");modal.id=modalId;modal.className="club-profile-modal hidden";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");document.body.appendChild(modal);}
+  const closeStageModal=()=>modal.classList.add("hidden");
+  target.innerHTML=playedStages.map((stage,index)=>{
     const result=(resultsByStage.get(stage.id)||[])[0];
-    const date=stage.played_at?new Date(stage.played_at+"T12:00:00").toLocaleDateString("pt-BR"):"Data não informada";
     const title=stage.name||("Etapa "+String(stage.stage_number||""));
-    const resultText=result?(Number(result.position)>0?Number(result.position)+"º lugar":"Participou")+" • "+(Number(result.points)||0).toLocaleString("pt-BR")+" pontos":"Participou";
-    return '<article class="club-haver-stage-card club-haver-stage-card-compact"><div class="club-haver-stage-toggle"><span class="club-haver-stage-icon" aria-hidden="true">♠</span><span class="club-haver-stage-card-copy"><strong>'+esc(title)+'</strong><small>'+esc(tournament?.name||"Torneio")+' • '+esc(date)+'</small><small>'+esc(resultText)+'</small></span></div></article>';
+    const date=stage.played_at?new Date(stage.played_at+"T12:00:00").toLocaleDateString("pt-BR"):"Data não informada";
+    const position=Number(result.position)>0?Number(result.position)+"º lugar":"Participou";
+    const points=(Number(result.points)||0).toLocaleString("pt-BR");
+    const tournament=tournamentMap.get(stage.tournament_id);
+    return '<button type="button" class="club-haver-stage-card-compact club-haver-stage-card-button" data-stage-info="'+index+'"><span class="club-haver-stage-card-copy"><strong>'+esc(title)+'</strong><small>'+esc(tournament?.name||"Torneio")+' • '+esc(date)+'</small><small>'+esc(position)+' • '+esc(points)+' pontos</small></span><span class="club-haver-stage-card-arrow">›</span></button>';
   }).join("");
+  target.querySelectorAll("[data-stage-info]").forEach(button=>button.addEventListener("click",()=>{
+    const stage=playedStages[Number(button.dataset.stageInfo)];
+    const result=(resultsByStage.get(stage.id)||[])[0];
+    const title=stage.name||("Etapa "+String(stage.stage_number||""));
+    const date=stage.played_at?new Date(stage.played_at+"T12:00:00").toLocaleDateString("pt-BR"):"Data não informada";
+    const position=Number(result.position)>0?Number(result.position)+"º lugar":"Participou";
+    const points=(Number(result.points)||0).toLocaleString("pt-BR");
+    const tournament=tournamentMap.get(stage.tournament_id);
+    modal.innerHTML='<div class="club-profile-modal-card club-haver-stage-info-card"><button type="button" class="club-haver-stage-info-close" aria-label="Fechar">×</button><h3>'+esc(title)+'</h3><p class="club-haver-stage-info-tournament">'+esc(tournament?.name||"Torneio")+'</p><div class="club-haver-stage-info-grid"><div><span>Data</span><strong>'+esc(date)+'</strong></div><div><span>Posição</span><strong>'+esc(position)+'</strong></div><div><span>Pontuação</span><strong>'+esc(points)+' pontos</strong></div></div><div class="club-profile-modal-actions"><button type="button" class="btn secondary" data-close-stage-info>Fechar</button></div></div>';
+    modal.classList.remove("hidden");
+    modal.querySelector(".club-haver-stage-info-close").addEventListener("click",closeStageModal);
+    modal.querySelector("[data-close-stage-info]").addEventListener("click",closeStageModal);
+  }));
+  modal.onclick=event=>{if(event.target===modal)closeStageModal();};
 }
 async function loadClubHaverNotebook(){
   const target=$("club-haver-notebook-list");
