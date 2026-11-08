@@ -2607,6 +2607,23 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 @media(max-width:600px){#club-haver-player-stages .club-haver-stage-toggle{padding:12px 8px}#club-haver-player-stages .club-haver-stage-finance-summary span{min-width:calc(50% - 8px)}#club-haver-player-stages .club-haver-stage-finance-item{align-items:flex-start}}
 
 
+/* Ações e janelas de edição/exclusão do perfil do cliente */
+.club-profile-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.club-profile-section-heading h4{margin:12px 0 7px}
+.club-profile-actions{display:flex;gap:8px}
+.club-profile-icon-btn{width:34px;height:34px;display:grid;place-items:center;border-radius:8px;border:1px solid #484040;background:#211d1d;color:#fff;font-size:19px;cursor:pointer}
+.club-profile-icon-btn:hover{background:#342626;border-color:#a64a50}
+.club-profile-icon-btn.danger{color:#ff858b}
+.club-profile-modal{position:fixed;inset:0;z-index:1400;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.72);backdrop-filter:blur(3px)}
+.club-profile-modal.hidden{display:none!important}
+.club-profile-modal-card{width:min(100%,420px);padding:22px;border:1px solid #4a3838;border-radius:14px;background:#171515;box-shadow:0 22px 70px rgba(0,0,0,.55)}
+.club-profile-modal-card h3{margin:0 0 16px;font-size:18px}
+.club-profile-modal-card>p{color:#ddd;line-height:1.5}
+.club-profile-modal-card .club-profile-delete-warning{color:#ff858b;font-size:13px}
+.club-profile-modal-card label{display:grid;gap:7px;margin:13px 0;color:#bbb;font-size:12px}
+.club-profile-modal-card input{width:100%;box-sizing:border-box;padding:11px;border:1px solid #484040;border-radius:8px;background:#0f0f0f;color:#fff}
+.club-profile-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px;flex-wrap:wrap}
+.club-profile-modal-actions .btn:disabled{opacity:.55;cursor:not-allowed}
 /* Perfil do jogador em painel lateral */
 #club-haver-player-drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:1200;backdrop-filter:blur(2px)}
 #club-haver-player-detail{position:fixed;z-index:1201;top:0;right:0;width:50vw;max-width:900px;min-width:520px;height:100vh;height:100dvh;overflow-y:auto;overscroll-behavior:contain;background:#111;border-left:1px solid #393030;box-shadow:-18px 0 55px rgba(0,0,0,.38);padding:16px 18px;box-sizing:border-box;transform:translateX(105%);transition:transform .25s ease}
@@ -3315,7 +3332,6 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <div class="club-haver-detail-head">
         <div><h3 id="club-haver-selected-name">JOGADOR</h3><p class="season-info">Extrato individual • histórico acumulado</p></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn danger" id="club-haver-delete-player" type="button">Remover cliente</button>
           <button class="btn secondary" id="club-haver-back-list">✕ Fechar perfil</button>
         </div>
       </div>
@@ -3325,13 +3341,12 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         <button type="button" class="club-haver-tab" id="club-haver-tab-notebook" role="tab" aria-selected="false" aria-controls="club-haver-notebook-panel">Caderno</button>
       </div>
       <section id="club-haver-profile-panel" class="club-haver-tab-panel">
-        <div class="club-profile-metrics">
-          <div class="club-profile-metric"><strong id="club-profile-orders">0</strong><span>LANÇAMENTOS</span></div>
-          <div class="club-profile-metric"><strong id="club-profile-average">R$ 0,00</strong><span>TICKET MÉDIO</span></div>
-          <div class="club-profile-metric"><strong id="club-profile-last-order">—</strong><span>ÚLTIMO LANÇAMENTO</span></div>
-          <div class="club-profile-metric"><strong id="club-profile-rating">—</strong><span>AVALIAÇÃO MÉDIA</span></div>
-        </div>
-        <section class="club-profile-section"><h4>Informações pessoais</h4><div class="club-profile-grid">
+        <section class="club-profile-section">
+          <div class="club-profile-section-heading"><h4>Informações pessoais</h4><div class="club-profile-actions">
+            <button type="button" class="club-profile-icon-btn" id="club-haver-edit-profile" title="Editar informações" aria-label="Editar informações">✎</button>
+            <button type="button" class="club-profile-icon-btn danger" id="club-haver-delete-player" title="Excluir cliente" aria-label="Excluir cliente">▤</button>
+          </div></div>
+          <div class="club-profile-grid">
           <div><span>Telefone</span><strong id="club-profile-phone">Não informado</strong></div>
           <div><span>E-mail</span><strong>Não informado</strong></div>
           <div><span>Origem do cadastro</span><strong>Não informado</strong></div>
@@ -3354,6 +3369,25 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         <div class="club-haver-stat debt" style="margin:10px 0"><span>TOTAL DE DÉBITOS LANÇADOS</span><strong id="club-haver-notebook-total">R$ 0,00</strong></div>
         <div id="club-haver-notebook-list" class="box"><div class="empty">Carregando débitos...</div></div>
       </section>
+
+      <div id="club-haver-profile-edit-modal" class="club-profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="club-profile-edit-title">
+        <div class="club-profile-modal-card">
+          <h3 id="club-profile-edit-title">Editar informações pessoais</h3>
+          <label>Nome do jogador<input id="club-profile-edit-name" type="text" maxlength="100"></label>
+          <label>Telefone<input id="club-profile-edit-phone" type="tel" maxlength="30" placeholder="Telefone"></label>
+          <p id="club-profile-edit-message" class="season-info"></p>
+          <div class="club-profile-modal-actions"><button type="button" class="btn secondary" id="club-profile-edit-cancel">Cancelar</button><button type="button" class="btn" id="club-profile-edit-save">Salvar alterações</button></div>
+        </div>
+      </div>
+      <div id="club-haver-delete-modal" class="club-profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="club-haver-delete-title">
+        <div class="club-profile-modal-card">
+          <h3 id="club-haver-delete-title">Excluir cliente</h3>
+          <p>Deseja realmente excluir este cliente?</p>
+          <p class="club-profile-delete-warning">Esta operação não poderá ser desfeita.</p>
+          <p id="club-haver-delete-message" class="season-info"></p>
+          <div class="club-profile-modal-actions"><button type="button" class="btn secondary" id="club-haver-delete-cancel">Cancelar</button><button type="button" class="btn danger" id="club-haver-delete-confirm">Excluir</button></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -8625,30 +8659,65 @@ async function openClubHaverPlayer(playerId) {
 async function deleteClubHaverPlayer(){
   if(!isStaff||!clubHaverSelectedPlayer||!selectedClubId)return;
   const player=clubHaverSelectedPlayer;
-  const confirmed=confirm("Remover "+player.name+" da lista de clientes? Os consumos e pagamentos comuns vinculados a este cadastro também serão excluídos. Registros de buy-in/inscrição de torneios serão preservados e impedem a remoção.");
-  if(!confirmed)return;
-  const button=$("club-haver-delete-player");
+  const button=$("club-haver-delete-confirm");
+  const message=$("club-haver-delete-message");
   if(button)button.disabled=true;
+  if(message)message.textContent="Verificando registros vinculados...";
   const {data:ledgerRows,error:ledgerError}=await db.from("club_player_ledger").select("id").eq("club_player_id",player.id);
-  if(ledgerError){alert("Não foi possível verificar o histórico do cliente: "+ledgerError.message);if(button)button.disabled=false;return;}
+  if(ledgerError){if(message)message.textContent="Não foi possível verificar o histórico: "+ledgerError.message;if(button)button.disabled=false;return;}
   const ledgerIds=(ledgerRows||[]).map(row=>row.id);
   if(ledgerIds.length){
     const {data:tournamentEntries,error:entriesError}=await db.from("tournament_entries").select("id").in("ledger_entry_id",ledgerIds).limit(1);
-    if(entriesError){alert("Não foi possível verificar inscrições vinculadas: "+entriesError.message);if(button)button.disabled=false;return;}
+    if(entriesError){if(message)message.textContent="Não foi possível verificar inscrições vinculadas: "+entriesError.message;if(button)button.disabled=false;return;}
     if(tournamentEntries?.length){
-      alert("Este cliente possui buy-in ou inscrição vinculada a um torneio. Para preservar o histórico e a classificação, não é possível removê-lo.");
+      if(message)message.textContent="Este cliente possui buy-in ou inscrição vinculada a um torneio. Para preservar o histórico e a classificação, não é possível excluí-lo.";
       if(button)button.disabled=false;
       return;
     }
     const {error:deleteLedgerError}=await db.from("club_player_ledger").delete().eq("club_player_id",player.id);
-    if(deleteLedgerError){alert("Não foi possível remover o histórico do cliente: "+deleteLedgerError.message);if(button)button.disabled=false;return;}
+    if(deleteLedgerError){if(message)message.textContent="Não foi possível remover o histórico: "+deleteLedgerError.message;if(button)button.disabled=false;return;}
   }
   const {error:deletePlayerError}=await db.from("club_players").delete().eq("id",player.id).eq("club_id",selectedClubId);
-  if(deletePlayerError){alert("Não foi possível remover o cliente: "+deletePlayerError.message);if(button)button.disabled=false;return;}
+  if(deletePlayerError){if(message)message.textContent="Não foi possível excluir o cliente: "+deletePlayerError.message;if(button)button.disabled=false;return;}
+  $("club-haver-delete-modal")?.classList.add("hidden");
   clubHaverSelectedPlayer=null;
   closeClubHaverPlayerDrawer();
   await loadClubHaver();
-  alert("Cliente removido com sucesso.");
+}
+function openClubHaverDeleteModal(){
+  if(!isStaff||!clubHaverSelectedPlayer)return;
+  $("club-haver-delete-message").textContent="";
+  $("club-haver-delete-confirm").disabled=false;
+  $("club-haver-delete-modal").classList.remove("hidden");
+}
+function openClubHaverProfileEdit(){
+  if(!isStaff||!clubHaverSelectedPlayer)return;
+  $("club-profile-edit-name").value=clubHaverSelectedPlayer.name||"";
+  $("club-profile-edit-phone").value=clubHaverSelectedPlayer.phone||"";
+  $("club-profile-edit-message").textContent="";
+  $("club-haver-profile-edit-modal").classList.remove("hidden");
+  $("club-profile-edit-name").focus();
+}
+async function saveClubHaverProfileEdit(){
+  if(!isStaff||!clubHaverSelectedPlayer)return;
+  const name=$("club-profile-edit-name").value.trim();
+  const phone=$("club-profile-edit-phone").value.trim();
+  const message=$("club-profile-edit-message");
+  const button=$("club-profile-edit-save");
+  if(!name){message.textContent="Informe o nome do jogador.";return;}
+  button.disabled=true;
+  message.textContent="Salvando...";
+  const playerId=clubHaverSelectedPlayer.id;
+  const {error}=await db.from("club_players").update({name,phone:phone||null}).eq("id",playerId).eq("club_id",selectedClubId);
+  if(error){message.textContent="Não foi possível salvar: "+error.message;button.disabled=false;return;}
+  clubHaverSelectedPlayer.name=name;
+  clubHaverSelectedPlayer.phone=phone||null;
+  clubHaverPlayers=clubHaverPlayers.map(player=>player.id===playerId?{...player,name,phone:phone||null}:player);
+  $("club-haver-selected-name").textContent=name;
+  $("club-profile-phone").textContent=phone||"Não informado";
+  $("club-haver-profile-edit-modal").classList.add("hidden");
+  button.disabled=false;
+  renderClubHaverPlayers();
 }
 async function loadClubHaverLedger() {
   if (!clubHaverSelectedPlayer) return;
@@ -8732,7 +8801,15 @@ $("club-haver-back").addEventListener("click",()=>{
   $("club-details-area").classList.remove("club-subview-active");
   $("club-management-area").classList.remove("hidden");
 });
-$("club-haver-delete-player").addEventListener("click",deleteClubHaverPlayer);
+$("club-haver-delete-player").addEventListener("click",openClubHaverDeleteModal);
+$("club-haver-edit-profile").addEventListener("click",openClubHaverProfileEdit);
+$("club-profile-edit-cancel").addEventListener("click",()=>$("club-haver-profile-edit-modal").classList.add("hidden"));
+$("club-profile-edit-save").addEventListener("click",saveClubHaverProfileEdit);
+$("club-haver-delete-cancel").addEventListener("click",()=>$("club-haver-delete-modal").classList.add("hidden"));
+$("club-haver-delete-confirm").addEventListener("click",deleteClubHaverPlayer);
+["club-haver-profile-edit-modal","club-haver-delete-modal"].forEach(id=>{
+  $(id).addEventListener("click",event=>{if(event.target.id===id)$(id).classList.add("hidden");});
+});
 function closeClubHaverPlayerDrawer(){
   $("club-haver-player-detail").classList.remove("drawer-open");
   $("club-haver-player-detail").classList.add("hidden");
