@@ -8721,39 +8721,15 @@ async function saveClubHaverProfileEdit(){
 }
 async function loadClubHaverLedger() {
   if (!clubHaverSelectedPlayer) return;
-  $("club-haver-history").innerHTML = '<div class="empty">Carregando extrato...</div>';
-  const {data,error} = await db.from("club_player_ledger")
+  const {data,error}=await db.from("club_player_ledger")
     .select("id,entry_type,category,description,amount,payment_method,created_at")
     .eq("club_player_id",clubHaverSelectedPlayer.id).order("created_at",{ascending:false});
-  if (error) {
-    $("club-haver-history").innerHTML = '<div class="notice">Erro ao carregar extrato: ' + esc(error.message) + '</div>';
-    return;
-  }
-  clubHaverTransactions = data || [];
-  const profileCharges=clubHaverTransactions.filter(row=>row.entry_type==="charge");
-  const profileTotal=profileCharges.reduce((sum,row)=>sum+(Number(row.amount)||0),0);
-  const profileLast=profileCharges[0]?.created_at;
-  $("club-profile-orders").textContent=String(profileCharges.length);
-  $("club-profile-average").textContent=clubMoney(profileCharges.length?profileTotal/profileCharges.length:0);
-  $("club-profile-last-order").textContent=profileLast?new Date(profileLast).toLocaleDateString("pt-BR"):"—";
-  $("club-profile-rating").textContent="—";
-  $("club-profile-phone").textContent=clubHaverSelectedPlayer.phone||"Não informado";
-  $("club-profile-since").textContent=clubHaverSelectedPlayer.created_at?new Date(clubHaverSelectedPlayer.created_at).toLocaleDateString("pt-BR"):"—";
-  const charged = clubHaverTransactions.filter(x=>x.entry_type==="charge").reduce((a,x)=>a+Number(x.amount),0);
-  const paid = clubHaverTransactions.filter(x=>x.entry_type==="payment").reduce((a,x)=>a+Number(x.amount),0);
-  $("club-haver-player-charged").textContent = clubMoney(charged);
-  $("club-haver-player-paid").textContent = clubMoney(paid);
-  $("club-haver-player-balance").textContent = clubMoney(charged-paid);
-  const todayKey = new Date().toLocaleDateString("en-CA");
-  const todayCharges = clubHaverTransactions.filter(row => row.entry_type === "charge" && new Date(row.created_at).toLocaleDateString("en-CA") === todayKey);
-  const todayTotal = todayCharges.reduce((sum,row) => sum + Number(row.amount),0);
-  $("club-haver-player-today").textContent = clubMoney(todayTotal);
-  $("club-haver-today-history").innerHTML = todayCharges.length ? todayCharges.map(row => '<div class="club-haver-entry"><div><strong>' + esc(row.description) + '</strong><small>' + esc(row.category || "Consumo") + ' • ' + new Date(row.created_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) + '</small></div><span class="charge">+ ' + clubMoney(row.amount) + '</span></div>').join("") : '<div class="empty">Nenhum consumo registrado hoje.</div>';
-  $("club-haver-history").innerHTML = clubHaverTransactions.length ? clubHaverTransactions.map(row => {
-    const date = new Date(row.created_at).toLocaleString("pt-BR");
-    const payment = row.entry_type==="payment";
-    return '<div class="club-haver-entry"><div><strong>' + esc(row.description) + '</strong><small>' + esc(row.category || (payment?"Pagamento":"Consumo")) + (row.payment_method ? ' • ' + esc(row.payment_method) : '') + ' • ' + date + '</small></div><span class="' + (payment?'payment':'charge') + '">' + (payment?'- ':'+ ') + clubMoney(row.amount) + '</span></div>';
-  }).join("") : '<div class="empty">Nenhuma movimentação registrada para este jogador.</div>';
+  if(error){console.error("Erro ao carregar extrato do cliente:",error.message);return;}
+  clubHaverTransactions=data||[];
+  const phone=$("club-profile-phone");
+  const since=$("club-profile-since");
+  if(phone)phone.textContent=clubHaverSelectedPlayer.phone||"Não informado";
+  if(since)since.textContent=clubHaverSelectedPlayer.created_at?new Date(clubHaverSelectedPlayer.created_at).toLocaleDateString("pt-BR"):"—";
 }
 async function saveClubHaverEntry() {
   if (!clubHaverSelectedPlayer) return;
