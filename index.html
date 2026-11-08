@@ -2702,6 +2702,59 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 }
 
 
+
+
+/* Ajuste de largura e centralização da área Contas dos Jogadores */
+body.admin-sidebar-active main:has(#club-haver-area:not(.hidden)){
+  display:flex!important;
+  justify-content:center!important;
+  align-items:flex-start;
+  padding-left:18px!important;
+  padding-right:18px!important;
+  box-sizing:border-box;
+}
+body.admin-sidebar-active main:has(#club-haver-area:not(.hidden)) > #club-details-area{
+  flex:1 1 100%!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+body.admin-sidebar-active #club-details-area:has(#club-haver-area:not(.hidden)) > .panel-pad{
+  padding-left:18px!important;
+  padding-right:18px!important;
+  box-sizing:border-box;
+}
+body.admin-sidebar-active #club-haver-area{
+  width:100%!important;
+  max-width:none!important;
+  margin-left:0!important;
+  margin-right:0!important;
+  box-sizing:border-box;
+}
+body.admin-sidebar-active #club-haver-overview,
+body.admin-sidebar-active #club-haver-player-list,
+body.admin-sidebar-active #club-haver-player-detail{
+  width:100%!important;
+  max-width:none!important;
+  box-sizing:border-box;
+}
+body.admin-sidebar-active .club-haver-summary{
+  width:100%;
+  max-width:none;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+body.admin-sidebar-active .client-list-card{
+  width:100%;
+  box-sizing:border-box;
+}
+@media(max-width:760px){
+  body.admin-sidebar-active main:has(#club-haver-area:not(.hidden)){padding-left:8px!important;padding-right:8px!important}
+  body.admin-sidebar-active #club-details-area:has(#club-haver-area:not(.hidden)) > .panel-pad{padding-left:8px!important;padding-right:8px!important}
+  body.admin-sidebar-active .club-haver-summary{grid-template-columns:1fr}
+}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
