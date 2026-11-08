@@ -8758,64 +8758,46 @@ async function loadClubHaverPlayerStages(){
   const target=$("club-haver-player-stages");
   if(!target||!clubHaverSelectedPlayer)return;
   target.innerHTML='<div class="empty">Localizando participações deste jogador...</div>';
-  const normalizeName=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," ");
+  const normalizeName=value=>String(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").trim().toLowerCase().replace(/\\s+/g," ");
   const playerName=normalizeName(clubHaverSelectedPlayer.name);
   const clubId=clubHaverSelectedPlayer.club_id||selectedClubId||managedClubId;
   if(!clubId){target.innerHTML='<div class="empty">Não foi possível identificar o clube deste cliente.</div>';return;}
-  const {data:clubStages,error:stagesError}=await db.from("stages")
-    .select("id,season_id,tournament_id,stage_number,name,played_at,status,club_id")
-    .eq("club_id",clubId).order("played_at",{ascending:false});
+  const {data:clubStages,error:stagesError}=await db.from("stages").select("id,season_id,tournament_id,stage_number,name,played_at,status,club_id").eq("club_id",clubId).order("played_at",{ascending:false});
   if(stagesError){target.innerHTML='<div class="notice">Erro ao localizar etapas: '+esc(stagesError.message)+'</div>';return;}
-  const stages=clubStages||[];
-  const tournamentIds=[...new Set(stages.map(stage=>stage.tournament_id).filter(Boolean))];
-  if(!tournamentIds.length){target.innerHTML='<div class="empty">Nenhuma etapa encontrada para este clube.</div>';return;}
-  const [{data:players,error:playersError},{data:commands,error:commandsError}]=await Promise.all([
+  const stages=clubStages||[], stageIds=stages.map(stage=>stage.id), tournamentIds=[...new Set(stages.map(stage=>stage.tournament_id).filter(Boolean))];
+  if(!stageIds.length||!tournamentIds.length){target.innerHTML='<div class="empty">Nenhuma etapa encontrada para este clube.</div>';return;}
+  const [{data:players,error:playersError},{data:commands,error:commandsError},{data:ledger,error:ledgerError}]=await Promise.all([
     db.from("players").select("id,display_name,tournament_id").in("tournament_id",tournamentIds),
-    db.from("stage_commands").select("id,stage_id,club_player_id,tournament_player_id").eq("club_player_id",clubHaverSelectedPlayer.id)
+    db.from("stage_commands").select("id,stage_id,club_player_id,tournament_player_id").eq("club_player_id",clubHaverSelectedPlayer.id).in("stage_id",stageIds),
+    db.from("club_player_ledger").select("id,stage_id,tournament_player_id,stage_command_id").eq("club_player_id",clubHaverSelectedPlayer.id).in("stage_id",stageIds)
   ]);
-  if(playersError||commandsError){const err=playersError||commandsError;target.innerHTML='<div class="notice">Erro ao localizar o vínculo do jogador: '+esc(err.message)+'</div>';return;}
+  if(playersError||commandsError||ledgerError){const err=playersError||commandsError||ledgerError;target.innerHTML='<div class="notice">Erro ao localizar o vínculo do jogador: '+esc(err.message)+'</div>';return;}
   const matchedPlayers=(players||[]).filter(player=>normalizeName(player.display_name)===playerName);
-  const matchedPlayerIds=matchedPlayers.map(player=>player.id);
-  const stageIds=stages.map(stage=>stage.id);
+  const playerIds=[...new Set([...(commands||[]).map(row=>row.tournament_player_id),...(ledger||[]).map(row=>row.tournament_player_id),...matchedPlayers.map(player=>player.id)].filter(Boolean))];
   const [{data:results,error:resultsError},{data:linkedCommands,error:linkedCommandsError}]=await Promise.all([
-    matchedPlayerIds.length?db.from("results").select("player_id,stage_id,position,points").in("player_id",matchedPlayerIds).in("stage_id",stageIds):Promise.resolve({data:[],error:null}),
-    matchedPlayerIds.length?db.from("stage_commands").select("id,stage_id,club_player_id,tournament_player_id").in("tournament_player_id",matchedPlayerIds).in("stage_id",stageIds):Promise.resolve({data:[],error:null})
+    playerIds.length?db.from("results").select("player_id,stage_id,position,points").in("player_id",playerIds).in("stage_id",stageIds):Promise.resolve({data:[],error:null}),
+    playerIds.length?db.from("stage_commands").select("id,stage_id,club_player_id,tournament_player_id").in("tournament_player_id",playerIds).in("stage_id",stageIds):Promise.resolve({data:[],error:null})
   ]);
   if(resultsError||linkedCommandsError){const err=resultsError||linkedCommandsError;target.innerHTML='<div class="notice">Erro ao carregar participações: '+esc(err.message)+'</div>';return;}
-  const participatedIds=new Set([...(results||[]).map(row=>row.stage_id),...(commands||[]).map(row=>row.stage_id),...(linkedCommands||[]).map(row=>row.stage_id)]);
+  const participatedIds=new Set([...(results||[]).map(row=>row.stage_id),...(commands||[]).map(row=>row.stage_id),...(linkedCommands||[]).map(row=>row.stage_id),...(ledger||[]).map(row=>row.stage_id)]);
   const participatedStages=stages.filter(stage=>participatedIds.has(stage.id));
-  if(!participatedStages.length){
-    target.innerHTML='<div class="empty">Não encontrei etapas disputadas por "'+esc(clubHaverSelectedPlayer.name)+'". Confira se o nome está igual no cadastro do jogador das etapas.</div>';
-    return;
-  }
+  if(!participatedStages.length){target.innerHTML='<div class="empty">Não encontrei etapas vinculadas a "'+esc(clubHaverSelectedPlayer.name)+'". Confira se o cadastro do cliente está associado às comandas dessas etapas.</div>';return;}
   const tournamentIdsForList=[...new Set(participatedStages.map(stage=>stage.tournament_id).filter(Boolean))];
   const {data:tournaments,error:tournamentsError}=await db.from("tournaments").select("id,name").in("id",tournamentIdsForList);
   if(tournamentsError){target.innerHTML='<div class="notice">Erro ao carregar torneios: '+esc(tournamentsError.message)+'</div>';return;}
-  const tournamentMap=new Map((tournaments||[]).map(item=>[item.id,item]));
-  const resultByStage=new Map();
+  const tournamentMap=new Map((tournaments||[]).map(item=>[item.id,item])), resultByStage=new Map(), commandByStage=new Map();
   (results||[]).forEach(row=>{if(!resultByStage.has(row.stage_id))resultByStage.set(row.stage_id,[]);resultByStage.get(row.stage_id).push(row);});
-  const commandByStage=new Map();
-  [...(commands||[]),...(linkedCommands||[])].forEach(row=>{if(!commandByStage.has(row.stage_id))commandByStage.set(row.stage_id,[]);commandByStage.get(row.stage_id).push(row);});
+  [...(commands||[]),...(linkedCommands||[])].forEach(row=>{if(!commandByStage.has(row.stage_id))commandByStage.set(row.stage_id,[]);if(!commandByStage.get(row.stage_id).some(item=>item.id===row.id))commandByStage.get(row.stage_id).push(row);});
   target.innerHTML=participatedStages.map((stage,index)=>{
-    const tournament=tournamentMap.get(stage.tournament_id);
-    const stageResults=resultByStage.get(stage.id)||[];
-    const result=stageResults[0];
-    const commandCount=(commandByStage.get(stage.id)||[]).length;
-    const date=stage.played_at?new Date(stage.played_at+"T12:00:00").toLocaleDateString("pt-BR"):"Data não informada";
-    const title=stage.name||("Etapa "+String(stage.stage_number||""));
-    const resultText=result?(Number(result.position)>0?Number(result.position)+"º lugar":"Participou")+" • "+(Number(result.points)||0).toLocaleString("pt-BR")+" pontos":"Participação registrada";
-    const detailId="club-haver-stage-detail-"+index;
+    const tournament=tournamentMap.get(stage.tournament_id), stageResults=resultByStage.get(stage.id)||[], result=stageResults[0], commandCount=(commandByStage.get(stage.id)||[]).length;
+    const date=stage.played_at?new Date(stage.played_at+"T12:00:00").toLocaleDateString("pt-BR"):"Data não informada", title=stage.name||("Etapa "+String(stage.stage_number||""));
+    const resultText=result?(Number(result.position)>0?Number(result.position)+"º lugar":"Participou")+" • "+(Number(result.points)||0).toLocaleString("pt-BR")+" pontos":"Participação registrada", detailId="club-haver-stage-detail-"+index;
     return '<article class="club-haver-stage-card club-haver-stage-card-compact"><button type="button" class="club-haver-stage-toggle" aria-expanded="false" aria-controls="'+detailId+'" data-stage-detail="'+detailId+'"><span class="club-haver-stage-icon" aria-hidden="true">♠</span><span class="club-haver-stage-card-copy"><strong>'+esc(title)+'</strong><small>'+esc(tournament?.name||"Torneio")+' • '+esc(date)+'</small><small>'+esc(resultText)+'</small></span><span class="club-haver-stage-total"><b>'+(commandCount?commandCount+" comanda(s)":"—")+'</b><small>Comandas</small></span><span class="club-haver-stage-chevron">›</span></button><div id="'+detailId+'" class="club-haver-stage-details hidden"><div class="club-haver-stage-finance-summary"><span>Participação <b>'+esc(resultText)+'</b></span><span>Comandas vinculadas <b>'+commandCount+'</b></span></div><p class="season-info">As movimentações financeiras desta etapa ficam disponíveis na comanda vinculada ao cliente.</p></div></article>';
   }).join("");
-  target.querySelectorAll("[data-stage-detail]").forEach(button=>{
-    button.addEventListener("click",()=>{
-      const panel=$(button.dataset.stageDetail);
-      const opening=panel.classList.contains("hidden");
-      panel.classList.toggle("hidden",!opening);
-      button.setAttribute("aria-expanded",opening?"true":"false");
-      button.classList.toggle("expanded",opening);
-    });
-  });
+  target.querySelectorAll("[data-stage-detail]").forEach(button=>button.addEventListener("click",()=>{
+    const panel=$(button.dataset.stageDetail), opening=panel.classList.contains("hidden");
+    panel.classList.toggle("hidden",!opening);button.setAttribute("aria-expanded",opening?"true":"false");button.classList.toggle("expanded",opening);
+  }));
 }
 async function loadClubHaverNotebook(){
   const target=$("club-haver-notebook-list");
