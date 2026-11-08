@@ -9234,12 +9234,12 @@ function renderClubHaverReport() {
   }).join("") : '<div class="empty">Nenhuma movimentação encontrada nesse período.</div>';
 }
 
-$("club-haver-entry-type").addEventListener("change",()=>{
+$("club-haver-entry-type")?.addEventListener("change",()=>{
   const payment = $("club-haver-entry-type").value==="payment";
   $("club-haver-payment-method-wrap").classList.toggle("hidden",!payment);
   $("club-haver-entry-category").disabled = payment;
 });
-$("club-haver-save-entry").addEventListener("click",saveClubHaverEntry);
+$("club-haver-save-entry")?.addEventListener("click",saveClubHaverEntry);
 
 async function loadClubHaverQuickProducts() {
   const area = $("club-haver-quick-products");
@@ -9357,8 +9357,8 @@ async function addClubHaverQuickProduct(product) {
   renderClubHaverQuickProducts();
   if(tournamentType && tournament && activeStage?.tournament_id===tournament.id){await refreshAll();await loadTournamentEntries();}
 }
-$("club-haver-add-product-toggle").addEventListener("click",()=>$("club-haver-quick-product-form").classList.toggle("hidden"));
-$("club-haver-quick-product-save").addEventListener("click",saveClubHaverQuickProduct);
+$("club-haver-add-product-toggle")?.addEventListener("click",()=>$("club-haver-quick-product-form")?.classList.toggle("hidden"));
+$("club-haver-quick-product-save")?.addEventListener("click",saveClubHaverQuickProduct);
 
 $("close-club-details").addEventListener("click",()=>$("club-haver-area").classList.add("hidden"));
 $("close-manage-clubs").addEventListener("click",()=>$("club-haver-area").classList.add("hidden"));
