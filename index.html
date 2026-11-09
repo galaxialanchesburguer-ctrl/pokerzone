@@ -6914,6 +6914,16 @@ function handleAdminSidebarNavigation(key) {
     $("tournament-tree")?.classList.add("hidden");
     $("tournament-app")?.classList.add("hidden");
     $("nearby-tournaments-screen")?.classList.add("hidden");
+
+    // Gestor autenticado: abre diretamente o clube vinculado à própria conta.
+    if (isClubManager && managedClubId) {
+      selectedClubId = managedClubId;
+      await openClub(managedClubId);
+      $("club-haver-btn")?.click();
+      setAdminSidebarActive("clients");
+      return;
+    }
+
     if (selectedClubId && !$("club-details-area").classList.contains("hidden")) {
       $("club-haver-btn").click();
       setAdminSidebarActive("clients");
