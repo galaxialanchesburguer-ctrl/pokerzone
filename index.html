@@ -3146,7 +3146,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   <div class="admin-sidebar-foot">ÁREA ADMINISTRATIVA<br>POKERZONE</div>
 </aside>
 
-<header><div class="logo">POKER<span>ZONE</span></div><div class="header-right"><div class="header-tag">RANKING OFICIAL</div><button class="btn secondary header-logout hidden" id="logout-btn">↪ Sair da conta</button></div></header>
+<header><div class="logo" id="header-home-logo" role="button" tabindex="0" aria-label="Voltar à tela inicial">POKER<span>ZONE</span></div><div class="header-right"><div class="header-tag">RANKING OFICIAL</div><button class="btn secondary header-logout hidden" id="logout-btn">↪ Sair da conta</button></div></header>
 <main>
  <!-- TELA INICIAL DOS TORNEIOS -->
 <section id="home-tournaments">
@@ -10930,19 +10930,39 @@ document.addEventListener("click",event=>{
   if(!sidebar.contains(event.target))sidebar.classList.remove("mobile-expanded");
 });
 
+function returnToAppHome(){
+  const main=document.querySelector("main");
+  if(!main)return;
+  hideStageSidebar();
+  if(typeof closeHomeSearches==="function") closeHomeSearches();
+  const home=$("home-tournaments");
+  main.querySelectorAll(":scope > section, :scope > .box, :scope > div[id]").forEach(el=>{
+    if(el!==home) el.classList.add("hidden");
+  });
+  if(home) home.classList.remove("hidden");
+  $("tournament-tree")?.classList.add("hidden");
+  $("admin-sidebar")?.classList.remove("mobile-expanded");
+  setPublicHomeChrome(true);
+  if(typeof setAdminSidebarActive==="function") setAdminSidebarActive("home");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+const headerHomeLogo=$("header-home-logo");
+if(headerHomeLogo){
+  headerHomeLogo.style.cursor="pointer";
+  headerHomeLogo.addEventListener("click",returnToAppHome);
+  headerHomeLogo.addEventListener("keydown",event=>{
+    if(event.key==="Enter"||event.key===" "){event.preventDefault();returnToAppHome();}
+  });
+}
 const adminSidebarBrand=document.querySelector(".admin-sidebar-brand");
 if(adminSidebarBrand){
   adminSidebarBrand.setAttribute("role","button");
   adminSidebarBrand.setAttribute("tabindex","0");
-  adminSidebarBrand.setAttribute("aria-label","Expandir ou recolher menu");
-  const toggleMobileSidebar=()=>{
-    if(window.matchMedia("(max-width: 760px)").matches){
-      $("admin-sidebar").classList.toggle("mobile-expanded");
-    }
-  };
-  adminSidebarBrand.addEventListener("click",toggleMobileSidebar);
+  adminSidebarBrand.setAttribute("aria-label","Voltar à tela inicial");
+  adminSidebarBrand.style.cursor="pointer";
+  adminSidebarBrand.addEventListener("click",returnToAppHome);
   adminSidebarBrand.addEventListener("keydown",event=>{
-    if(event.key==="Enter"||event.key===" "){event.preventDefault();toggleMobileSidebar();}
+    if(event.key==="Enter"||event.key===" "){event.preventDefault();returnToAppHome();}
   });
 }
 
