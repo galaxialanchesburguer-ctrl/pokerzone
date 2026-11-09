@@ -6420,7 +6420,7 @@ async function loadSidebarTournaments() {
 }
 async function openSidebarTournamentStages(selected, tournamentList) {
   if (!selected) return;
-  const stagesNavText=$('[data-admin-nav="stages"] .admin-sidebar-text');
+  const stagesNavText=document.querySelector('[data-admin-nav="stages"] .admin-sidebar-text');
   if(stagesNavText) stagesNavText.textContent="Etapas";
   $("admin-sidebar")?.classList.add("stages-sidebar-open");
   const backToTournaments=()=>loadSidebarTournamentListFromData(tournamentList);
@@ -6446,9 +6446,13 @@ async function openSidebarTournamentStages(selected, tournamentList) {
     showTab("stages-view");
     await openStage(sb.dataset.treeStage);
     const selectedStage=stages.find(st=>String(st.id)===String(sb.dataset.treeStage));
-    const stagesNavText=$('[data-admin-nav="stages"] .admin-sidebar-text');
-    if(stagesNavText && selectedStage){
-      stagesNavText.textContent="Etapa "+(selectedStage.stage_number ?? selectedStage.name ?? "");
+    const stagesNavButton=document.querySelector('[data-admin-nav="stages"]');
+    const stagesNavText=stagesNavButton?.querySelector(".admin-sidebar-text");
+    if(stagesNavButton && selectedStage){
+      const stageLabel="Etapa "+(selectedStage.stage_number ?? selectedStage.name ?? "");
+      if(stagesNavText) stagesNavText.textContent=stageLabel;
+      stagesNavButton.title=stageLabel;
+      stagesNavButton.setAttribute("aria-label",stageLabel);
     }
   }));
   const create=document.createElement("button");
