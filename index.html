@@ -3628,6 +3628,81 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
  
 </div>
 
+<!-- BUSCA PÚBLICA DE TORNEIOS -->
+<div id="public-tournament-search" class="box hidden">
+  <div class="box-head">
+    <h2>BUSCAR TORNEIOS</h2>
+    <button id="close-public-tournament-search" class="btn secondary">
+      Fechar
+    </button>
+  </div>
+
+  <div class="panel-pad">
+    <input
+      type="text"
+      id="public-tournament-search-input"
+      placeholder="Digite o nome do torneio ou clube..."
+    >
+
+    <div id="public-tournament-search-results">
+      <div class="empty">Digite para pesquisar torneios.</div>
+    </div>
+  </div>
+</div>
+
+ <!-- BUSCA PÚBLICA DE JOGADORES -->
+<div id="public-player-search" class="box hidden">
+  <div class="box-head">
+    <h2>BUSCAR JOGADORES</h2>
+    <button id="close-public-player-search" class="btn secondary">
+      Fechar
+    </button>
+  </div>
+
+  <div class="panel-pad">
+    <input
+      type="text"
+      id="public-player-search-input"
+      placeholder="Digite o nome do jogador..."
+    >
+
+    <div id="public-player-search-results">
+      <div class="empty">Digite o nome de um jogador para pesquisar.</div>
+    </div>
+  </div>
+</div>
+ 
+
+<!-- ÁREA DE BUSCA -->
+  <div id="tournament-search-area" class="box hidden">
+  <div class="box-head">
+    <h2>BUSCAR CLUBE</h2>
+    <button id="close-tournament-search" class="btn secondary">
+      Fechar
+    </button>
+  </div>
+
+  <div class="panel-pad">
+    <input
+      type="text"
+      id="tournament-search-input"
+      placeholder="Digite o nome do clube..."
+    >
+
+    <div id="recent-clubs-history" class="recent-clubs-history">
+      <h3>CLUBES ACESSADOS RECENTEMENTE</h3>
+      <div id="recent-clubs-list">
+        <div class="empty">Os clubes que você abrir aparecerão aqui.</div>
+      </div>
+    </div>
+
+    <div id="tournament-search-results">
+      <div class="empty">Digite o nome de um clube para pesquisar.</div>
+    </div>
+  </div>
+</div>
+
+  
 <!-- APRESENTAÇÃO PARA JOGADORES VISITANTES -->
 <section id="home-player-welcome" class="home-marketing hidden">
   <div class="marketing-intro">
@@ -3749,50 +3824,6 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   </div>
 </section>
 
-<!-- BUSCA PÚBLICA DE TORNEIOS -->
-<div id="public-tournament-search" class="box hidden">
-  <div class="box-head">
-    <h2>BUSCAR TORNEIOS</h2>
-    <button id="close-public-tournament-search" class="btn secondary">
-      Fechar
-    </button>
-  </div>
-
-  <div class="panel-pad">
-    <input
-      type="text"
-      id="public-tournament-search-input"
-      placeholder="Digite o nome do torneio ou clube..."
-    >
-
-    <div id="public-tournament-search-results">
-      <div class="empty">Digite para pesquisar torneios.</div>
-    </div>
-  </div>
-</div>
-
- <!-- BUSCA PÚBLICA DE JOGADORES -->
-<div id="public-player-search" class="box hidden">
-  <div class="box-head">
-    <h2>BUSCAR JOGADORES</h2>
-    <button id="close-public-player-search" class="btn secondary">
-      Fechar
-    </button>
-  </div>
-
-  <div class="panel-pad">
-    <input
-      type="text"
-      id="public-player-search-input"
-      placeholder="Digite o nome do jogador..."
-    >
-
-    <div id="public-player-search-results">
-      <div class="empty">Digite o nome de um jogador para pesquisar.</div>
-    </div>
-  </div>
-</div>
- 
 <!-- FORMULÁRIO DE CRIAÇÃO -->
 <div id="create-tournament-area" class="box hidden">
   <div class="box-head">
@@ -4443,35 +4474,6 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   <h3 class="blind-saved-title">ESTRUTURAS SALVAS PELO CLUBE</h3>
   <div id="blind-saved-list"><div class="empty">Carregando estruturas...</div></div>
 </div>
-</div>
-
-  <!-- ÁREA DE BUSCA -->
-  <div id="tournament-search-area" class="box hidden">
-  <div class="box-head">
-    <h2>BUSCAR CLUBE</h2>
-    <button id="close-tournament-search" class="btn secondary">
-      Fechar
-    </button>
-  </div>
-
-  <div class="panel-pad">
-    <input
-      type="text"
-      id="tournament-search-input"
-      placeholder="Digite o nome do clube..."
-    >
-
-    <div id="recent-clubs-history" class="recent-clubs-history">
-      <h3>CLUBES ACESSADOS RECENTEMENTE</h3>
-      <div id="recent-clubs-list">
-        <div class="empty">Os clubes que você abrir aparecerão aqui.</div>
-      </div>
-    </div>
-
-    <div id="tournament-search-results">
-      <div class="empty">Digite o nome de um clube para pesquisar.</div>
-    </div>
-  </div>
 </div>
 
   <!-- Histórico de torneios mantido no DOM para compatibilidade, sem exibição na página inicial -->
