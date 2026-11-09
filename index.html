@@ -3190,6 +3190,46 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   .stage-command-add span { font-size: 26px; }
   .stage-command-add small { font-size: 9px; text-align: center; }
 }
+
+/* ===== RESPIRO NA LISTA DE ETAPAS DA BARRA LATERAL ===== */
+#tournament-tree {
+  padding: 20px 14px;
+  gap: 10px;
+}
+#tournament-tree .tournament-tree-head {
+  padding-bottom: 17px;
+  gap: 12px;
+}
+#tournament-tree .tournament-tree-title {
+  font-size: 12px;
+  line-height: 1.45;
+  letter-spacing: 1px;
+  overflow-wrap: anywhere;
+}
+#tournament-tree #tournament-tree-list {
+  gap: 9px;
+}
+#tournament-tree .tournament-tree-item {
+  min-height: 46px;
+  padding: 12px 13px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media(max-width:760px) {
+  .admin-sidebar.mobile-expanded .tournament-tree {
+    padding: 18px 14px;
+  }
+  .admin-sidebar.mobile-expanded .tournament-tree-item {
+    min-height: 50px;
+    padding: 13px 13px;
+    line-height: 1.5;
+  }
+  .admin-sidebar.mobile-expanded #tournament-tree-list {
+    gap: 9px;
+  }
+}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
