@@ -6573,7 +6573,7 @@ if (manageClubsButton) {
   const homeHeader = document.querySelector("#home-tournaments > .home-header");
   const homeActions = document.querySelector("#home-tournaments > .home-actions");
   if (homeHeader) homeHeader.classList.remove("hidden");
-  if (homeActions) homeActions.classList.remove("hidden");
+  if (homeActions) homeActions.classList.toggle("hidden", isStaff);
   if (isStaff) msg(isClubManager ? "● Gestão do clube vinculado" : "● Acesso administrativo");
   else msg("● Consulta pública");
 }
@@ -6695,7 +6695,8 @@ function setPublicHomeChrome(visible) {
   const header = document.querySelector("#home-tournaments > .home-header");
   const actions = document.querySelector("#home-tournaments > .home-actions");
   if (header) header.classList.toggle("hidden", !visible);
-  if (actions) actions.classList.toggle("hidden", !visible);
+  // Atalhos de busca ficam disponíveis apenas para visitantes.
+  if (actions) actions.classList.toggle("hidden", !visible || isStaff);
 }
 function setAdminSidebarActive(key) {
   document.querySelectorAll("[data-admin-nav]").forEach(button => {
