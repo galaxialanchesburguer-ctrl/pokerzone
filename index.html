@@ -3628,6 +3628,44 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
  
 </div>
 
+<!-- APRESENTAÇÃO PARA JOGADORES VISITANTES -->
+<section id="home-player-welcome" class="home-marketing hidden">
+  <div class="marketing-intro">
+    <span class="marketing-eyebrow">POKERZONE · SUA COMUNIDADE, SEU JOGO</span>
+    <h2>O poker conecta. <span>O PokerZone aproxima.</span></h2>
+    <p>Encontre clubes, descubra torneios e acompanhe os resultados. Tudo para você ficar mais perto das comunidades de poker e da sua evolução como jogador.</p>
+  </div>
+
+  <div class="marketing-about-grid">
+    <article class="marketing-about-card">
+      <div class="marketing-icon">♣</div>
+      <h3>Conecte-se aos clubes</h3>
+      <p>Encontre clubes e comunidades de poker e descubra onde acontecem os jogos e campeonatos.</p>
+    </article>
+    <article class="marketing-about-card">
+      <div class="marketing-icon">🏆</div>
+      <h3>Acompanhe sua trajetória</h3>
+      <p>Consulte torneios, posições e resultados para acompanhar cada conquista na mesa.</p>
+    </article>
+    <article class="marketing-about-card">
+      <div class="marketing-icon">♠</div>
+      <h3>Fique por dentro</h3>
+      <p>Tenha torneios, clubes e informações da comunidade reunidos em um só lugar.</p>
+    </article>
+  </div>
+
+  <div class="marketing-audience">
+    <div>
+      <span class="marketing-eyebrow">MAIS PERTO DO JOGO</span>
+      <h2>Sua próxima história começa na mesa.</h2>
+    </div>
+    <div class="audience-grid">
+      <div class="audience-item"><strong>DESCUBRA</strong><span>Explore clubes e encontre novas comunidades para fazer parte.</span></div>
+      <div class="audience-item"><strong>PARTICIPE</strong><span>Encontre torneios e fique por dentro das oportunidades de jogo.</span></div>
+      <div class="audience-item"><strong>EVOLUA</strong><span>Acompanhe seus resultados e valorize cada etapa da sua jornada.</span></div>
+    </div>
+  </div>
+</section>
 
 <!-- APRESENTAÇÃO DO POKERZONE -->
 <section id="home-about-pokerzone" class="home-marketing hidden">
@@ -6576,6 +6614,8 @@ if (manageClubsButton) {
   if (homeActions) homeActions.classList.toggle("hidden", isStaff);
   const homeMarketing = $("home-about-pokerzone");
   if (homeMarketing) homeMarketing.classList.toggle("hidden", !isAdmin);
+  const playerWelcome = $("home-player-welcome");
+  if (playerWelcome) playerWelcome.classList.toggle("hidden", isStaff);
   if (isStaff) msg(isClubManager ? "● Gestão do clube vinculado" : "● Acesso administrativo");
   else msg("● Consulta pública");
 }
@@ -6697,9 +6737,11 @@ function setPublicHomeChrome(visible) {
   const header = document.querySelector("#home-tournaments > .home-header");
   const actions = document.querySelector("#home-tournaments > .home-actions");
   const marketing = $("home-about-pokerzone");
+  const playerWelcome = $("home-player-welcome");
   if (header) header.classList.toggle("hidden", !visible);
-  // Atalhos de busca ficam disponíveis apenas para visitantes.
+  // Atalhos e apresentação para jogadores ficam disponíveis apenas a visitantes.
   if (actions) actions.classList.toggle("hidden", !visible || isStaff);
+  if (playerWelcome) playerWelcome.classList.toggle("hidden", !visible || isStaff);
   // A apresentação comercial fica restrita ao administrador geral.
   if (marketing) marketing.classList.toggle("hidden", !visible || !isAdmin);
 }
