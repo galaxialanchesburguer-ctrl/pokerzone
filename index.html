@@ -6615,7 +6615,7 @@ if (manageClubsButton) {
   const homeMarketing = $("home-about-pokerzone");
   if (homeMarketing) homeMarketing.classList.toggle("hidden", !isAdmin);
   const playerWelcome = $("home-player-welcome");
-  if (playerWelcome) playerWelcome.classList.toggle("hidden", isStaff);
+  if (playerWelcome) playerWelcome.classList.toggle("hidden", isStaff && !isClubManager);
   if (isStaff) msg(isClubManager ? "● Gestão do clube vinculado" : "● Acesso administrativo");
   else msg("● Consulta pública");
 }
@@ -6739,9 +6739,9 @@ function setPublicHomeChrome(visible) {
   const marketing = $("home-about-pokerzone");
   const playerWelcome = $("home-player-welcome");
   if (header) header.classList.toggle("hidden", !visible);
-  // Atalhos e apresentação para jogadores ficam disponíveis apenas a visitantes.
+  // Atalhos de busca ficam apenas para visitantes; a apresentação também aparece no início do clube.
   if (actions) actions.classList.toggle("hidden", !visible || isStaff);
-  if (playerWelcome) playerWelcome.classList.toggle("hidden", !visible || isStaff);
+  if (playerWelcome) playerWelcome.classList.toggle("hidden", !visible || (isStaff && !isClubManager));
   // A apresentação comercial fica restrita ao administrador geral.
   if (marketing) marketing.classList.toggle("hidden", !visible || !isAdmin);
 }
