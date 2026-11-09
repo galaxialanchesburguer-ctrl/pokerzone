@@ -4886,8 +4886,9 @@ async function generateFinalRankingImage(){
  ctx.fillStyle="#f5443b";ctx.font="800 25px Arial";ctx.fillText("POKERZONE",width/2,78);
  ctx.fillStyle="#fff";ctx.font="800 43px Arial";
  ctx.fillText((tournament?.name||"RANKING DO TORNEIO").toUpperCase(),width/2,137);
+ const tournamentDescription=(tournament && tournament.description ? String(tournament.description) : "").trim();
  ctx.fillStyle="#d8cfd0";ctx.font="600 30px Arial";
- ctx.fillText($("final-ranking-view").querySelector(".box-head h2").textContent.toUpperCase(),width/2,190);
+ ctx.fillText(tournamentDescription,width/2,190,width-140);
  const {data:publishedStages,error:publishedStagesError}=await db.from("stages").select("id").eq("season_id",season?.id||"").eq("status","published");
  if(publishedStagesError){alert("Não foi possível identificar quantas etapas foram publicadas.");return;}
  const publishedStageCount=(publishedStages||[]).length;
@@ -4920,8 +4921,8 @@ async function generateFinalRankingImage(){
   ctx.fillText(row.total,800,y+47);ctx.fillText(row.discarded,1050,y+47);
   ctx.font="800 25px Arial";ctx.fillStyle="#fff";ctx.fillText(row.final,1320,y+47);
  });
- ctx.textAlign="center";ctx.fillStyle="#8f8588";ctx.font="18px Arial";
- ctx.fillText("POKERZONE • RANKING FINAL",width/2,height-35);
+ ctx.textAlign="center";ctx.fillStyle="#8f8588";ctx.font="16px Arial";
+ ctx.fillText("Classificação geral após "+publishedStageCount+" etapas, já com os 3 piores resultados descartados",width/2,height-35,width-100);
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
  if(!blob){alert("Não foi possível gerar a imagem.");return;}
  const url=URL.createObjectURL(blob),link=document.createElement("a");
