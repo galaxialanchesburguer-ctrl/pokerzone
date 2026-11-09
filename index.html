@@ -6756,7 +6756,7 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
         '<label>Buscar cliente ou jogador<input id="stage-command-customer-search" type="search" value="'+esc(searchTerm)+'" placeholder="Digite o nome..." autocomplete="off"></label>'+
         '<div class="stage-command-customer-results" id="stage-command-customer-results">'+(found.length?customerOptions:'<div class="empty">Nenhum cliente encontrado.</div>')+'</div>')+
     '</div>'+
-    (selected?'<div class="stage-command-modal-section"><h4>2. CONSUMO RÁPIDO</h4><p class="season-info">Valores do torneio carregados automaticamente.</p>'+
+    (player?'<div class="stage-command-modal-section"><h4>2. CONSUMO RÁPIDO</h4><p class="season-info">Valores do torneio carregados automaticamente.</p>'+
       '<div class="club-haver-quick-products stage-command-tournament-products">'+[
         {id:"__t_buyin",name:"Buy-in",category:"Inscrição",unit_price:Number(stageCommandTournamentDetails.buy_in)||0},
         {id:"__t_rebuy",name:"Rebuy",category:"Rebuy",unit_price:Number(stageCommandTournamentDetails.rebuy_amount)||0},
@@ -6841,7 +6841,7 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
     content.querySelector("#stage-command-product-form")?.classList.toggle("hidden");
   });
   content.querySelector("#stage-command-product-save")?.addEventListener("click",async()=>{
-    if(!isStaff||!stageCommandSelectedCustomer||!stageCommandSelectedPlayer)return;
+    if(!isStaff||!stageCommandSelectedPlayer)return;
     const name=content.querySelector("#stage-command-product-name").value.trim();
     const price=Number(content.querySelector("#stage-command-product-price").value);
     const category=content.querySelector("#stage-command-product-category").value;
