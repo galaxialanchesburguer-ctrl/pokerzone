@@ -2935,6 +2935,9 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   body.admin-sidebar-active .club-haver-summary{grid-template-columns:1fr}
 }
 
+
+.ranking-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}.ranking-title-row .section-title{margin:0}.ranking-title-row #generate-ranking-image{white-space:nowrap;padding:10px 15px;font-size:13px}
+@media(max-width:520px){.ranking-title-row{align-items:flex-start}.ranking-title-row #generate-ranking-image{width:auto}}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3798,7 +3801,10 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 
 
  <section id="tournament-ranking-view">
-  <h2 class="section-title">Classificação completa</h2>
+  <div class="ranking-title-row">
+   <h2 class="section-title">Classificação completa</h2>
+   <button class="btn secondary" id="generate-ranking-image" type="button">📸 Gerar imagem</button>
+  </div>
   <section class="box"><div class="box-head"><h2>RANKING DA TEMPORADA</h2>
    <input class="search" id="search" type="search" placeholder="Pesquisar jogador..." autocomplete="off">
   </div>
@@ -4796,6 +4802,64 @@ $("club-clock-back-btn").addEventListener("click", () => {
 });
 $("blind-clock-open-display-btn").addEventListener("click", () => openStandaloneBlindClock(selectedClubId));
 $("blind-structure-clock-display").addEventListener("click", () => openStandaloneBlindClock(selectedClubId));
+
+async function generateRankingImage(){
+ const rows=[...$("ranking").querySelectorAll("tr")].map(row=>({
+  position:row.children[0]?.textContent.trim()||"",
+  name:row.children[1]?.textContent.trim()||"",
+  points:row.children[2]?.textContent.trim()||"",
+  stages:row.children[3]?.textContent.trim()||""
+ })).filter(row=>row.name && !row.name.includes("Nenhum jogador"));
+ if(!rows.length){alert("Não há jogadores para gerar a imagem.");return;}
+ const canvas=document.createElement("canvas");
+ const ctx=canvas.getContext("2d");
+ const width=1080,rowHeight=76,top=300,bottom=90;
+ canvas.width=width;
+ canvas.height=top+(rows.length*rowHeight)+bottom;
+ const height=canvas.height;
+ ctx.fillStyle="#111014";ctx.fillRect(0,0,width,height);
+ const bg=ctx.createLinearGradient(0,0,width,height);
+ bg.addColorStop(0,"#241719");bg.addColorStop(1,"#111014");
+ ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
+ ctx.fillStyle="#f5443b";ctx.fillRect(0,0,width,14);
+ ctx.textAlign="center";
+ ctx.fillStyle="#f5443b";ctx.font="800 25px Arial";ctx.fillText("POKERZONE",width/2,78);
+ ctx.fillStyle="#ffffff";ctx.font="800 43px Arial";
+ ctx.fillText((tournament?.name||"RANKING DO TORNEIO").toUpperCase(),width/2,137);
+ ctx.fillStyle="#d8cfd0";ctx.font="600 30px Arial";
+ ctx.fillText($("tournament-ranking-view").querySelector(".section-title").textContent.toUpperCase(),width/2,190);
+ ctx.fillStyle="#8f8588";ctx.font="20px Arial";
+ ctx.fillText("CLASSIFICAÇÃO OFICIAL",width/2,235);
+ const startY=top;
+ ctx.fillStyle="#f5443b";ctx.fillRect(50,startY,width-100,52);
+ ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font="700 18px Arial";
+ ctx.fillText("POS.",82,startY+33);ctx.fillText("JOGADOR",205,startY+33);
+ ctx.textAlign="right";ctx.fillText("PONTOS",950,startY+33);
+ rows.forEach((row,index)=>{
+  const y=startY+52+index*rowHeight;
+  ctx.fillStyle=index%2===0?"#211d22":"#19161b";
+  ctx.fillRect(50,y,width-100,rowHeight);
+  ctx.strokeStyle="#393238";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(50,y+rowHeight);ctx.lineTo(width-50,y+rowHeight);ctx.stroke();
+  ctx.textAlign="left";ctx.font=index<3?"800 25px Arial":"600 23px Arial";
+  ctx.fillStyle=index===0?"#ffd166":index===1?"#d9dce2":index===2?"#d99a70":"#f5443b";
+  ctx.fillText(row.position,82,y+47);
+  ctx.fillStyle="#fff";ctx.font=index<3?"700 24px Arial":"500 22px Arial";
+  ctx.fillText(row.name.length>34?row.name.slice(0,31)+"...":row.name,205,y+47);
+  ctx.textAlign="right";ctx.fillStyle="#fff";ctx.font="800 24px Arial";
+  ctx.fillText(row.points,950,y+47);
+ });
+ ctx.textAlign="center";ctx.fillStyle="#8f8588";ctx.font="18px Arial";
+ ctx.fillText("POKERZONE • RANKING",width/2,height-35);
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+ if(!blob){alert("Não foi possível gerar a imagem.");return;}
+ const url=URL.createObjectURL(blob);
+ const link=document.createElement("a");
+ const safeName=(tournament?.name||"ranking").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").toLowerCase();
+ link.href=url;link.download="ranking-"+(safeName||"pokerzone")+".png";
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$("generate-ranking-image").addEventListener("click",generateRankingImage);
 
 function renderRanking(list){
  const tb=$("ranking");
