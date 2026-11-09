@@ -3310,7 +3310,10 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   #admin-sidebar.stages-sidebar-open.stages-sidebar-collapsed .admin-sidebar-brand{
     font-size:0!important;
     text-align:center!important;
-    padding:4px 0 14px!important;
+    margin-top:8px!important;
+    padding:12px 0 18px!important;
+    min-height:42px!important;
+    box-sizing:content-box!important;
   }
   #admin-sidebar.stages-sidebar-open.stages-sidebar-collapsed .admin-sidebar-brand:before{
     content:"PZ"!important;
@@ -11205,9 +11208,21 @@ if(adminSidebarBrand){
   adminSidebarBrand.setAttribute("tabindex","0");
   adminSidebarBrand.setAttribute("aria-label","Voltar à tela inicial");
   adminSidebarBrand.style.cursor="pointer";
-  adminSidebarBrand.addEventListener("click",returnToAppHome);
+  const handleAdminSidebarBrandClick=()=>{
+    const sidebar=$("admin-sidebar");
+    if(sidebar?.classList.contains("stages-sidebar-collapsed")){
+      sidebar.classList.remove("stages-sidebar-collapsed");
+      sidebar.classList.add("mobile-expanded","stages-sidebar-open");
+      $("tournament-tree")?.classList.remove("hidden");
+      setAdminSidebarActive("tournaments");
+      return;
+    }
+    returnToAppHome();
+  };
+  adminSidebarBrand.setAttribute("aria-label","Abrir lista de etapas ou voltar à tela inicial");
+  adminSidebarBrand.addEventListener("click",handleAdminSidebarBrandClick);
   adminSidebarBrand.addEventListener("keydown",event=>{
-    if(event.key==="Enter"||event.key===" "){event.preventDefault();returnToAppHome();}
+    if(event.key==="Enter"||event.key===" "){event.preventDefault();handleAdminSidebarBrandClick();}
   });
 }
 
