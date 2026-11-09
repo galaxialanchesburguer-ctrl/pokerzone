@@ -5743,11 +5743,18 @@ async function addTournamentEntry(type){
     message.textContent="Não foi possível registrar na Conferência: "+error.message+" (o lançamento da comanda foi desfeito).";
     return;
   }
-  message.textContent=label+" registrado para "+player.display_name+" e lançado na comanda.";
+  message.textContent=label+" registrado para "+player.display_name+" e lançado na comanda. Pesquise e selecione o próximo jogador para fazer outro lançamento.";
+  // Exige uma nova seleção explícita antes de qualquer outro Buy-in, Rebuy ou Add-on.
+  // Evita que cliques repetidos lancem automaticamente no último jogador selecionado.
+  selectedTournamentEntryPlayerId="";
+  $("entry-player-search").value="";
+  $("entry-player-search-results").innerHTML="";
   await loadTournamentEntries();
-  selectedTournamentEntryPlayerId=playerId;
-  $("entry-player-search").value=player.display_name;
-  renderTournamentEntryPlayer(playerId);
+  selectedTournamentEntryPlayerId="";
+  $("entry-player-search").value="";
+  renderTournamentEntryPlayerSearch("");
+  $("entry-player-detail-title").textContent="HISTÓRICO INDIVIDUAL";
+  $("entry-player-detail").innerHTML='<div class="empty">Pesquise e selecione um jogador para conferir os lançamentos individuais.</div>';
 }
 $("entry-player-search").addEventListener("input",event=>renderTournamentEntryPlayerSearch(event.target.value));
 $("entry-add-buyin").addEventListener("click",()=>addTournamentEntry("buyin"));
