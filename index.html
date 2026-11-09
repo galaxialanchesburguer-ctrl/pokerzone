@@ -3630,7 +3630,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 
 
 <!-- APRESENTAÇÃO DO POKERZONE -->
-<section id="home-about-pokerzone" class="home-marketing">
+<section id="home-about-pokerzone" class="home-marketing hidden">
   <div class="marketing-intro">
     <span class="marketing-eyebrow">MAIS ORGANIZAÇÃO. MAIS POKER.</span>
     <h2>O poker da sua comunidade, <span>em um só lugar.</span></h2>
@@ -6574,6 +6574,8 @@ if (manageClubsButton) {
   const homeActions = document.querySelector("#home-tournaments > .home-actions");
   if (homeHeader) homeHeader.classList.remove("hidden");
   if (homeActions) homeActions.classList.toggle("hidden", isStaff);
+  const homeMarketing = $("home-about-pokerzone");
+  if (homeMarketing) homeMarketing.classList.toggle("hidden", !isAdmin);
   if (isStaff) msg(isClubManager ? "● Gestão do clube vinculado" : "● Acesso administrativo");
   else msg("● Consulta pública");
 }
@@ -6694,9 +6696,12 @@ function loadSidebarTournamentListFromData(data) {
 function setPublicHomeChrome(visible) {
   const header = document.querySelector("#home-tournaments > .home-header");
   const actions = document.querySelector("#home-tournaments > .home-actions");
+  const marketing = $("home-about-pokerzone");
   if (header) header.classList.toggle("hidden", !visible);
   // Atalhos de busca ficam disponíveis apenas para visitantes.
   if (actions) actions.classList.toggle("hidden", !visible || isStaff);
+  // A apresentação comercial fica restrita ao administrador geral.
+  if (marketing) marketing.classList.toggle("hidden", !visible || !isAdmin);
 }
 function setAdminSidebarActive(key) {
   document.querySelectorAll("[data-admin-nav]").forEach(button => {
