@@ -6422,6 +6422,8 @@ async function openSidebarTournamentStages(selected, tournamentList) {
   if (!selected) return;
   const stagesNavText=document.querySelector('[data-admin-nav="stages"] .admin-sidebar-text');
   if(stagesNavText) stagesNavText.textContent="Etapas";
+  const stagesTab=document.querySelector('.tabs [data-tab="stages-view"]');
+  if(stagesTab) stagesTab.textContent="Etapas";
   $("admin-sidebar")?.classList.add("stages-sidebar-open");
   const backToTournaments=()=>loadSidebarTournamentListFromData(tournamentList);
   renderTournamentTreePanel("ETAPAS · "+selected.name,"Torneios",backToTournaments,'<div class="empty">Carregando etapas...</div>');
@@ -6451,6 +6453,8 @@ async function openSidebarTournamentStages(selected, tournamentList) {
     if(stagesNavButton && selectedStage){
       const stageLabel="Etapa "+(selectedStage.stage_number ?? selectedStage.name ?? "");
       if(stagesNavText) stagesNavText.textContent=stageLabel;
+      const stagesTab=document.querySelector('.tabs [data-tab="stages-view"]');
+      if(stagesTab) stagesTab.textContent=stageLabel;
       stagesNavButton.title=stageLabel;
       stagesNavButton.setAttribute("aria-label",stageLabel);
     }
