@@ -3239,6 +3239,36 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     overflow-wrap:anywhere!important;
   }
 }
+
+/* ===== MESMO PADRÃO VISUAL AO ABRIR UM TORNEIO (EX.: HAPPY MONDAY) ===== */
+#admin-sidebar-tournament-group .admin-sidebar-nav{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:9px!important;
+}
+#admin-sidebar-tournament-group .admin-sidebar-link{
+  width:100%!important;
+  min-height:48px!important;
+  box-sizing:border-box!important;
+  padding:13px 12px!important;
+  line-height:1.5!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+@media(max-width:760px){
+  .admin-sidebar.mobile-expanded #admin-sidebar-tournament-group{
+    width:100%!important;
+  }
+  .admin-sidebar.mobile-expanded #admin-sidebar-tournament-group .admin-sidebar-nav{
+    gap:10px!important;
+  }
+  .admin-sidebar.mobile-expanded #admin-sidebar-tournament-group .admin-sidebar-link{
+    min-height:52px!important;
+    padding:14px 13px!important;
+    font-size:14px!important;
+  }
+}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
