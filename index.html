@@ -3433,6 +3433,79 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   }
 }
 
+
+/* ===== CALENDÁRIO ADMINISTRATIVO E APARÊNCIA ===== */
+.admin-page-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:12px 0 25px}
+.admin-page-heading h1{margin:7px 0}
+.admin-calendar-box{overflow:hidden}
+.admin-calendar-weekdays,.admin-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.admin-calendar-weekdays{background:var(--panel2);border-bottom:1px solid var(--line)}
+.admin-calendar-weekdays span{text-align:center;padding:13px 4px;color:var(--muted);font-size:11px;font-weight:800}
+.calendar-day{min-height:112px;padding:8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0}
+.calendar-day:nth-child(7n){border-right:0}
+.calendar-day-empty{background:rgba(120,120,120,.035)}
+.calendar-day-number{display:block;font-size:12px;font-weight:800;margin-bottom:7px}
+.calendar-day.is-today{background:rgba(237,48,56,.07)}
+.calendar-day.is-today .calendar-day-number{color:var(--red)}
+.calendar-event{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;border:0;border-left:3px solid var(--red);border-radius:3px;background:rgba(237,48,56,.13);color:inherit;padding:5px 6px;margin:3px 0;font-size:10px;cursor:pointer}
+.calendar-more{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.admin-calendar-list{padding:16px}
+.admin-calendar-list h3{font-size:12px;letter-spacing:1px;margin:3px 0 12px}
+.calendar-list-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.calendar-list-item>div{flex:1;min-width:0}
+.calendar-list-item strong,.calendar-list-item small{display:block}
+.calendar-list-item small{color:var(--muted);font-size:11px;margin-top:5px}
+.calendar-visibility{font-size:10px;color:var(--muted)}
+.appearance-panel{max-width:760px}
+.appearance-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;padding:18px}
+.appearance-choice{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:15px;border:2px solid var(--line);border-radius:12px;background:var(--panel2);color:inherit;text-align:left;cursor:pointer}
+.appearance-choice.selected{border-color:var(--red);box-shadow:0 0 0 2px rgba(237,48,56,.1)}
+.appearance-choice strong{font-size:15px}
+.appearance-choice small{color:var(--muted);font-size:11px}
+.appearance-check{display:none;position:absolute;right:13px;top:13px;color:var(--red);font-weight:900}
+.appearance-choice.selected .appearance-check{display:block}
+.appearance-preview{width:100%;height:75px;display:flex;align-items:flex-start;gap:6px;padding:9px;border-radius:7px}
+.appearance-preview i{display:block;height:48px;border-radius:4px}
+.appearance-preview i:first-child{width:22%}
+.appearance-preview i:nth-child(2){width:43%}
+.appearance-preview i:nth-child(3){width:25%}
+.appearance-preview-dark{background:#101010}.appearance-preview-dark i{background:#292929;border:1px solid #444}.appearance-preview-dark i:first-child{background:#3a171a}
+.appearance-preview-light{background:#f1f2f4}.appearance-preview-light i{background:#fff;border:1px solid #ddd}.appearance-preview-light i:first-child{background:#f9dfe0}
+.appearance-note{padding:0 18px 18px}
+.home-header{position:relative}
+.home-header h1{font-size:clamp(38px,7vw,68px);letter-spacing:-2px}
+.home-header p{font-size:clamp(14px,2vw,18px);max-width:650px;line-height:1.6}
+:root[data-theme="light"]{--bg:#f3f4f6;--panel:#fff;--panel2:#eef0f3;--line:#d9dde3;--muted:#687080;color-scheme:light}
+:root[data-theme="light"] body{background:#f3f4f6!important;color:#20232a}
+:root[data-theme="light"] header{background:rgba(255,255,255,.96)!important;border-color:#e0e3e8!important}
+:root[data-theme="light"] .admin-sidebar{background:linear-gradient(180deg,#fff,#f2f3f6)!important;border-color:#d9dde3!important}
+:root[data-theme="light"] .admin-sidebar-brand,:root[data-theme="light"] .admin-sidebar-foot{border-color:#e0e3e8;color:#737b89}
+:root[data-theme="light"] .admin-sidebar-label{color:#7a8290}
+:root[data-theme="light"] .admin-sidebar-link{color:#4d5562}
+:root[data-theme="light"] .admin-sidebar-link:hover{background:#fcebed;color:#8d1820;border-color:#f2c6ca}
+:root[data-theme="light"] .admin-sidebar-link.active{background:#fdebed;border-color:#e9aeb3;color:#9d1821}
+:root[data-theme="light"] .tournament-tree{background:#fff;border-color:#d9dde3}
+:root[data-theme="light"] .tournament-tree-title{color:#303640}
+:root[data-theme="light"] .tournament-tree-item{color:#505866}
+:root[data-theme="light"] .box,:root[data-theme="light"] .podium-card,:root[data-theme="light"] .summary-card,:root[data-theme="light"] .profile-stat,:root[data-theme="light"] .profile-discard-item{background:#fff!important;border-color:#dfe3e8!important;color:#20232a}
+:root[data-theme="light"] .box-head,:root[data-theme="light"] th{background:#eef0f3!important;color:#4f5866}
+:root[data-theme="light"] td{border-color:#e5e7eb;color:#303640}
+:root[data-theme="light"] tr:hover td,:root[data-theme="light"] tbody tr:hover td{background:#fff3f3!important}
+:root[data-theme="light"] input,:root[data-theme="light"] select,:root[data-theme="light"] textarea{background:#fff!important;color:#20232a!important;border-color:#cbd1d9}
+:root[data-theme="light"] .btn.secondary{background:#eef0f3!important;color:#343b46!important;border-color:#cbd1d9!important}
+:root[data-theme="light"] .tab{color:#687080}
+:root[data-theme="light"] .tabs{background:#e9ecf0;border-color:#d9dde3}
+:root[data-theme="light"] .tab:hover{background:#fff;color:#222}
+:root[data-theme="light"] .profile-header h2,:root[data-theme="light"] #profile-content h3,:root[data-theme="light"] .summary-card strong{color:#20232a}
+:root[data-theme="light"] .profile-header p,:root[data-theme="light"] .profile-stats span,:root[data-theme="light"] .profile-discard-item small{color:#687080}
+:root[data-theme="light"] .profile-final-total{background:#fff0f0;border-color:#edc3c6}
+:root[data-theme="light"] .profile-final-total strong{color:#20232a}
+:root[data-theme="light"] footer{border-color:#d9dde3;color:#7b8290}
+:root[data-theme="light"] .connection-status{background:#fff;color:#343b46;border:1px solid #d9dde3}
+:root[data-theme="light"] .calendar-event{color:#8d1820}
+:root[data-theme="light"] .notice{background:#fff8e8;color:#75551a;border-color:#ead7a8}
+@media(max-width:700px){.calendar-day{min-height:78px;padding:5px 3px}.calendar-day-number{font-size:10px}.calendar-event{font-size:8px;padding:4px 3px}.calendar-more{font-size:8px}.calendar-list-item{flex-wrap:wrap}.calendar-list-item>div{flex-basis:65%}.appearance-options{grid-template-columns:1fr}.admin-page-heading .actions{width:100%}.admin-page-heading .actions .btn{flex:1}}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3444,7 +3517,10 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   <div>
     <div class="admin-sidebar-label">PAINEL</div>
     <nav class="admin-sidebar-nav">
-      <button type="button" class="admin-sidebar-link" data-admin-nav="tournaments" title="Torneios"><span class="admin-sidebar-icon">♛</span><span class="admin-sidebar-text">Torneios</span></button><div id="tournament-tree" class="tournament-tree hidden"><div id="tournament-tree-list"></div></div>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="home" title="Início"><span class="admin-sidebar-icon">⌂</span><span class="admin-sidebar-text">Início</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="calendar" title="Calendário"><span class="admin-sidebar-icon">▦</span><span class="admin-sidebar-text">Calendário</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="appearance" title="Aparência"><span class="admin-sidebar-icon">◐</span><span class="admin-sidebar-text">Aparência</span></button>
+            <button type="button" class="admin-sidebar-link" data-admin-nav="tournaments" title="Torneios"><span class="admin-sidebar-icon">♛</span><span class="admin-sidebar-text">Torneios</span></button><div id="tournament-tree" class="tournament-tree hidden"><div id="tournament-tree-list"></div></div>
       <button type="button" class="admin-sidebar-link" data-admin-nav="clients" title="Clientes"><span class="admin-sidebar-icon">♙</span><span class="admin-sidebar-text">Clientes</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="settings" title="Configurações"><span class="admin-sidebar-icon">⚙</span><span class="admin-sidebar-text">Configurações</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="clubs" title="Meu clube"><span class="admin-sidebar-icon">♣</span><span class="admin-sidebar-text">Meu clube / Clubes</span></button>
@@ -4230,6 +4306,32 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   </div>
 
 </section>
+
+<section id="admin-calendar-screen" class="hidden">
+  <div class="admin-page-heading">
+    <div><div class="eyebrow">POKERZONE • ORGANIZAÇÃO</div><h1>Calendário</h1><p class="season-info">Acompanhe as datas dos torneios cadastrados.</p></div>
+    <div class="actions"><button type="button" class="btn secondary" id="calendar-prev">← Anterior</button><button type="button" class="btn secondary" id="calendar-today">Hoje</button><button type="button" class="btn secondary" id="calendar-next">Próximo →</button></div>
+  </div>
+  <div class="box admin-calendar-box">
+    <div class="box-head"><h2 id="calendar-month-title">Carregando calendário...</h2><button type="button" class="btn secondary" id="calendar-refresh">↻ Atualizar</button></div>
+    <div class="admin-calendar-weekdays"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div>
+    <div id="admin-calendar-grid" class="admin-calendar-grid"><div class="empty">Carregando torneios...</div></div>
+    <div id="admin-calendar-list" class="admin-calendar-list"></div>
+  </div>
+</section>
+
+<section id="admin-appearance-screen" class="hidden">
+  <div class="admin-page-heading"><div><div class="eyebrow">PERSONALIZAÇÃO</div><h1>Aparência</h1><p class="season-info">Escolha como o PokerZone será exibido neste dispositivo.</p></div></div>
+  <div class="box appearance-panel">
+    <div class="box-head"><h2>TEMA DO SISTEMA</h2></div>
+    <div class="appearance-options">
+      <button type="button" class="appearance-choice" data-theme-choice="dark"><span class="appearance-preview appearance-preview-dark"><i></i><i></i><i></i></span><strong>Escuro</strong><small>Visual clássico do PokerZone</small><span class="appearance-check">✓</span></button>
+      <button type="button" class="appearance-choice" data-theme-choice="light"><span class="appearance-preview appearance-preview-light"><i></i><i></i><i></i></span><strong>Claro</strong><small>Visual leve para ambientes iluminados</small><span class="appearance-check">✓</span></button>
+    </div>
+    <p class="season-info appearance-note">A preferência fica salva neste navegador e será aplicada às telas do sistema.</p>
+  </div>
+</section>
+
  <!-- TORNEIOS PRÓXIMOS -->
 <section id="nearby-tournaments-screen" class="hidden">
 
@@ -6527,9 +6629,81 @@ function openAdminTournamentSection(tabId, navKey) {
   showTab(tabId);
   setAdminSidebarActive(navKey);
 }
+function showAdminScreen(screenId, navKey) {
+  if (!isStaff) return;
+  hideStageSidebar();
+  $("tournament-tree")?.classList.add("hidden");
+  $("admin-sidebar")?.classList.remove("mobile-expanded");
+  ["home-tournaments","nearby-tournaments-screen","tournament-app","admin-calendar-screen","admin-appearance-screen"].forEach(id => $(id)?.classList.add("hidden"));
+  $("manage-clubs-area")?.classList.add("hidden");
+  $("club-details-area")?.classList.add("hidden");
+  $(screenId)?.classList.remove("hidden");
+  setPublicHomeChrome(false);
+  setAdminSidebarActive(navKey);
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+let adminCalendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let adminCalendarEvents = [];
+function calendarDateKey(date) {
+  return [date.getFullYear(),String(date.getMonth()+1).padStart(2,"0"),String(date.getDate()).padStart(2,"0")].join("-");
+}
+function renderAdminCalendar() {
+  const grid=$("admin-calendar-grid"), title=$("calendar-month-title"), list=$("admin-calendar-list");
+  if(!grid||!title||!list)return;
+  const year=adminCalendarMonth.getFullYear(), month=adminCalendarMonth.getMonth();
+  title.textContent=adminCalendarMonth.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  const firstDay=new Date(year,month,1).getDay(), days=new Date(year,month+1,0).getDate();
+  const todayKey=calendarDateKey(new Date());
+  const cells=[];
+  for(let i=0;i<firstDay;i++) cells.push('<div class="calendar-day calendar-day-empty"></div>');
+  for(let day=1;day<=days;day++){
+    const key=calendarDateKey(new Date(year,month,day));
+    const events=adminCalendarEvents.filter(item=>item.event_date===key);
+    cells.push('<div class="calendar-day'+(key===todayKey?' is-today':'')+'"><span class="calendar-day-number">'+day+'</span>'+events.slice(0,3).map(event=>'<button type="button" class="calendar-event" data-calendar-tournament="'+event.id+'" title="'+esc(event.name)+'">'+esc(event.name)+'</button>').join("")+(events.length>3?'<small class="calendar-more">+'+(events.length-3)+' mais</small>':"")+'</div>');
+  }
+  grid.innerHTML=cells.join("");
+  const monthEvents=adminCalendarEvents.filter(item=>item.event_date && item.event_date.startsWith(year+"-"+String(month+1).padStart(2,"0"))).sort((a,b)=>(a.event_date+a.start_time).localeCompare(b.event_date+b.start_time));
+  list.innerHTML=monthEvents.length?'<h3>TORNEIOS DO MÊS</h3>'+monthEvents.map(item=>'<div class="calendar-list-item"><div><strong>'+esc(item.name)+'</strong><small>'+new Date(item.event_date+"T12:00:00").toLocaleDateString("pt-BR")+(item.start_time?' • '+item.start_time.slice(0,5):'')+' • '+esc(item.club_name||"Clube não informado")+'</small></div><span class="calendar-visibility">'+(item.is_public?'Público':'Privado')+'</span><button type="button" class="btn secondary" data-calendar-tournament="'+item.id+'">Abrir</button></div>').join(""):'<div class="empty">Nenhum torneio cadastrado neste mês.</div>';
+  grid.querySelectorAll("[data-calendar-tournament]").forEach(btn=>btn.addEventListener("click",()=>openCalendarTournament(btn.dataset.calendarTournament)));
+  list.querySelectorAll("[data-calendar-tournament]").forEach(btn=>btn.addEventListener("click",()=>openCalendarTournament(btn.dataset.calendarTournament)));
+}
+async function loadAdminCalendar() {
+  const grid=$("admin-calendar-grid");
+  if(!grid)return;
+  grid.innerHTML='<div class="empty">Carregando torneios...</div>';
+  const {data:tournaments,error}=await db.from("tournaments").select("id,name,is_public,club_id,clubs!tournaments_club_id_fkey(name)").order("name");
+  if(error){console.error("Erro ao carregar torneios do calendário:",error);grid.innerHTML='<div class="empty">Não foi possível carregar o calendário.</div>';return;}
+  const ids=(tournaments||[]).map(item=>item.id);
+  if(!ids.length){adminCalendarEvents=[];renderAdminCalendar();return;}
+  const {data:details,error:detailsError}=await db.from("tournament_details").select("tournament_id,event_date,start_time").in("tournament_id",ids).not("event_date","is",null);
+  if(detailsError){console.error("Erro ao carregar datas dos torneios:",detailsError);grid.innerHTML='<div class="empty">Não foi possível carregar as datas dos torneios.</div>';return;}
+  adminCalendarEvents=(details||[]).map(detail=>{
+    const tournament=tournaments.find(item=>item.id===detail.tournament_id);
+    return tournament?{...detail,id:tournament.id,name:tournament.name,is_public:tournament.is_public,club_name:tournament.clubs?.name||""}:null;
+  }).filter(Boolean);
+  renderAdminCalendar();
+}
+async function openCalendarTournament(tournamentId) {
+  const {data:selected,error}=await db.from("tournaments").select("*").eq("id",tournamentId).maybeSingle();
+  if(error||!selected){alert("Não foi possível abrir este torneio.");return;}
+  await openTournament(selected);
+}
+function applyPokerZoneTheme(theme) {
+  const selected=theme==="light"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",selected);
+  try{localStorage.setItem("pokerzone_theme",selected);}catch(error){console.warn("Não foi possível salvar o tema:",error);}
+  document.querySelectorAll("[data-theme-choice]").forEach(button=>button.classList.toggle("selected",button.dataset.themeChoice===selected));
+}
+try{applyPokerZoneTheme(localStorage.getItem("pokerzone_theme")||"dark");}catch(error){applyPokerZoneTheme("dark");}
+document.querySelectorAll("[data-theme-choice]").forEach(button=>button.addEventListener("click",()=>applyPokerZoneTheme(button.dataset.themeChoice)));
+$("calendar-prev")?.addEventListener("click",()=>{adminCalendarMonth=new Date(adminCalendarMonth.getFullYear(),adminCalendarMonth.getMonth()-1,1);renderAdminCalendar();});
+$("calendar-next")?.addEventListener("click",()=>{adminCalendarMonth=new Date(adminCalendarMonth.getFullYear(),adminCalendarMonth.getMonth()+1,1);renderAdminCalendar();});
+$("calendar-today")?.addEventListener("click",()=>{adminCalendarMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);renderAdminCalendar();});
+$("calendar-refresh")?.addEventListener("click",loadAdminCalendar);
+
 function handleAdminSidebarNavigation(key) {
   if (!isStaff) return;
-  if (["home","clubs","clients","settings"].includes(key)) {
+  if (["home","clubs","clients","settings","calendar","appearance"].includes(key)) {
     hideStageSidebar();
     $("tournament-tree")?.classList.add("hidden");
     $("admin-sidebar")?.classList.remove("mobile-expanded");
@@ -6537,6 +6711,16 @@ function handleAdminSidebarNavigation(key) {
   if (key === "home") {
     $("tournament-tree")?.classList.add("hidden");
     showAdminHome();
+    return;
+  }
+  if (key === "calendar") {
+    showAdminScreen("admin-calendar-screen","calendar");
+    loadAdminCalendar();
+    return;
+  }
+  if (key === "appearance") {
+    showAdminScreen("admin-appearance-screen","appearance");
+    applyPokerZoneTheme(document.documentElement.getAttribute("data-theme")||"dark");
     return;
   }
   if (key === "tournaments") {
