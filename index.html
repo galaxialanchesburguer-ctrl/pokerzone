@@ -4044,7 +4044,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
      <label>Número da etapa<input id="stage-number" type="number" min="1"></label>
      <label>Nome<input id="stage-name" placeholder="ETAPA 22"></label>
      <label>Data<input id="stage-date" type="date"></label>
-     <label>Status<select id="stage-status"><option value="draft">Rascunho</option><option value="published">Publicada</option></select></label>
+     <label>Status<input id="stage-status" type="text" value="Rascunho" readonly></label>
     </div>
     <div class="panel-pad admin-only"><div class="notice">Edite posições e pontos diretamente. Para retirar um jogador da etapa, remova sua linha. A ausência não gera pontos.</div>
     <div class="row">
@@ -6484,10 +6484,11 @@ async function openStage(id) {
   $("stage-number").value = selectedStage.stage_number ?? "";
   $("stage-name").value = selectedStage.name || "";
   $("stage-date").value = selectedStage.played_at || "";
-  $("stage-status").value = selectedStage.status || "draft";
+  $("stage-status").value = selectedStage.status === "published" ? "Publicada" : "Rascunho";
 
-  ["stage-number","stage-name","stage-date","stage-status","add-player","calculate-points","save-stage"]
-    .forEach(fieldId => { $(fieldId).disabled = !isStaff; });
+  ["stage-number","stage-name","add-player","calculate-points"].forEach(fieldId => { $(fieldId).disabled = !isStaff; });
+  $("stage-date").disabled = !isStaff || selectedStage.status === "published";
+  $("save-stage").disabled = !isStaff || selectedStage.status === "published";
 
   const { data, error } = await db
     .from("results")
@@ -7392,7 +7393,7 @@ $("new-stage").addEventListener("click", () => {
 
   $("stage-name").value = "ETAPA " + $("stage-number").value;
   $("stage-date").value = new Date().toISOString().slice(0, 10);
-  $("stage-status").value = "draft";
+  $("stage-status").value = "Rascunho";
 
   $("player-search").value = "";
   $("player-feedback").classList.add("hidden");
@@ -7416,7 +7417,10 @@ async function saveStage() {
   const number = Number($("stage-number").value);
   const name = $("stage-name").value.trim();
   const date = $("stage-date").value;
-  const status = $("stage-status").value;
+  if (currentStage?.status === "published") {
+    alert("Esta etapa já foi publicada e não pode mais ser alterada.");
+    return;
+  }
 
   if (!number || !name || !date) {
     alert("Preencha número, nome e data.");
@@ -7443,7 +7447,6 @@ async function saveStage() {
     stage_number: number,
     name,
     played_at: date,
-    status,
     participant_count: editorResults.length
   };
 
