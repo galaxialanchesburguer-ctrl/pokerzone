@@ -3133,6 +3133,63 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     min-height: calc(62px + env(safe-area-inset-top));
   }
 }
+
+/* Comandas em três colunas nos celulares */
+@media (max-width: 600px) {
+  #stage-commands-panel .stage-command-area {
+    padding: 12px 8px !important;
+  }
+  #stage-command-grid,
+  .stage-command-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    align-items: stretch;
+  }
+  #stage-command-grid > .stage-command-card,
+  #stage-command-grid > .stage-command-add,
+  .stage-command-grid > .stage-command-card,
+  .stage-command-grid > .stage-command-add {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 7px 5px !important;
+    border-radius: 9px;
+  }
+  .stage-command-player-name {
+    min-height: 42px;
+    padding: 5px 2px;
+    font-size: 11px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .stage-command-card h4 {
+    font-size: 11px !important;
+    line-height: 1.2;
+    margin-bottom: 5px;
+  }
+  .stage-command-card .command-total {
+    font-size: 14px !important;
+    line-height: 1.2;
+    margin: 5px 0;
+    overflow-wrap: anywhere;
+  }
+  .stage-command-card .command-meta {
+    font-size: 9px;
+    gap: 3px;
+  }
+  .stage-command-card .command-open {
+    margin-top: 7px;
+    padding: 7px 3px;
+    font-size: 10px;
+    line-height: 1.15;
+    white-space: normal;
+  }
+  .stage-command-add {
+    min-height: 105px;
+    gap: 4px;
+  }
+  .stage-command-add span { font-size: 26px; }
+  .stage-command-add small { font-size: 9px; text-align: center; }
+}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
