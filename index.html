@@ -5375,10 +5375,14 @@ async function loadTournamentEntries(){
   const commandPlayers=[];
   commands.forEach(command=>{
     const customer=customersById.get(command.club_player_id);
-    const linked=playersById.get(command.tournament_player_id)||playersByName.get(normalizeEntryName(customer?.name));
-    const displayName=customer?.name||linked?.display_name||("Comanda "+command.command_number);
-    if(!commandPlayers.some(p=>p.id===(linked?.id||null)&&p.command_id===command.id)){
-      commandPlayers.push({id:linked?.id||null,display_name:displayName,command_id:command.id,club_player_id:command.club_player_id,command_number:command.command_number});
+    const nameMatch=playersByName.get(normalizeEntryName(customer?.name));
+    // O vínculo pelo nome só vale quando há lançamentos desta etapa.
+    // Assim, uma comanda preservada após a remoção não volta à Conferência.
+    const linked=playersById.get(command.tournament_player_id)||(nameMatch&&(entryData||[]).some(entry=>entry.player_id===nameMatch.id)?nameMatch:null);
+    if(!linked)return;
+    const displayName=customer?.name||linked.display_name;
+    if(!commandPlayers.some(p=>p.id===linked.id&&p.command_id===command.id)){
+      commandPlayers.push({id:linked.id,display_name:displayName,command_id:command.id,club_player_id:command.club_player_id,command_number:command.command_number});
     }
   });
   // A Conferência deve listar somente jogadores com participação nesta etapa:
@@ -5418,10 +5422,53 @@ async function loadTournamentEntries(){
   $("entries-prize-total").textContent=moneyBRL(totals.prize);
   const q=($("entries-search").value||"").trim().toLocaleLowerCase("pt-BR");
   const filtered=all.filter(g=>g.player.display_name.toLocaleLowerCase("pt-BR").includes(q));
-  body.innerHTML=filtered.length?filtered.map(g=>'<tr><td class="player-cell">'+esc(g.player.display_name)+'</td><td>'+g.buyins+'</td><td>'+g.rebuys+'</td><td>'+g.addons+'</td><td>'+moneyBRL(g.gross)+'</td><td><div style="display:flex;gap:5px;align-items:center;min-width:150px"><input type="number" min="0" step="0.01" value="'+(g.payout||0).toFixed(2)+'" data-entry-payout="'+esc(g.player.command_id)+'" style="width:95px;padding:6px"><button type="button" class="btn secondary" data-save-payout="'+esc(g.player.command_id)+'" style="padding:6px 9px">Salvar</button></div></td><td>'+(g.player.id?'<button class="btn secondary" data-entry-player="'+g.player.id+'">Ver ficha</button>':'—')+'</td></tr>').join(""):'<tr><td colspan="7" class="empty">Nenhuma comanda encontrada nesta etapa.</td></tr>';
+  body.innerHTML=filtered.length?filtered.map(g=>'<tr><td class="player-cell">'+esc(g.player.display_name)+'</td><td>'+g.buyins+'</td><td>'+g.rebuys+'</td><td>'+g.addons+'</td><td>'+moneyBRL(g.gross)+'</td><td><div style="display:flex;gap:5px;align-items:center;min-width:150px"><input type="number" min="0" step="0.01" value="'+(g.payout||0).toFixed(2)+'" data-entry-payout="'+esc(g.player.command_id)+'" style="width:95px;padding:6px"><button type="button" class="btn secondary" data-save-payout="'+esc(g.player.command_id)+'" style="padding:6px 9px">Salvar</button><button type="button" class="btn danger" data-remove-stage-player="'+esc(g.player.id)+'" data-command-id="'+esc(g.player.command_id||"")+'" title="Remover jogador desta etapa" style="padding:6px 10px;min-width:32px">×</button></div></td><td>'+(g.player.id?'<button class="btn secondary" data-entry-player="'+g.player.id+'">Ver ficha</button>':'—')+'</td></tr>').join(""):'<tr><td colspan="7" class="empty">Nenhuma comanda encontrada nesta etapa.</td></tr>';
   body.querySelectorAll("[data-entry-player]").forEach(btn=>btn.addEventListener("click",()=>renderTournamentEntryPlayer(btn.dataset.entryPlayer)));
   body.querySelectorAll("[data-save-payout]").forEach(btn=>btn.addEventListener("click",()=>saveTournamentPrizePayout(btn.dataset.savePayout,btn)));
+  body.querySelectorAll("[data-remove-stage-player]").forEach(btn=>btn.addEventListener("click",()=>removeTournamentEntryPlayer(btn.dataset.removeStagePlayer,btn.dataset.commandId||"",btn)));
   if(selectedTournamentEntryPlayerId) renderTournamentEntryPlayer(selectedTournamentEntryPlayerId);
+}
+async function removeTournamentEntryPlayer(playerId,commandId,button){
+  if(!isStaff||!tournament||!activeTournamentStage||!playerId)return;
+  const player=tournamentEntryPlayers.find(item=>item.id===playerId);
+  const playerName=player?.display_name||"este jogador";
+  const rows=tournamentEntryRows.filter(row=>row.player_id===playerId&&row.stage_id===activeTournamentStage.id);
+  if(!confirm("Remover "+playerName+" da Conferência desta etapa? Os registros de Buy-in, Rebuy e Add-on desta etapa e seus lançamentos vinculados serão removidos. A comanda, os demais consumos e o histórico de outras etapas serão mantidos."))return;
+  button.disabled=true;
+  let commandUnlinked=false;
+  if(commandId){
+    const {error}=await db.from("stage_commands").update({tournament_player_id:null})
+      .eq("id",commandId).eq("stage_id",activeTournamentStage.id).eq("tournament_player_id",playerId);
+    if(error){alert("Não foi possível desvincular o jogador da etapa: "+error.message);button.disabled=false;return;}
+    commandUnlinked=true;
+  }
+  if(rows.length){
+    const {error}=await db.from("tournament_entries").delete()
+      .eq("tournament_id",tournament.id).eq("stage_id",activeTournamentStage.id).eq("player_id",playerId);
+    if(error){
+      if(commandUnlinked)await db.from("stage_commands").update({tournament_player_id:playerId}).eq("id",commandId).eq("stage_id",activeTournamentStage.id);
+      alert("Não foi possível remover os registros da Conferência: "+error.message);
+      button.disabled=false;return;
+    }
+    const ledgerIds=[...new Set(rows.map(row=>row.ledger_entry_id).filter(Boolean))];
+    if(ledgerIds.length){
+      const {error:ledgerError}=await db.from("club_player_ledger").delete().in("id",ledgerIds).eq("stage_id",activeTournamentStage.id);
+      if(ledgerError){
+        const {error:restoreError}=await db.from("tournament_entries").insert(rows.map(row=>({
+          tournament_id:row.tournament_id,stage_id:row.stage_id,ledger_entry_id:row.ledger_entry_id,
+          player_id:row.player_id,entry_type:row.entry_type,amount:row.amount,prize_amount:row.prize_amount,
+          ranking_amount:row.ranking_amount,club_fee_amount:row.club_fee_amount,created_at:row.created_at
+        })));
+        if(commandUnlinked)await db.from("stage_commands").update({tournament_player_id:playerId}).eq("id",commandId).eq("stage_id",activeTournamentStage.id);
+        alert("Não foi possível remover os lançamentos vinculados à comanda: "+ledgerError.message+(restoreError?" (e a restauração dos registros da Conferência falhou: "+restoreError.message+")":""));
+        await loadTournamentEntries();
+        return;
+      }
+    }
+  }
+  selectedTournamentEntryPlayerId="";
+  await loadTournamentEntries();
+  alert(playerName+" foi removido da Conferência desta etapa. A comanda e os demais consumos foram preservados.");
 }
 async function saveTournamentPrizePayout(commandId,button){
   const message=$("entry-action-message");
