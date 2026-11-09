@@ -3269,6 +3269,50 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   }
 }
 
+
+/* ===== LARGURA EXTRA PARA A LISTA DE ETAPAS DO TORNEIO ABERTO ===== */
+#admin-sidebar.stages-sidebar-open{
+  width:320px!important;
+}
+#admin-sidebar.stages-sidebar-open #tournament-tree{
+  width:100%!important;
+  box-sizing:border-box!important;
+}
+#admin-sidebar.stages-sidebar-open #tournament-tree-list{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  width:100%!important;
+  gap:10px!important;
+}
+#admin-sidebar.stages-sidebar-open .tournament-tree-item{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:50px!important;
+  box-sizing:border-box!important;
+  padding:13px 14px!important;
+  font-size:14px!important;
+  line-height:1.45!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  word-break:normal!important;
+}
+@media(max-width:760px){
+  #admin-sidebar.stages-sidebar-open{
+    width:min(360px,calc(100vw - 20px))!important;
+    max-width:calc(100vw - 20px)!important;
+  }
+  #admin-sidebar.stages-sidebar-open #tournament-tree{
+    width:100%!important;
+    padding:16px 12px!important;
+  }
+  #admin-sidebar.stages-sidebar-open .tournament-tree-item{
+    min-height:54px!important;
+    padding:15px 14px!important;
+    font-size:15px!important;
+  }
+}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -6236,6 +6280,7 @@ function openSidebarTournamentCreation() {
   if(heading)heading.textContent="CRIAR TORNEIO";
 }
 function renderSidebarTournamentList(data, emptyMessage="") {
+  $("admin-sidebar")?.classList.remove("stages-sidebar-open");
   const items=(data||[]).map(t=>'<button type="button" class="tournament-tree-item" data-sidebar-tournament="'+esc(t.id)+'">'+esc(t.name)+'</button>').join("");
   const createButton='<button type="button" class="tournament-tree-create" id="sidebar-create-tournament">+ Criar torneio</button>';
   renderTournamentTreePanel("TORNEIOS DO CLUBE","Voltar",()=>{
@@ -6255,6 +6300,7 @@ async function loadSidebarTournaments() {
 }
 async function openSidebarTournamentStages(selected, tournamentList) {
   if (!selected) return;
+  $("admin-sidebar")?.classList.add("stages-sidebar-open");
   const backToTournaments=()=>loadSidebarTournamentListFromData(tournamentList);
   renderTournamentTreePanel("ETAPAS · "+selected.name,"Torneios",backToTournaments,'<div class="empty">Carregando etapas...</div>');
   await openTournament(selected);
