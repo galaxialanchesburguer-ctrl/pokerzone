@@ -2864,6 +2864,20 @@ body.admin-sidebar-active main{max-width:none;width:calc(100% - 248px);padding-l
 body.admin-sidebar-active footer{width:calc(100% - 248px)}
 @media(max-width:760px){
  .admin-sidebar{width:68px;padding:16px 7px;gap:16px}
+ .admin-sidebar.mobile-expanded{
+   width:min(320px,86vw);padding:18px 14px;gap:18px;
+   box-shadow:12px 0 34px rgba(0,0,0,.55);
+ }
+ .admin-sidebar.mobile-expanded .admin-sidebar-brand{font-size:21px;text-align:left;padding:2px 10px 16px}
+ .admin-sidebar.mobile-expanded .admin-sidebar-brand:before{content:none}
+ .admin-sidebar.mobile-expanded .admin-sidebar-brand span{display:inline}
+ .admin-sidebar.mobile-expanded .admin-sidebar-label,
+ .admin-sidebar.mobile-expanded .admin-sidebar-text,
+ .admin-sidebar.mobile-expanded .admin-sidebar-foot{display:block}
+ .admin-sidebar.mobile-expanded .admin-sidebar-link{justify-content:flex-start;gap:12px;padding:13px 11px;font-size:13px}
+ .admin-sidebar.mobile-expanded .tournament-tree{width:100%;padding:18px 14px}
+ .admin-sidebar.mobile-expanded .tournament-tree-item{padding:13px 12px;font-size:14px;line-height:1.4}
+ .admin-sidebar.mobile-expanded #tournament-tree-list{gap:8px}
  .admin-sidebar-brand{font-size:0;text-align:center;padding:4px 0 14px}
  .admin-sidebar-brand:before{content:"PZ";font-size:18px}
  .admin-sidebar-brand span{display:none}
@@ -6056,6 +6070,7 @@ function showSidebarTournamentList() {
   if (!selectedClubId && isClubManager && managedClubId) selectedClubId = managedClubId;
   if (!selectedClubId) { alert("Abra um clube antes de acessar os torneios."); openAdminClubs(); return; }
   hideStageSidebar();
+  if (window.matchMedia("(max-width: 760px)").matches) $("admin-sidebar")?.classList.add("mobile-expanded");
   setPublicHomeChrome(false);
   $("home-tournaments").classList.remove("hidden");
   $("tournament-app").classList.add("hidden");
@@ -6192,7 +6207,11 @@ function openAdminTournamentSection(tabId, navKey) {
 }
 function handleAdminSidebarNavigation(key) {
   if (!isStaff) return;
-  if (["home","clubs","clients","settings"].includes(key)) { hideStageSidebar(); $("tournament-tree")?.classList.add("hidden"); }
+  if (["home","clubs","clients","settings"].includes(key)) {
+    hideStageSidebar();
+    $("tournament-tree")?.classList.add("hidden");
+    $("admin-sidebar")?.classList.remove("mobile-expanded");
+  }
   if (key === "home") {
     $("tournament-tree")?.classList.add("hidden");
     showAdminHome();
