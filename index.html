@@ -6420,6 +6420,8 @@ async function loadSidebarTournaments() {
 }
 async function openSidebarTournamentStages(selected, tournamentList) {
   if (!selected) return;
+  const stagesNavText=$('[data-admin-nav="stages"] .admin-sidebar-text');
+  if(stagesNavText) stagesNavText.textContent="Etapas";
   $("admin-sidebar")?.classList.add("stages-sidebar-open");
   const backToTournaments=()=>loadSidebarTournamentListFromData(tournamentList);
   renderTournamentTreePanel("ETAPAS · "+selected.name,"Torneios",backToTournaments,'<div class="empty">Carregando etapas...</div>');
@@ -6443,6 +6445,11 @@ async function openSidebarTournamentStages(selected, tournamentList) {
     $("tournament-tree")?.classList.add("hidden");
     showTab("stages-view");
     await openStage(sb.dataset.treeStage);
+    const selectedStage=stages.find(st=>String(st.id)===String(sb.dataset.treeStage));
+    const stagesNavText=$('[data-admin-nav="stages"] .admin-sidebar-text');
+    if(stagesNavText && selectedStage){
+      stagesNavText.textContent="Etapa "+(selectedStage.stage_number ?? selectedStage.name ?? "");
+    }
   }));
   const create=document.createElement("button");
   create.type="button";create.className="tournament-tree-create";create.textContent="+ Criar etapa";
