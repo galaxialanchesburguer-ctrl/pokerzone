@@ -6571,11 +6571,6 @@ function showAdminHome() {
   $("admin-appearance-screen")?.classList.add("hidden");
   hideStageSidebar();
   setPublicHomeChrome(true);
-  if (isClubManager && managedClubId) {
-    openClub(managedClubId);
-    setAdminSidebarActive("clubs");
-    return;
-  }
   $("tournament-app").classList.add("hidden");
   $("nearby-tournaments-screen").classList.add("hidden");
   $("home-tournaments").classList.remove("hidden");
