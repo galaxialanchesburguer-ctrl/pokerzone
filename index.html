@@ -5381,10 +5381,12 @@ async function loadTournamentEntries(){
       commandPlayers.push({id:linked?.id||null,display_name:displayName,command_id:command.id,club_player_id:command.club_player_id,command_number:command.command_number});
     }
   });
-  (playerData||[]).forEach(player=>{
-    if(!commandPlayers.some(item=>item.id===player.id)){
-      commandPlayers.push({id:player.id,display_name:player.display_name,command_id:null,club_player_id:null,command_number:null});
-    }
+  // A Conferência deve listar somente jogadores com participação nesta etapa:
+  // comandas vinculadas ou lançamentos registrados em tournament_entries.
+  (entryData||[]).forEach(entry=>{
+    if(commandPlayers.some(item=>item.id===entry.player_id))return;
+    const linked=playersById.get(entry.player_id);
+    if(linked)commandPlayers.push({id:linked.id,display_name:linked.display_name,command_id:null,club_player_id:null,command_number:null});
   });
   commandPlayers.sort((a,b)=>a.display_name.localeCompare(b.display_name,"pt-BR"));
   tournamentEntryPlayers=commandPlayers;
@@ -5396,11 +5398,9 @@ async function loadTournamentEntries(){
   renderTournamentEntryPlayerSearch("");
 
   const payoutRows=payoutData||[];
-  const groups=new Map(tournamentEntryPlayers.map((p,index)=>[p.command_id,{player:p,buyins:0,rebuys:0,addons:0,gross:0,prize:0,payout:payoutRows.filter(row=>row.stage_command_id===p.command_id).reduce((sum,row)=>sum+Number(row.amount||0),0),fees:0,ranking:0,rows:[]}]));
+  const groups=new Map(tournamentEntryPlayers.map(p=>[p.id,{player:p,buyins:0,rebuys:0,addons:0,gross:0,prize:0,payout:payoutRows.filter(row=>row.stage_command_id===p.command_id).reduce((sum,row)=>sum+Number(row.amount||0),0),fees:0,ranking:0,rows:[]}]));
   tournamentEntryRows.forEach(row=>{
-    const commandPlayer=tournamentEntryPlayers.find(p=>p.id===row.player_id);
-    if(!commandPlayer)return;
-    const g=groups.get(commandPlayer.command_id); if(!g)return;
+    const g=groups.get(row.player_id); if(!g)return;
     g.rows.push(row); g.gross+=Number(row.amount)||0; g.prize+=Number(row.prize_amount)||0;
     g.fees+=Number(row.club_fee_amount)||0; g.ranking+=Number(row.ranking_amount)||0;
     if(row.entry_type==="buyin")g.buyins++;
