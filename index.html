@@ -4937,7 +4937,7 @@ async function generateFinalRankingImage(){
   }else{
    ctx.strokeStyle="#393238";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(50,y+rowHeight);ctx.lineTo(width-50,y+rowHeight);ctx.stroke();
   }
-  ctx.textAlign="center";ctx.font="800 30px Arial";
+  ctx.textAlign="center";ctx.font="700 20px Arial";
   ctx.fillStyle=row.movement==="up"?"#55d69a":row.movement==="down"?"#ff737b":"#8f8588";
   ctx.fillText(row.movement==="up"?"↑":row.movement==="down"?"↓":"—",82,y+48);
   ctx.textAlign="left";ctx.font=index<3?"800 25px Arial":"600 23px Arial";
