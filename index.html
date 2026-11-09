@@ -6434,26 +6434,12 @@ if (manageClubsButton) {
   document.body.classList.toggle("admin-sidebar-active", isStaff);
   $("admin-sidebar-tournament-group").classList.toggle("hidden", !isStaff || !tournament);
 
-  if (isClubManager && managedClubId) {
-    msg("● Gestão do clube vinculado");
-    // Para gestores de clube, abre diretamente o clube vinculado
-    // e oculta a página pública de busca.
-    const homeHeader = document.querySelector("#home-tournaments > .home-header");
-    const homeActions = document.querySelector("#home-tournaments > .home-actions");
-    if (homeHeader) homeHeader.classList.add("hidden");
-    if (homeActions) homeActions.classList.add("hidden");
-    $("public-tournament-search").classList.add("hidden");
-    $("public-player-search").classList.add("hidden");
-    await openClub(managedClubId);
-    setAdminSidebarActive("clubs");
-  } else {
-    const homeHeader = document.querySelector("#home-tournaments > .home-header");
-    const homeActions = document.querySelector("#home-tournaments > .home-actions");
-    if (homeHeader) homeHeader.classList.remove("hidden");
-    if (homeActions) homeActions.classList.remove("hidden");
-    if (isStaff) msg("● Acesso administrativo");
-    else msg("● Consulta pública");
-  }
+  const homeHeader = document.querySelector("#home-tournaments > .home-header");
+  const homeActions = document.querySelector("#home-tournaments > .home-actions");
+  if (homeHeader) homeHeader.classList.remove("hidden");
+  if (homeActions) homeActions.classList.remove("hidden");
+  if (isStaff) msg(isClubManager ? "● Gestão do clube vinculado" : "● Acesso administrativo");
+  else msg("● Consulta pública");
 }
 
 function hideStageSidebar() {}
