@@ -2945,6 +2945,21 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 
 .ranking-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}.ranking-title-row .section-title{margin:0}.ranking-title-row #generate-ranking-image{white-space:nowrap;padding:10px 15px;font-size:13px}
 @media(max-width:520px){.ranking-title-row{align-items:flex-start}.ranking-title-row #generate-ranking-image{width:auto}}
+
+/* Menu lateral expansível no celular pelo toque em PZ */
+@media(max-width:760px){
+ .admin-sidebar-brand{cursor:pointer;user-select:none}
+ .admin-sidebar.mobile-expanded{width:min(248px,85vw);padding:20px 15px;gap:20px;z-index:60;box-shadow:12px 0 35px rgba(0,0,0,.65)}
+ .admin-sidebar.mobile-expanded .admin-sidebar-brand{font-size:21px;text-align:left;padding:2px 10px 16px}
+ .admin-sidebar.mobile-expanded .admin-sidebar-brand:before{content:none}
+ .admin-sidebar.mobile-expanded .admin-sidebar-brand span{display:inline;color:#ed3038}
+ .admin-sidebar.mobile-expanded .admin-sidebar-label,
+ .admin-sidebar.mobile-expanded .admin-sidebar-text,
+ .admin-sidebar.mobile-expanded .admin-sidebar-foot{display:block}
+ .admin-sidebar.mobile-expanded .admin-sidebar-link{justify-content:flex-start;padding:12px 11px}
+ .admin-sidebar.mobile-expanded .tournament-tree{width:100%}
+ .admin-sidebar.mobile-expanded:after{content:"Toque em PZ para recolher";display:block;color:#777;font-size:10px;text-align:center;padding:8px 0}
+}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -10728,6 +10743,22 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
 }
 
 loadRecentTournaments();
+
+const adminSidebarBrand=document.querySelector(".admin-sidebar-brand");
+if(adminSidebarBrand){
+  adminSidebarBrand.setAttribute("role","button");
+  adminSidebarBrand.setAttribute("tabindex","0");
+  adminSidebarBrand.setAttribute("aria-label","Expandir ou recolher menu");
+  const toggleMobileSidebar=()=>{
+    if(window.matchMedia("(max-width: 760px)").matches){
+      $("admin-sidebar").classList.toggle("mobile-expanded");
+    }
+  };
+  adminSidebarBrand.addEventListener("click",toggleMobileSidebar);
+  adminSidebarBrand.addEventListener("keydown",event=>{
+    if(event.key==="Enter"||event.key===" "){event.preventDefault();toggleMobileSidebar();}
+  });
+}
 
 async function init(){
   try {
