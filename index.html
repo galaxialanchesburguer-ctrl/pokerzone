@@ -4892,9 +4892,9 @@ $("back-to-ranking").addEventListener("click", () => {
       };
     });
 
-    const playedHistory=history.filter(item=>item.played);
-    const discarded=playedHistory.length>3
-      ?[...playedHistory].sort((a,b)=>a.points-b.points||a.stage.stage_number-b.stage.stage_number).slice(0,3)
+    // Etapas não disputadas também valem zero e entram no critério de descarte.
+    const discarded=history.length>3
+      ?[...history].sort((a,b)=>a.points-b.points||a.stage.stage_number-b.stage.stage_number).slice(0,3)
       :[];
 
     const discardedIds=new Set(discarded.map(item=>item.stage.id));
@@ -5111,14 +5111,14 @@ async function loadRanking(){
 
  // Ranking final: recalcula os três piores resultados somente dentro do período selecionado.
  const finalPlayers=(ps||[]).map(p=>{
-  // Considera somente etapas realmente disputadas pelo jogador.
+  // Toda etapa publicada conta: quem não jogou recebe zero ponto.
   const scores=includedStages.map(stage=>{
    const result=includedResults.find(r=>r.player?.id===p.id && r.stage?.id===stage.id);
-   return result ? Number(result.points)||0 : null;
-  }).filter(points=>points!==null);
+   return result ? Number(result.points)||0 : 0;
+  });
   const sorted=[...scores].sort((a,b)=>a-b);
-  // Os três piores resultados só são descartados quando há mais de três etapas disputadas.
-  const discarded=scores.length>3?sorted.slice(0,3):[];
+  // A partir da quarta etapa, descartam-se os três piores resultados, inclusive zeros.
+  const discarded=includedStages.length>3?sorted.slice(0,3):[];
   const discardedPoints=discarded.reduce((sum,n)=>sum+n,0);
   const adjustment=Number((adj||[]).find(a=>a.player_id===p.id)?.points_adjustment)||0;
   const sumPoints=scores.reduce((sum,n)=>sum+n,0);
