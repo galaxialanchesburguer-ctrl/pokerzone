@@ -2949,16 +2949,26 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 /* Menu lateral expansível no celular pelo toque em PZ */
 @media(max-width:760px){
  .admin-sidebar-brand{cursor:pointer;user-select:none}
- .admin-sidebar.mobile-expanded{width:min(248px,85vw);padding:20px 15px;gap:20px;z-index:60;box-shadow:12px 0 35px rgba(0,0,0,.65)}
- .admin-sidebar.mobile-expanded .admin-sidebar-brand{font-size:21px;text-align:left;padding:2px 10px 16px}
+ .admin-sidebar.mobile-expanded{
+   width:min(280px,78vw);height:100dvh;max-height:100dvh;box-sizing:border-box;
+   padding:18px 13px;gap:16px;z-index:60;overflow-y:auto;overscroll-behavior:contain;
+   box-shadow:12px 0 35px rgba(0,0,0,.65)
+ }
+ .admin-sidebar.mobile-expanded .admin-sidebar-brand{font-size:21px;text-align:left;padding:2px 10px 16px;flex:0 0 auto}
  .admin-sidebar.mobile-expanded .admin-sidebar-brand:before{content:none}
  .admin-sidebar.mobile-expanded .admin-sidebar-brand span{display:inline;color:#ed3038}
  .admin-sidebar.mobile-expanded .admin-sidebar-label,
  .admin-sidebar.mobile-expanded .admin-sidebar-text,
  .admin-sidebar.mobile-expanded .admin-sidebar-foot{display:block}
- .admin-sidebar.mobile-expanded .admin-sidebar-link{justify-content:flex-start;padding:12px 11px}
- .admin-sidebar.mobile-expanded .tournament-tree{width:100%}
- .admin-sidebar.mobile-expanded:after{content:"Toque em PZ para recolher";display:block;color:#777;font-size:10px;text-align:center;padding:8px 0}
+ .admin-sidebar.mobile-expanded .admin-sidebar-link{justify-content:flex-start;padding:11px 10px}
+ /* A lista de torneios precisa ficar no fluxo do menu, não sobrepor a navegação inteira */
+ .admin-sidebar.mobile-expanded .tournament-tree{
+   position:static;inset:auto;width:100%;height:auto;max-height:none;min-height:0;
+   flex:0 0 auto;margin:0;padding:10px 8px;overflow:visible;z-index:auto;
+   border:1px solid #3b2022;border-radius:8px;box-sizing:border-box
+ }
+ .admin-sidebar.mobile-expanded .tournament-tree-item{white-space:normal;overflow-wrap:anywhere}
+ .admin-sidebar.mobile-expanded:after{content:"Toque em PZ para recolher";display:block;color:#777;font-size:10px;text-align:center;padding:8px 0;flex:0 0 auto}
 }
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
