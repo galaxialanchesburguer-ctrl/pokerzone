@@ -6870,7 +6870,7 @@ $("calendar-next")?.addEventListener("click",()=>{adminCalendarMonth=new Date(ad
 $("calendar-today")?.addEventListener("click",()=>{adminCalendarMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);renderAdminCalendar();});
 $("calendar-refresh")?.addEventListener("click",loadAdminCalendar);
 
-function handleAdminSidebarNavigation(key) {
+async function handleAdminSidebarNavigation(key) {
   if (!isStaff) return;
   if (["home","clubs","clients","settings","calendar","appearance"].includes(key)) {
     hideStageSidebar();
