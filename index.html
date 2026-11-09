@@ -4888,8 +4888,11 @@ async function generateFinalRankingImage(){
  ctx.fillText((tournament?.name||"RANKING DO TORNEIO").toUpperCase(),width/2,137);
  ctx.fillStyle="#d8cfd0";ctx.font="600 30px Arial";
  ctx.fillText($("final-ranking-view").querySelector(".box-head h2").textContent.toUpperCase(),width/2,190);
+ const {data:publishedStages,error:publishedStagesError}=await db.from("stages").select("id").eq("season_id",season?.id||"").eq("status","published");
+ if(publishedStagesError){alert("Não foi possível identificar quantas etapas foram publicadas.");return;}
+ const publishedStageCount=(publishedStages||[]).length;
  ctx.fillStyle="#8f8588";ctx.font="20px Arial";
- ctx.fillText("TOP 20 • CLASSIFICAÇÃO OFICIAL",width/2,235);
+ ctx.fillText("TOP 20 • CLASSIFICAÇÃO OFICIAL • APÓS A ETAPA "+publishedStageCount,width/2,235);
  const y0=top;
  ctx.fillStyle="#f5443b";ctx.fillRect(50,y0,width-100,52);
  ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font="700 18px Arial";
