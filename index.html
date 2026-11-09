@@ -4436,15 +4436,9 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   </div>
 </div>
 
-  <!-- TORNEIOS RECENTES -->
-  <div class="box">
-    <div class="box-head">
-      <h2>TORNEIOS RECENTES</h2>
-    </div>
-
-    <div id="recent-tournaments-list">
-      <div class="empty">Seus torneios acessados aparecerão aqui.</div>
-    </div>
+  <!-- Histórico de torneios mantido no DOM para compatibilidade, sem exibição na página inicial -->
+  <div class="box hidden" aria-hidden="true">
+    <div id="recent-tournaments-list"></div>
   </div>
 
 </section>
