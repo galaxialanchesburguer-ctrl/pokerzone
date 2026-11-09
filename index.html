@@ -2559,6 +2559,8 @@ body.admin-sidebar-active .client-list-card{grid-template-columns:minmax(180px,1
 .client-list-sort-head button{border:0;background:transparent;color:#999;font-size:10px;font-weight:800;letter-spacing:.8px;text-align:left;cursor:pointer;padding:7px 0;display:flex;align-items:center;gap:7px}
 .client-list-sort-head button span{font-size:14px;color:#777}
 .client-list-sort-head button.active,.client-list-sort-head button.active span{color:var(--red)}
+#club-haver-player-list .client-list-info strong.positive{color:#55d69a}
+#club-haver-player-list .client-list-info strong.negative{color:#ff737b}
 @media(max-width:900px){.client-list-sort-head{grid-template-columns:1fr 1fr;gap:8px 16px;padding:0 17px 8px}.client-list-sort-head button:nth-child(3),.client-list-sort-head button:nth-child(4){display:none}}
 @media(max-width:900px){.client-list-card{grid-template-columns:1fr 1fr;gap:12px}.client-list-main{grid-column:1/-1}.client-list-last{grid-column:1/-1}.client-list-open{justify-self:start}}
 
@@ -8780,7 +8782,7 @@ function renderClubHaverPlayers(){
       const stageLabel=stage?(stage.stage_number?"Etapa "+stage.stage_number:stage.name||"Etapa"):"";
       lastTournament=[date,tournament?.name||"Torneio",stageLabel].filter(Boolean).join(" • ");
     }
-    return '<div class="club-haver-player client-list-card" role="button" tabindex="0" data-player-id="'+esc(player.id)+'" aria-label="Abrir perfil de '+esc(player.name)+'"><div class="client-list-main"><strong>'+esc(player.name)+'</strong><small>'+esc(player.phone||"Telefone não informado")+'</small></div><div class="client-list-info"><span class="client-list-label">SALDO</span><strong>'+(balance>0?'+':balance<0?'-':'')+clubMoney(Math.abs(balance))+'</strong></div><div class="client-list-info client-list-last"><span class="client-list-label">ÚLTIMO TORNEIO</span><strong>'+esc(lastTournament)+'</strong></div><div class="client-list-info"><span class="client-list-label">CLIENTE DESDE</span><strong>'+dateLabel(player.created_at?player.created_at.slice(0,10):"")+'</strong></div></div>';
+    return '<div class="club-haver-player client-list-card" role="button" tabindex="0" data-player-id="'+esc(player.id)+'" aria-label="Abrir perfil de '+esc(player.name)+'"><div class="client-list-main"><strong>'+esc(player.name)+'</strong><small>'+esc(player.phone||"Telefone não informado")+'</small></div><div class="client-list-info"><span class="client-list-label">SALDO</span><strong class="'+(balance>0?'positive':balance<0?'negative':'')+'">'+(balance>0?'+':balance<0?'-':'')+clubMoney(Math.abs(balance))+'</strong></div><div class="client-list-info client-list-last"><span class="client-list-label">ÚLTIMO TORNEIO</span><strong>'+esc(lastTournament)+'</strong></div><div class="client-list-info"><span class="client-list-label">CLIENTE DESDE</span><strong>'+dateLabel(player.created_at?player.created_at.slice(0,10):"")+'</strong></div></div>';
   }).join("");
 }
 async function saveClubHaverPlayer() {
