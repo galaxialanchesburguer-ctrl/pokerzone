@@ -3298,6 +3298,34 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   word-break:normal!important;
 }
 @media(max-width:760px){
+  /* Após escolher uma etapa, recolhe a barra; o ícone Torneios permite reabrir a lista. */
+  #admin-sidebar.stages-sidebar-open.stages-sidebar-collapsed{
+    width:68px!important;
+    max-width:68px!important;
+    padding:16px 7px!important;
+  }
+  #admin-sidebar.stages-sidebar-open.stages-sidebar-collapsed #tournament-tree{
+    display:none!important;
+  }
+  #admin-sidebar.stages-sidebar-open.stages-sidebar-collapsed .admin-sidebar-brand{
+    font-size:0!important;
+    text-align:center!important;
+    padding:4px 0 14px!important;
+  }
+  #admin-sidebar.stages-sidebar-open.stages-sidebar-collapsed .admin-sidebar-brand:before{
+    content:"PZ"!important;
+    font-size:18px!important;
+  }
+  #admin-sidebar.stages-sidebar-open.stages-sidebar-collapsed .admin-sidebar-brand span,
+  #admin-sidebar.stages-sidebar-open.stages-sidebar-collapsed .admin-sidebar-label,
+  #admin-sidebar.stages-sidebar-open.stages-sidebar-collapsed .admin-sidebar-text,
+  #admin-sidebar.stages-sidebar-open.stages-sidebar-collapsed .admin-sidebar-foot{
+    display:none!important;
+  }
+  #admin-sidebar.stages-sidebar-open.stages-sidebar-collapsed .admin-sidebar-link{
+    justify-content:center!important;
+    padding:12px 5px!important;
+  }
   #admin-sidebar.stages-sidebar-open{
     width:min(320px,calc(100vw - 20px))!important;
     max-width:calc(100vw - 20px)!important;
@@ -6316,9 +6344,11 @@ async function openSidebarTournamentStages(selected, tournamentList) {
   list.innerHTML=stages.length?stages.map(st=>`<button type="button" class="tournament-tree-item" data-tree-stage="${st.id}">${esc(st.name||"Etapa "+st.stage_number)}</button>`).join(""):'<div class="empty">Nenhuma etapa cadastrada.</div>';
   list.querySelectorAll("[data-tree-stage]").forEach(sb=>sb.addEventListener("click",async()=>{
     list.querySelectorAll("[data-tree-stage]").forEach(x=>x.classList.toggle("active",x===sb));
-    // Mantém a lista de etapas aberta enquanto a etapa selecionada é exibida.
-    // Assim é possível alternar entre etapas sem reabrir a barra lateral.
-    $("admin-sidebar")?.classList.add("stages-sidebar-open","mobile-expanded");
+    // Recolhe a barra após selecionar a etapa; o botão Torneios reabre a lista.
+    const sidebar=$("admin-sidebar");
+    sidebar?.classList.add("stages-sidebar-open","stages-sidebar-collapsed");
+    sidebar?.classList.remove("mobile-expanded");
+    $("tournament-tree")?.classList.add("hidden");
     showTab("stages-view");
     await openStage(sb.dataset.treeStage);
   }));
@@ -6403,6 +6433,14 @@ function handleAdminSidebarNavigation(key) {
     return;
   }
   if (key === "tournaments") {
+    const sidebar=$("admin-sidebar");
+    if (sidebar?.classList.contains("stages-sidebar-collapsed")) {
+      sidebar.classList.remove("stages-sidebar-collapsed");
+      sidebar.classList.add("mobile-expanded","stages-sidebar-open");
+      $("tournament-tree")?.classList.remove("hidden");
+      setAdminSidebarActive("tournaments");
+      return;
+    }
     showSidebarTournamentList();
     setAdminSidebarActive("tournaments");
     return;
