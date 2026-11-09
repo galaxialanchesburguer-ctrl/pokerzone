@@ -4901,10 +4901,18 @@ async function generateFinalRankingImage(){
  ctx.fillText("PONTOS",800,y0+33);ctx.fillText("DESCARTES",1050,y0+33);ctx.fillText("PONTUAÇÃO FINAL",1320,y0+33);
  rows.forEach((row,index)=>{
   const y=y0+52+index*rowHeight;
-  ctx.fillStyle=index%2===0?"#211d22":"#19161b";ctx.fillRect(50,y,width-100,rowHeight);
-  ctx.strokeStyle="#393238";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(50,y+rowHeight);ctx.lineTo(width-50,y+rowHeight);ctx.stroke();
+  const podiumColors=["#ffd166","#d9dce2","#d99a70"];
+  const podiumFills=["#332a18","#292d33","#30231d"];
+  ctx.fillStyle=index<3?podiumFills[index]:(index%2===0?"#211d22":"#19161b");
+  ctx.fillRect(50,y,width-100,rowHeight);
+  if(index<3){
+   ctx.fillStyle=podiumColors[index];ctx.fillRect(50,y,8,rowHeight);
+   ctx.strokeStyle=podiumColors[index];ctx.lineWidth=2;ctx.strokeRect(50,y,width-100,rowHeight);
+  }else{
+   ctx.strokeStyle="#393238";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(50,y+rowHeight);ctx.lineTo(width-50,y+rowHeight);ctx.stroke();
+  }
   ctx.textAlign="left";ctx.font=index<3?"800 25px Arial":"600 23px Arial";
-  ctx.fillStyle=index===0?"#ffd166":index===1?"#d9dce2":index===2?"#d99a70":"#f5443b";
+  ctx.fillStyle=index<3?podiumColors[index]:"#f5443b";
   ctx.fillText(row.position,78,y+47);
   ctx.fillStyle="#fff";ctx.font=index<3?"700 24px Arial":"500 22px Arial";
   ctx.fillText(row.name.length>30?row.name.slice(0,27)+"...":row.name,190,y+47);
