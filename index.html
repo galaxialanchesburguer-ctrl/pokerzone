@@ -6708,11 +6708,10 @@ async function openSidebarTournamentStages(selected, tournamentList) {
   list.innerHTML=stages.length?stages.map(st=>`<button type="button" class="tournament-tree-item" data-tree-stage="${st.id}">${esc(st.name||"Etapa "+st.stage_number)}</button>`).join(""):'<div class="empty">Nenhuma etapa cadastrada.</div>';
   list.querySelectorAll("[data-tree-stage]").forEach(sb=>sb.addEventListener("click",async()=>{
     list.querySelectorAll("[data-tree-stage]").forEach(x=>x.classList.toggle("active",x===sb));
-    // Recolhe a barra após selecionar a etapa; o botão Torneios reabre a lista.
+    // Mantém a barra lateral e a lista de etapas abertas ao selecionar uma etapa.
     const sidebar=$("admin-sidebar");
-    sidebar?.classList.add("stages-sidebar-open","stages-sidebar-collapsed");
-    sidebar?.classList.remove("mobile-expanded");
-    $("tournament-tree")?.classList.add("hidden");
+    sidebar?.classList.add("stages-sidebar-open");
+    sidebar?.classList.remove("stages-sidebar-collapsed");
     showTab("stages-view");
     await openStage(sb.dataset.treeStage);
     const selectedStage=stages.find(st=>String(st.id)===String(sb.dataset.treeStage));
