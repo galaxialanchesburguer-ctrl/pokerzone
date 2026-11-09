@@ -3344,6 +3344,35 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   }
 }
 
+
+/* ===== AJUSTE FINO: BARRA LATERAL DAS ETAPAS ===== */
+#admin-sidebar.stages-sidebar-open{
+  width:280px!important;
+}
+#admin-sidebar.stages-sidebar-open #tournament-tree{
+  width:100%!important;
+  box-sizing:border-box!important;
+}
+#admin-sidebar.stages-sidebar-open .tournament-tree-item{
+  padding:11px 10px!important;
+  font-size:13px!important;
+}
+@media(max-width:760px){
+  #admin-sidebar.stages-sidebar-open{
+    width:min(270px,calc(100vw - 20px))!important;
+    max-width:calc(100vw - 20px)!important;
+  }
+  #admin-sidebar.stages-sidebar-open #tournament-tree{
+    width:100%!important;
+    padding:13px 8px!important;
+  }
+  #admin-sidebar.stages-sidebar-open .tournament-tree-item{
+    min-height:48px!important;
+    padding:10px 9px!important;
+    font-size:13px!important;
+  }
+}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
