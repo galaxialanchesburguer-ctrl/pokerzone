@@ -6615,9 +6615,9 @@ if (manageClubsButton) {
   if (homeHeader) homeHeader.classList.remove("hidden");
   if (homeActions) homeActions.classList.toggle("hidden", isStaff);
   const homeMarketing = $("home-about-pokerzone");
-  if (homeMarketing) homeMarketing.classList.toggle("hidden", !isAdmin);
+  if (homeMarketing) homeMarketing.classList.toggle("hidden", !isStaff);
   const playerWelcome = $("home-player-welcome");
-  if (playerWelcome) playerWelcome.classList.toggle("hidden", isStaff && !isClubManager);
+  if (playerWelcome) playerWelcome.classList.toggle("hidden", isStaff);
   if (isStaff) msg(isClubManager ? "● Gestão do clube vinculado" : "● Acesso administrativo");
   else msg("● Consulta pública");
 }
@@ -6741,11 +6741,11 @@ function setPublicHomeChrome(visible) {
   const marketing = $("home-about-pokerzone");
   const playerWelcome = $("home-player-welcome");
   if (header) header.classList.toggle("hidden", !visible);
-  // Atalhos de busca ficam apenas para visitantes; a apresentação também aparece no início do clube.
+  // Atalhos e apresentação voltada ao jogador ficam apenas para visitantes.
   if (actions) actions.classList.toggle("hidden", !visible || isStaff);
-  if (playerWelcome) playerWelcome.classList.toggle("hidden", !visible || (isStaff && !isClubManager));
-  // A apresentação comercial fica restrita ao administrador geral.
-  if (marketing) marketing.classList.toggle("hidden", !visible || !isAdmin);
+  if (playerWelcome) playerWelcome.classList.toggle("hidden", !visible || isStaff);
+  // A apresentação institucional/comercial original fica para todos os perfis administrativos.
+  if (marketing) marketing.classList.toggle("hidden", !visible || !isStaff);
 }
 function setAdminSidebarActive(key) {
   document.querySelectorAll("[data-admin-nav]").forEach(button => {
