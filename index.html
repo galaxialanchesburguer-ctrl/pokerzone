@@ -6591,6 +6591,22 @@ async function createStageCommandForCustomer(customer,buyinEnabled=true){
   }else if(buyinEnabled){
     content.innerHTML='<div class="notice">Esta etapa não está vinculada a um torneio. Desative o buy-in para criar apenas a comanda.</div><button type="button" class="btn secondary" id="stage-command-buyin-back">Voltar</button>';content.querySelector("#stage-command-buyin-back")?.addEventListener("click",()=>renderStageCommandCreation(customer.name));return;
   }
+  // Impede duas comandas para o mesmo cliente/jogador na mesma etapa.
+  const {data:stageCommands,error:stageCommandsError}=await db.from("stage_commands").select("id,club_player_id,tournament_player_id").eq("stage_id",currentStage.id);
+  if(stageCommandsError){content.innerHTML='<div class="notice">Não foi possível conferir as comandas existentes: '+esc(stageCommandsError.message)+'</div>';return;}
+  const existingCommand=(stageCommands||[]).find(item=>item.club_player_id===customer.id||(tournamentPlayer?.id&&item.tournament_player_id===tournamentPlayer.id));
+  if(existingCommand){
+    const updates={};
+    if(!existingCommand.club_player_id)updates.club_player_id=customer.id;
+    if(!existingCommand.tournament_player_id&&tournamentPlayer?.id)updates.tournament_player_id=tournamentPlayer.id;
+    if(Object.keys(updates).length){
+      const {error:linkError}=await db.from("stage_commands").update(updates).eq("id",existingCommand.id).eq("stage_id",currentStage.id);
+      if(linkError){content.innerHTML='<div class="notice">Já existe uma comanda para '+esc(customer.name)+', mas não foi possível atualizar o vínculo: '+esc(linkError.message)+'</div>';return;}
+    }
+    await loadStageCommandCards();
+    await openStagePlayerCommand(existingCommand.id);
+    return;
+  }
   if(buyinEnabled){
     const {data:details,error:detailsError}=await db.from("tournament_details").select("buy_in,tournament_fee,club_fee_type,ranking_contribution").eq("tournament_id",stageInfo.tournament_id).maybeSingle();
     if(detailsError||!details||details.buy_in==null||Number(details.buy_in)<=0){content.innerHTML='<div class="notice">O valor do buy-in não está configurado neste torneio. Configure em Informações ou desative o interruptor para criar apenas a comanda.</div><button type="button" class="btn secondary" id="stage-command-buyin-back">Voltar</button>';content.querySelector("#stage-command-buyin-back")?.addEventListener("click",()=>renderStageCommandCreation(customer.name));return;}
