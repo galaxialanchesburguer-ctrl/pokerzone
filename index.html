@@ -10744,6 +10744,12 @@ $("tournament-search-input").addEventListener("input", searchTournaments);
 
 loadRecentTournaments();
 
+document.addEventListener("click",event=>{
+  const sidebar=$("admin-sidebar");
+  if(!sidebar||!sidebar.classList.contains("mobile-expanded"))return;
+  if(!sidebar.contains(event.target))sidebar.classList.remove("mobile-expanded");
+});
+
 const adminSidebarBrand=document.querySelector(".admin-sidebar-brand");
 if(adminSidebarBrand){
   adminSidebarBrand.setAttribute("role","button");
