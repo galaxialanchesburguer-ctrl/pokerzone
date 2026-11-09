@@ -3918,7 +3918,10 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
  <h2 class="section-title">Pódio da temporada</h2>
  <section class="podium" id="final-podium"></section>
 
- <h2 class="section-title">Classificação completa</h2>
+ <div class="ranking-title-row">
+  <h2 class="section-title">Classificação completa</h2>
+  <button class="btn secondary" id="generate-final-ranking-image" type="button">📸 Gerar imagem</button>
+ </div>
 
  <section class="box">
   <div class="box-head">
@@ -4860,6 +4863,63 @@ async function generateRankingImage(){
  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 $("generate-ranking-image").addEventListener("click",generateRankingImage);
+
+async function generateFinalRankingImage(){
+ const rows=[...$("final-ranking").querySelectorAll("tr")].map(row=>({
+  position:row.children[0]?.textContent.trim()||"",
+  name:row.children[1]?.textContent.trim()||"",
+  total:row.children[2]?.textContent.trim()||"",
+  discarded:row.children[3]?.textContent.trim()||"",
+  final:row.children[4]?.textContent.trim()||""
+ })).filter(row=>row.name && !row.name.includes("Nenhum resultado")).slice(0,20);
+ if(!rows.length){alert("Não há jogadores no ranking final para gerar a imagem.");return;}
+ const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+ const width=1400,rowHeight=76,top=300,bottom=90;
+ canvas.width=width;canvas.height=top+rows.length*rowHeight+bottom;
+ const height=canvas.height;
+ ctx.fillStyle="#111014";ctx.fillRect(0,0,width,height);
+ const bg=ctx.createLinearGradient(0,0,width,height);
+ bg.addColorStop(0,"#241719");bg.addColorStop(1,"#111014");
+ ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
+ ctx.fillStyle="#f5443b";ctx.fillRect(0,0,width,14);
+ ctx.textAlign="center";
+ ctx.fillStyle="#f5443b";ctx.font="800 25px Arial";ctx.fillText("POKERZONE",width/2,78);
+ ctx.fillStyle="#fff";ctx.font="800 43px Arial";
+ ctx.fillText((tournament?.name||"RANKING DO TORNEIO").toUpperCase(),width/2,137);
+ ctx.fillStyle="#d8cfd0";ctx.font="600 30px Arial";
+ ctx.fillText($("final-ranking-view").querySelector(".box-head h2").textContent.toUpperCase(),width/2,190);
+ ctx.fillStyle="#8f8588";ctx.font="20px Arial";
+ ctx.fillText("TOP 20 • CLASSIFICAÇÃO OFICIAL",width/2,235);
+ const y0=top;
+ ctx.fillStyle="#f5443b";ctx.fillRect(50,y0,width-100,52);
+ ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font="700 18px Arial";
+ ctx.fillText("POS.",78,y0+33);ctx.fillText("JOGADOR",190,y0+33);
+ ctx.textAlign="right";
+ ctx.fillText("PONTOS",800,y0+33);ctx.fillText("DESCARTES",1050,y0+33);ctx.fillText("PONTUAÇÃO FINAL",1320,y0+33);
+ rows.forEach((row,index)=>{
+  const y=y0+52+index*rowHeight;
+  ctx.fillStyle=index%2===0?"#211d22":"#19161b";ctx.fillRect(50,y,width-100,rowHeight);
+  ctx.strokeStyle="#393238";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(50,y+rowHeight);ctx.lineTo(width-50,y+rowHeight);ctx.stroke();
+  ctx.textAlign="left";ctx.font=index<3?"800 25px Arial":"600 23px Arial";
+  ctx.fillStyle=index===0?"#ffd166":index===1?"#d9dce2":index===2?"#d99a70":"#f5443b";
+  ctx.fillText(row.position,78,y+47);
+  ctx.fillStyle="#fff";ctx.font=index<3?"700 24px Arial":"500 22px Arial";
+  ctx.fillText(row.name.length>30?row.name.slice(0,27)+"...":row.name,190,y+47);
+  ctx.textAlign="right";ctx.font="600 22px Arial";ctx.fillStyle="#c9c1c4";
+  ctx.fillText(row.total,800,y+47);ctx.fillText(row.discarded,1050,y+47);
+  ctx.font="800 25px Arial";ctx.fillStyle="#fff";ctx.fillText(row.final,1320,y+47);
+ });
+ ctx.textAlign="center";ctx.fillStyle="#8f8588";ctx.font="18px Arial";
+ ctx.fillText("POKERZONE • RANKING FINAL",width/2,height-35);
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+ if(!blob){alert("Não foi possível gerar a imagem.");return;}
+ const url=URL.createObjectURL(blob),link=document.createElement("a");
+ const safeName=(tournament?.name||"ranking").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").toLowerCase();
+ link.href=url;link.download="ranking-final-top-20-"+(safeName||"pokerzone")+".png";
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$("generate-final-ranking-image").addEventListener("click",generateFinalRankingImage);
 
 function renderRanking(list){
  const tb=$("ranking");
