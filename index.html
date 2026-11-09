@@ -4034,7 +4034,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   </div>
  <div id="stage-list"><div class="empty">Carregando etapas...</div></div></div>
  <div id="stage-editor" class="box hidden">
-  <div class="box-head"><h2 id="editor-title">Editar etapa</h2><div class="actions"><button class="btn secondary" id="close-editor">Fechar</button><button class="btn admin-only" id="save-stage">Salvar etapa e resultados</button></div></div>
+  <div class="box-head"><h2 id="editor-title">Editar etapa</h2><div class="actions"><button class="btn secondary" id="close-editor">Fechar</button><button class="btn admin-only" id="publish-stage">Publicar etapa</button><button class="btn admin-only" id="save-stage">Salvar etapa e resultados</button></div></div>
   <div class="stage-editor-tabs">
     <button type="button" class="stage-editor-tab" data-stage-editor-tab="data">Classificação</button>
     <button type="button" class="stage-editor-tab" data-stage-editor-tab="commands">Comandas</button>
@@ -6486,9 +6486,10 @@ async function openStage(id) {
   $("stage-date").value = selectedStage.played_at || "";
   $("stage-status").value = selectedStage.status === "published" ? "Publicada" : "Rascunho";
 
-  ["stage-number","stage-name","add-player","calculate-points"].forEach(fieldId => { $(fieldId).disabled = !isStaff; });
-  $("stage-date").disabled = !isStaff || selectedStage.status === "published";
-  $("save-stage").disabled = !isStaff || selectedStage.status === "published";
+  const canEditStage = isStaff && selectedStage.status !== "published";
+  ["stage-number","stage-name","stage-date","add-player","calculate-points","player-search","save-stage"].forEach(fieldId => { $(fieldId).disabled = !canEditStage; });
+  $("publish-stage").hidden = !isStaff || selectedStage.status !== "draft";
+  $("publish-stage").disabled = !isStaff;
 
   const { data, error } = await db
     .from("results")
@@ -7120,6 +7121,7 @@ function calculateStagePoints() {
   });
 }
 function renderResultRows() {
+  const canEditStage = isStaff && currentStage?.status !== "published";
   $("result-rows").innerHTML = editorResults.length
     ? editorResults
         .sort((a, b) => a.position - b.position)
@@ -7129,7 +7131,7 @@ function renderResultRows() {
   <div class="row">
     <select
       data-player="${r.player_id}"
-      ${isStaff ? "" : "disabled"}
+      ${canEditStage ? "" : "disabled"}
     >
       ${players.map(p => `
         <option
@@ -7144,7 +7146,7 @@ function renderResultRows() {
       data-rename="${r.player_id}"
       type="button"
       title="Editar nome"
-      ${isStaff ? "" : "disabled"}
+      ${canEditStage ? "" : "disabled"}
     >✎</button>
   </div>
 </td>
@@ -7154,7 +7156,7 @@ function renderResultRows() {
                 min="1"
                 value="${r.position}"
                 data-pos="${r.player_id}"
-                ${isStaff ? "" : "disabled"}
+                ${canEditStage ? "" : "disabled"}
               >
             </td>
             <td>
@@ -7162,10 +7164,10 @@ function renderResultRows() {
                 type="number"
                 value="${r.points}"
                 data-points="${r.player_id}"
-                ${isStaff ? "" : "disabled"}
+                ${canEditStage ? "" : "disabled"}
               >
             </td>
-            <td class="${isStaff ? "" : "hidden"}">
+            <td class="${canEditStage ? "" : "hidden"}">
               <button class="btn danger" data-remove="${r.player_id}">
                 Remover
               </button>
@@ -7394,6 +7396,7 @@ $("new-stage").addEventListener("click", () => {
   $("stage-name").value = "ETAPA " + $("stage-number").value;
   $("stage-date").value = new Date().toISOString().slice(0, 10);
   $("stage-status").value = "Rascunho";
+  $("publish-stage").hidden = true;
 
   $("player-search").value = "";
   $("player-feedback").classList.add("hidden");
@@ -7491,6 +7494,7 @@ async function saveStage() {
   if (isNewStage) setStageEditorTab("commands");
 }
  $("save-stage").addEventListener("click", saveStage);
+ $("publish-stage").addEventListener("click", publishCurrentStage);
  $("close-editor").addEventListener("click", () => {
   $("stage-editor").classList.add("hidden");
   stageEditorReturnVisible = false;
@@ -7500,6 +7504,22 @@ async function saveStage() {
   updateDeleteActionButton();
 });
  
+async function publishCurrentStage() {
+  if (!isStaff || !currentStage?.id || currentStage.status !== "draft") return;
+  if (!confirm("Deseja publicar esta etapa? Após a publicação, os resultados e a classificação ficarão definitivos.")) return;
+  const button = $("publish-stage");
+  button.disabled = true;
+  const stageId = currentStage.id;
+  const { error } = await db.rpc("publish_stage", { p_stage_id: stageId });
+  if (error) {
+    alert("Não foi possível publicar a etapa: " + error.message);
+    button.disabled = false;
+    return;
+  }
+  alert("Etapa publicada com sucesso! A pontuação oficial foi calculada.");
+  await refreshAll();
+  await openStage(stageId);
+}
 async function refreshAll(){try{await loadRanking();await loadStages()}catch(e){console.error(e);msg("Erro: "+e.message)}}
  
 let currentTournamentDetails = null;
