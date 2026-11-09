@@ -5377,10 +5377,16 @@ async function loadTournamentEntries(){
     const customer=customersById.get(command.club_player_id);
     const linked=playersById.get(command.tournament_player_id)||playersByName.get(normalizeEntryName(customer?.name));
     const displayName=customer?.name||linked?.display_name||("Comanda "+command.command_number);
-    if(!commandPlayers.some(p=>p.id=== (linked?.id||null) && p.command_id===command.id)){
+    if(!commandPlayers.some(p=>p.id===(linked?.id||null)&&p.command_id===command.id)){
       commandPlayers.push({id:linked?.id||null,display_name:displayName,command_id:command.id,club_player_id:command.club_player_id,command_number:command.command_number});
     }
   });
+  (playerData||[]).forEach(player=>{
+    if(!commandPlayers.some(item=>item.id===player.id)){
+      commandPlayers.push({id:player.id,display_name:player.display_name,command_id:null,club_player_id:null,command_number:null});
+    }
+  });
+  commandPlayers.sort((a,b)=>a.display_name.localeCompare(b.display_name,"pt-BR"));
   tournamentEntryPlayers=commandPlayers;
   tournamentEntryRows=entryData||[];
   tournamentEntryDetails=details||{};
@@ -5645,13 +5651,33 @@ async function addTournamentEntry(type){
   const feeValue=Number(tournamentEntryDetails.tournament_fee)||0;
   const fee=tournamentEntryDetails.club_fee_type==="percent"?amount*feeValue/100:(type==="buyin"?feeValue:0);
   const commandPlayer=tournamentEntryPlayers.find(p=>p.id===playerId);
-  const command=commandPlayer?.command_id
+  let command=commandPlayer?.command_id
     ?(await db.from("stage_commands").select("id,club_player_id,tournament_player_id").eq("id",commandPlayer.command_id).eq("stage_id",activeTournamentStage.id).maybeSingle()).data
     :null;
-  if(!command?.id||!command.club_player_id){
-    message.textContent="Este jogador não possui uma comanda vinculada nesta etapa. Vincule o jogador a uma comanda antes de lançar pela Conferência.";
-    return;
+  if(!command?.id){
+    const {data:stageClub,error:stageClubError}=await db.from("stages").select("club_id").eq("id",activeTournamentStage.id).maybeSingle();
+    if(stageClubError){message.textContent="Não foi possível identificar o clube da etapa: "+stageClubError.message;return;}
+    const clubId=stageClub?.club_id||tournament.club_id||selectedClubId||managedClubId;
+    let customer=(tournamentEntryCustomers||[]).find(c=>normalizeEntryName(c.name)===normalizeEntryName(commandPlayer?.display_name));
+    if(!customer&&clubId){
+      const {data:found,error:findError}=await db.from("club_players").select("id,name,club_id").eq("club_id",clubId).ilike("name",commandPlayer?.display_name||"").limit(1).maybeSingle();
+      if(findError){message.textContent="Não foi possível localizar o cadastro do cliente: "+findError.message;return;}
+      customer=found;
+    }
+    if(!customer){
+      message.textContent="Cadastre este jogador como cliente do clube antes de lançar o Buy-in pela Conferência.";
+      return;
+    }
+    const {data:lastCommands,error:lastError}=await db.from("stage_commands").select("command_number").eq("stage_id",activeTournamentStage.id).order("command_number",{ascending:false}).limit(1);
+    if(lastError){message.textContent="Não foi possível preparar a comanda: "+lastError.message;return;}
+    const {data:newCommand,error:createError}=await db.from("stage_commands").insert({
+      stage_id:activeTournamentStage.id,club_id:clubId,command_number:Number(lastCommands?.[0]?.command_number||0)+1,
+      club_player_id:customer.id,tournament_player_id:playerId
+    }).select("id,club_player_id,tournament_player_id").single();
+    if(createError){message.textContent="Não foi possível abrir a comanda automaticamente: "+createError.message;return;}
+    command=newCommand;
   }
+  if(!command.club_player_id){message.textContent="A comanda não possui cliente vinculado.";return;}
   const {data:userData}=await db.auth.getUser();
   const label={buyin:"Buy-in",rebuy:"Rebuy",addon:"Add-on"}[type];
   const {data:ledgerRow,error:ledgerError}=await db.from("club_player_ledger").insert({
