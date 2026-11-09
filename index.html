@@ -4874,7 +4874,7 @@ async function generateFinalRankingImage(){
  })).filter(row=>row.name && !row.name.includes("Nenhum resultado")).slice(0,20);
  if(!rows.length){alert("Não há jogadores no ranking final para gerar a imagem.");return;}
  const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
- const width=1400,rowHeight=76,top=300,bottom=90;
+ const width=1400,rowHeight=76,top=300,bottom=130;
  canvas.width=width;canvas.height=top+rows.length*rowHeight+bottom;
  const height=canvas.height;
  ctx.fillStyle="#111014";ctx.fillRect(0,0,width,height);
@@ -4922,7 +4922,7 @@ async function generateFinalRankingImage(){
   ctx.font="800 25px Arial";ctx.fillStyle="#fff";ctx.fillText(row.final,1320,y+47);
  });
  ctx.textAlign="center";ctx.fillStyle="#8f8588";ctx.font="16px Arial";
- ctx.fillText("Classificação geral após "+publishedStageCount+" etapas, já com os 3 piores resultados descartados",width/2,height-35,width-100);
+ ctx.fillText("Classificação geral após "+publishedStageCount+" etapas, considerando o descarte dos 3 piores resultados",width/2,height-48,width-100);
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
  if(!blob){alert("Não foi possível gerar a imagem.");return;}
  const url=URL.createObjectURL(blob),link=document.createElement("a");
