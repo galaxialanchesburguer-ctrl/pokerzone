@@ -1,0 +1,19 @@
+{
+  "name": "PokerZone",
+  "short_name": "PokerZone",
+  "description": "Clubes, torneios, etapas e rankings de poker.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b0909",
+  "theme_color": "#0b0909",
+  "icons": [
+    {
+      "src": "./pokerzone-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
