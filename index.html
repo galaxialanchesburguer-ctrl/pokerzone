@@ -5799,7 +5799,7 @@ function renderSidebarTournamentList(data, emptyMessage="") {
   $("sidebar-create-tournament")?.addEventListener("click",openSidebarTournamentCreation);
 }
 async function loadSidebarTournaments() {
-  const { data, error } = await db.from("tournaments").select("id,name,club_id").eq("club_id",selectedClubId).order("name");
+  const { data, error } = await db.from("tournaments").select("id,name,description,club_id").eq("club_id",selectedClubId).order("name");
   if (error) {
     renderSidebarTournamentList([], "Erro ao carregar torneios.");
     return;
