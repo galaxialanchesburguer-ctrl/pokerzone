@@ -4777,8 +4777,8 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
  <div id="stage-editor" class="box hidden">
   <div class="box-head"><h2 id="editor-title">Editar etapa</h2><div class="actions"><button class="btn secondary" id="close-editor">Fechar</button><button class="btn admin-only" id="publish-stage">Publicar etapa</button><button class="btn admin-only" id="save-stage">Salvar etapa e resultados</button></div></div>
   <div class="stage-editor-tabs">
-    <button type="button" class="stage-editor-tab" data-stage-editor-tab="data">Classificação</button>
     <button type="button" class="stage-editor-tab" data-stage-editor-tab="commands">Comandas</button>
+    <button type="button" class="stage-editor-tab" data-stage-editor-tab="data">Classificação</button>
   </div>
   <div id="stage-data-panel" class="stage-editor-panel">
     <div class="form-grid">
@@ -7306,7 +7306,7 @@ async function openStage(id) {
   $("editor-title").textContent = "Carregando etapa...";
   $("result-rows").innerHTML = '<tr><td colspan="4" class="empty">Carregando jogadores e resultados...</td></tr>';
   $("stage-command-grid").innerHTML = '<div class="empty">Carregando comandas...</div>';
-  setStageEditorTab("data");
+  setStageEditorTab("commands");
 
   // Busca sempre a etapa clicada no banco, sem depender de dados antigos da barra lateral.
   const { data: selectedStage, error: stageError } = await db
@@ -7371,7 +7371,7 @@ async function openStage(id) {
   await loadStageCommandCards();
   if (requestId !== stageLoadRequestId) return;
 
-  setStageEditorTab("data");
+  setStageEditorTab("commands");
   $("stage-editor").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 let stageCommandCustomers = [];
