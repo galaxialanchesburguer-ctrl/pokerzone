@@ -3052,43 +3052,46 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     font-size: 14px;
   }
 
+  /* Navegação do torneio em duas linhas: todos os acessos visíveis sem cobrir o conteúdo */
   #tournament-app .tabs {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 45;
-    display: flex;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
     max-width: none;
-    margin: 0;
-    padding: 8px 7px calc(8px + env(safe-area-inset-bottom));
-    gap: 5px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    border: 1px solid #472126;
-    border-bottom: 0;
-    border-radius: 16px 16px 0 0;
-    background: rgba(15,12,12,.97);
-    -webkit-backdrop-filter: blur(16px);
-    backdrop-filter: blur(16px);
-    box-shadow: 0 -8px 28px rgba(0,0,0,.42);
-    scrollbar-width: none;
+    margin: 18px 0 22px;
+    padding: 7px;
+    gap: 7px;
+    overflow: visible;
+    border: 1px solid #342326;
+    border-radius: 13px;
+    background: #171313;
+    box-shadow: 0 5px 18px rgba(0,0,0,.22);
   }
 
-  #tournament-app .tabs::-webkit-scrollbar { display: none; }
-
   #tournament-app .tabs .tab {
-    flex: 0 0 auto;
-    min-width: max-content;
-    min-height: 43px;
-    padding: 11px 13px;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 7px;
+    border: 1px solid #30292a;
+    border-bottom: 2px solid transparent;
     border-radius: 9px;
     font-size: 11px;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  #tournament-app .tabs .tab.active {
+    color: #fff;
+    background: rgba(237,48,56,.13);
+    border-color: rgba(237,48,56,.48);
+    border-bottom-color: var(--red);
   }
 
   #tournament-app {
-    padding-bottom: calc(78px + env(safe-area-inset-bottom));
+    padding-bottom: 24px;
   }
 
   .box {
