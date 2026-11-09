@@ -4867,6 +4867,7 @@ $("generate-ranking-image").addEventListener("click",generateRankingImage);
 async function generateFinalRankingImage(){
  const rows=[...$("final-ranking").querySelectorAll("tr")].map(row=>({
   position:row.children[0]?.textContent.trim()||"",
+  playerId:row.querySelector("[data-player-id]")?.dataset.playerId||"",
   name:row.children[1]?.textContent.trim()||"",
   total:row.children[2]?.textContent.trim()||"",
   discarded:row.children[3]?.textContent.trim()||"",
@@ -4889,15 +4890,39 @@ async function generateFinalRankingImage(){
  const tournamentDescription=(tournament && tournament.description ? String(tournament.description) : "").trim();
  ctx.fillStyle="#d8cfd0";ctx.font="600 30px Arial";
  ctx.fillText(tournamentDescription,width/2,190,width-140);
- const {data:publishedStages,error:publishedStagesError}=await db.from("stages").select("id").eq("season_id",season?.id||"").eq("status","published");
+ const {data:publishedStages,error:publishedStagesError}=await db.from("stages").select("id,stage_number").eq("season_id",season?.id||"").eq("status","published").order("stage_number");
  if(publishedStagesError){alert("Não foi possível identificar quantas etapas foram publicadas.");return;}
  const publishedStageCount=(publishedStages||[]).length;
+ // Evolução em relação à classificação acumulada até a etapa publicada anterior.
+ const previousStages=(publishedStages||[]).slice(0,-1);
+ const previousRanks=new Map();
+ if(previousStages.length){
+  const [{data:previousPlayers,error:previousPlayersError},{data:previousResults,error:previousResultsError},{data:previousAdjustments,error:previousAdjustmentsError}]=await Promise.all([
+   db.from("players").select("id,display_name").eq("is_active",true).eq("tournament_id",tournament.id),
+   db.from("results").select("points,player_id,stage:stages!inner(id,stage_number,season_id,status)").eq("stage.season_id",season.id).eq("stage.status","published"),
+   db.from("season_player_adjustments").select("player_id,points_adjustment").eq("season_id",season.id)
+  ]);
+  if(previousPlayersError||previousResultsError||previousAdjustmentsError){alert("Não foi possível calcular a evolução em relação à etapa anterior.");return;}
+  const previousStageIds=new Set(previousStages.map(stage=>stage.id));
+  const previousRanking=(previousPlayers||[]).map(player=>{
+   const scores=previousStages.map(stage=>{
+    const result=(previousResults||[]).find(item=>item.player_id===player.id && item.stage?.id===stage.id);
+    return result?Number(result.points)||0:0;
+   });
+   const discarded=previousStages.length>3?[...scores].sort((a,b)=>a-b).slice(0,3):[];
+   const adjustment=Number((previousAdjustments||[]).find(item=>item.player_id===player.id)?.points_adjustment)||0;
+   const points=scores.reduce((sum,value)=>sum+value,0)-discarded.reduce((sum,value)=>sum+value,0)+adjustment;
+   return {id:player.id,name:player.display_name,points};
+  }).filter(player=>player.points>0).sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,"pt-BR"));
+  previousRanking.forEach((player,index)=>previousRanks.set(player.id,index+1));
+ }
+ rows.forEach((row,index)=>{row.movement="same";const previousPosition=previousRanks.get(row.playerId);if(previousPosition!=null){if(previousPosition>index+1)row.movement="up";else if(previousPosition<index+1)row.movement="down";}});
  ctx.fillStyle="#8f8588";ctx.font="20px Arial";
  ctx.fillText("TOP 20 • CLASSIFICAÇÃO OFICIAL • APÓS A ETAPA "+publishedStageCount,width/2,235);
  const y0=top;
  ctx.fillStyle="#f5443b";ctx.fillRect(50,y0,width-100,52);
  ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font="700 18px Arial";
- ctx.fillText("POS.",78,y0+33);ctx.fillText("JOGADOR",190,y0+33);
+ ctx.fillText("POS.",122,y0+33);ctx.fillText("JOGADOR",230,y0+33);
  ctx.textAlign="right";
  ctx.fillText("PONTOS",800,y0+33);ctx.fillText("DESCARTES",1050,y0+33);ctx.fillText("PONTUAÇÃO FINAL",1320,y0+33);
  rows.forEach((row,index)=>{
@@ -4912,11 +4937,14 @@ async function generateFinalRankingImage(){
   }else{
    ctx.strokeStyle="#393238";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(50,y+rowHeight);ctx.lineTo(width-50,y+rowHeight);ctx.stroke();
   }
+  ctx.textAlign="center";ctx.font="800 30px Arial";
+  ctx.fillStyle=row.movement==="up"?"#55d69a":row.movement==="down"?"#ff737b":"#8f8588";
+  ctx.fillText(row.movement==="up"?"↑":row.movement==="down"?"↓":"—",82,y+48);
   ctx.textAlign="left";ctx.font=index<3?"800 25px Arial":"600 23px Arial";
   ctx.fillStyle=index<3?podiumColors[index]:"#f5443b";
-  ctx.fillText(row.position,78,y+47);
+  ctx.fillText(row.position,122,y+47);
   ctx.fillStyle="#fff";ctx.font=index<3?"700 24px Arial":"500 22px Arial";
-  ctx.fillText(row.name.length>30?row.name.slice(0,27)+"...":row.name,190,y+47);
+  ctx.fillText(row.name.length>30?row.name.slice(0,27)+"...":row.name,230,y+47);
   ctx.textAlign="right";ctx.font="600 22px Arial";ctx.fillStyle="#c9c1c4";
   ctx.fillText(row.total,800,y+47);ctx.fillText(row.discarded,1050,y+47);
   ctx.font="800 25px Arial";ctx.fillStyle="#fff";ctx.fillText(row.final,1320,y+47);
