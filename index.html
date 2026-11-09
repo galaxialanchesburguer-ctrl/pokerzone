@@ -6316,6 +6316,7 @@ async function openSidebarTournamentStages(selected, tournamentList) {
   list.innerHTML=stages.length?stages.map(st=>`<button type="button" class="tournament-tree-item" data-tree-stage="${st.id}">${esc(st.name||"Etapa "+st.stage_number)}</button>`).join(""):'<div class="empty">Nenhuma etapa cadastrada.</div>';
   list.querySelectorAll("[data-tree-stage]").forEach(sb=>sb.addEventListener("click",async()=>{
     list.querySelectorAll("[data-tree-stage]").forEach(x=>x.classList.toggle("active",x===sb));
+    $("admin-sidebar")?.classList.remove("stages-sidebar-open","mobile-expanded");
     showTab("stages-view");
     await openStage(sb.dataset.treeStage);
   }));
