@@ -8772,7 +8772,7 @@ function renderClubHaverPlayers(){
     const notebookBalance=rows.reduce((sum,row)=>sum+(row.entry_type==="payment"?(Number(row.amount)||0):-(Number(row.amount)||0)),0);
     return {rows,balance:notebookBalance,debit:Math.max(0,-notebookBalance)};
   };
-  const normalizeTournamentPlayerName=value=>String(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").trim().toLocaleLowerCase("pt-BR").replace(/\\s+/g," ");
+  const normalizeTournamentPlayerName=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLocaleLowerCase("pt-BR").replace(/\s+/g," ");
   const lastTournamentRecord=player=>{
     const playerName=normalizeTournamentPlayerName(player.name);
     return clubHaverPlayerTournamentHistory
