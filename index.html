@@ -7384,6 +7384,7 @@ $("new-stage").addEventListener("click", () => {
   $("stage-list-box").classList.add("hidden");
   currentStage = null;
   editorResults = [];
+  ["stage-number","stage-name","stage-date","add-player","calculate-points","player-search","save-stage"].forEach(fieldId => { $(fieldId).disabled = !isStaff; });
   updateDeleteActionButton();
 
   $("stage-editor").classList.remove("hidden");
