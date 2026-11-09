@@ -6581,6 +6581,8 @@ function setAdminSidebarActive(key) {
   });
 }
 function showAdminHome() {
+  $("admin-calendar-screen")?.classList.add("hidden");
+  $("admin-appearance-screen")?.classList.add("hidden");
   hideStageSidebar();
   setPublicHomeChrome(true);
   if (isClubManager && managedClubId) {
@@ -6686,6 +6688,7 @@ async function loadAdminCalendar() {
 async function openCalendarTournament(tournamentId) {
   const {data:selected,error}=await db.from("tournaments").select("*").eq("id",tournamentId).maybeSingle();
   if(error||!selected){alert("Não foi possível abrir este torneio.");return;}
+  $("admin-calendar-screen")?.classList.add("hidden");
   await openTournament(selected);
 }
 function applyPokerZoneTheme(theme) {
