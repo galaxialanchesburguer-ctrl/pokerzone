@@ -2,8 +2,14 @@
 <html lang="pt-BR"> 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101010">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0909">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PokerZone">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./pokerzone-icon.svg">
+<link rel="apple-touch-icon" href="./pokerzone-icon.svg">
 <meta name="description" content="PokerZone - Ranking oficial da competição de poker.">
 <title>PokerZone | Ranking Oficial</title>
 <style>
@@ -3102,6 +3108,14 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   }
 }
 
+
+/* Ajustes para modo aplicativo instalado no celular */
+@media (max-width: 700px) {
+  header {
+    padding-top: calc(8px + env(safe-area-inset-top));
+    min-height: calc(62px + env(safe-area-inset-top));
+  }
+}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
