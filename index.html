@@ -5514,14 +5514,18 @@ async function ensureConferenceCustomer(customer){
   const message=$("entry-action-message");
   message.textContent="Preparando jogador e comanda...";
   const normalize=value=>String(value||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLocaleLowerCase("pt-BR").replace(/\\s+/g," ").trim();
-  let player=(players||[]).find(p=>normalize(p.display_name)===normalize(customer.name));
+  // Consulta a tabela do torneio diretamente. A variável global "players" também
+  // é usada pelo ranking e não é uma fonte confiável para detectar cadastros existentes.
+  const {data:existingPlayers,error:existingPlayersError}=await db.from("players")
+    .select("id,display_name").eq("tournament_id",tournament.id);
+  if(existingPlayersError){message.textContent="Não foi possível verificar os jogadores do torneio: "+existingPlayersError.message;return;}
+  let player=(existingPlayers||[]).find(p=>normalize(p.display_name)===normalize(customer.name));
   if(!player){
     const {data:newPlayer,error:newPlayerError}=await db.from("players").insert({
       full_name:customer.name,display_name:customer.name,is_active:true,tournament_id:tournament.id
     }).select("id,display_name").single();
     if(newPlayerError){message.textContent="Não foi possível cadastrar o jogador no torneio: "+newPlayerError.message;return;}
     player=newPlayer;
-    players.push(player);
   }
   let command=(await db.from("stage_commands").select("id,command_number,club_player_id,tournament_player_id")
     .eq("stage_id",activeTournamentStage.id).eq("club_player_id",customer.id).order("command_number").limit(1).maybeSingle()).data;
@@ -5557,8 +5561,11 @@ function renderTournamentEntryPlayerSearch(term=""){
   box.innerHTML=(matches.length?matches.map(c=>'<button type="button" class="btn secondary" data-select-entry-customer="'+c.id+'" style="display:block;width:100%;text-align:left;margin:4px 0">'+esc(c.name)+(c.phone?' <small>• '+esc(c.phone)+'</small>':'')+'</button>').join(""):'')+
     (q?'<button type="button" class="btn secondary" id="entry-new-customer" style="display:block;width:100%;margin-top:8px">+ Cadastrar "'+esc(term)+'" como novo cliente</button>':'');
   box.querySelectorAll("[data-select-entry-customer]").forEach(btn=>btn.addEventListener("click",async()=>{
+    if(btn.disabled)return;
+    btn.disabled=true;
     const customer=tournamentEntryCustomers.find(c=>c.id===btn.dataset.selectEntryCustomer);
-    if(customer)await ensureConferenceCustomer(customer);
+    try{if(customer)await ensureConferenceCustomer(customer);}
+    finally{btn.disabled=false;}
   }));
   box.querySelector("#entry-new-customer")?.addEventListener("click",()=>renderConferenceNewCustomer(term));
 }
