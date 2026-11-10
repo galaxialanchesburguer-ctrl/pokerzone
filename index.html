@@ -8626,22 +8626,16 @@ async function reopenCurrentStage() {
   button.disabled = true;
   const stageId = currentStage.id;
 
-  const { data, error } = await db
-    .from("stages")
-    .update({ status: "draft" })
-    .eq("id", stageId)
-    .eq("status", "published")
-    .select("id,status")
-    .maybeSingle();
+  // A função oficial no banco valida a permissão e altera o status,
+  // respeitando a proteção contra alterações diretas na tabela.
+  const { error } = await db.rpc("reopen_stage", { p_stage_id: stageId });
 
-  if (error || !data || data.status !== "draft") {
-    alert("Não foi possível reabrir a etapa: " + (error?.message || "O banco não confirmou a alteração do status."));
+  if (error) {
+    alert("Não foi possível reabrir a etapa: " + error.message);
     button.disabled = false;
     return;
   }
 
-  // Atualiza o estado local imediatamente: não depende de uma nova leitura
-  // da lista para liberar os campos do editor.
   currentStage = { ...currentStage, status: "draft" };
   stages = stages.map(stage => stage.id === stageId ? { ...stage, status: "draft" } : stage);
   $("stage-status").value = "Rascunho";
@@ -8656,7 +8650,8 @@ async function reopenCurrentStage() {
   renderResultRows();
 
   alert("Etapa reaberta! Os campos de dados e a classificação já estão liberados para edição.");
-  loadStages().catch(error => console.error("Erro ao atualizar a lista de etapas:", error));
+  await refreshAll();
+  await openStage(stageId);
 }
 async function publishCurrentStage() {
   if (!isStaff || !currentStage?.id || currentStage.status !== "draft") return;
