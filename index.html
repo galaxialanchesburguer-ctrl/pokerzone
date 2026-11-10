@@ -1125,6 +1125,20 @@ input:focus,select:focus {
     width: 100%;
   }
 }
+/* CARDS DE TORNEIOS NA ÁREA PRINCIPAL */
+.staff-tournaments-cards{margin:26px auto 34px;max-width:1180px;padding:24px;background:#151515;border:1px solid #302426;border-radius:14px}
+.staff-tournaments-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.staff-tournaments-kicker{color:#ed5962;font-size:10px;font-weight:800;letter-spacing:1.8px}
+.staff-tournaments-heading h2{margin:5px 0 4px;color:#fff;font-size:21px;font-weight:900}
+.staff-tournaments-heading p{margin:0;color:#999;font-size:13px}
+.staff-tournaments-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px}
+.staff-tournament-card{min-width:0;padding:19px;background:linear-gradient(145deg,#242020,#191919);border:1px solid #3b3031;border-radius:12px;transition:border-color .2s,transform .2s}
+.staff-tournament-card:hover{border-color:#ed2939;transform:translateY(-2px)}
+.staff-tournament-card h3{margin:0 0 9px;color:#fff;font-size:17px;font-weight:800;overflow-wrap:anywhere}
+.staff-tournament-card p{min-height:36px;margin:0 0 15px;color:#aaa;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.staff-tournament-card .btn{width:100%}
+@media(max-width:600px){.staff-tournaments-cards{padding:16px;margin:18px 0}.staff-tournaments-heading{align-items:stretch;flex-direction:column}.staff-tournaments-heading .btn{width:100%}.staff-tournaments-grid{grid-template-columns:1fr}}
+
 /* PAINEL DE TORNEIOS DO CLUBE */
 .club-tournaments-panel {
   margin-top: 28px;
@@ -3632,6 +3646,15 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   </button>
  
 </div>
+
+<!-- TORNEIOS CADASTRADOS DO CLUBE -->
+<section id="staff-tournaments-cards" class="staff-tournaments-cards hidden">
+  <div class="staff-tournaments-heading">
+    <div><span class="staff-tournaments-kicker">PAINEL DO CLUBE</span><h2>MEUS TORNEIOS</h2><p>Selecione um torneio para acessar suas etapas e informações.</p></div>
+    <button type="button" class="btn" id="staff-create-tournament-btn">+ Criar torneio</button>
+  </div>
+  <div id="staff-tournaments-grid" class="staff-tournaments-grid"><div class="empty">Carregando torneios...</div></div>
+</section>
 
 <!-- BUSCA PÚBLICA DE TORNEIOS -->
 <div id="public-tournament-search" class="box hidden">
@@ -6653,6 +6676,7 @@ function showSidebarTournamentList() {
   if (window.matchMedia("(max-width: 760px)").matches) $("admin-sidebar")?.classList.add("mobile-expanded");
   setPublicHomeChrome(false);
   $("home-tournaments").classList.remove("hidden");
+  $("staff-tournaments-cards")?.classList.remove("hidden");
   $("tournament-app").classList.add("hidden");
   ["manage-clubs-area","club-details-area","create-tournament-area","tournament-search-area","public-tournament-search","public-player-search"].forEach(id => $(id)?.classList.add("hidden"));
   $("tournament-tree").classList.remove("hidden");
@@ -6670,6 +6694,7 @@ function openSidebarTournamentCreation() {
     return;
   }
   $("tournament-tree").classList.add("hidden");
+  $("staff-tournaments-cards")?.classList.add("hidden");
   $("home-tournaments").classList.remove("hidden");
   $("tournament-app").classList.add("hidden");
   ["manage-clubs-area","club-details-area","club-tournaments-area","club-settings-area","club-clock-area","create-tournament-area","tournament-search-area","public-tournament-search","public-player-search"].forEach(id => $(id)?.classList.add("hidden"));
@@ -6681,7 +6706,15 @@ function openSidebarTournamentCreation() {
 }
 function renderSidebarTournamentList(data, emptyMessage="") {
   $("admin-sidebar")?.classList.remove("stages-sidebar-open");
-  const items=(data||[]).map(t=>'<button type="button" class="tournament-tree-item" data-sidebar-tournament="'+esc(t.id)+'">'+esc(t.name)+'</button>').join("");
+  const tournaments=data||[];
+  const cards=$("staff-tournaments-grid");
+  if(cards){
+    cards.innerHTML=tournaments.length?tournaments.map(t=>'<article class="staff-tournament-card"><h3>'+esc(t.name)+'</h3><p>'+esc(t.description||"Acesse para gerenciar etapas, resultados e informações do torneio.")+'</p><button type="button" class="btn open-staff-tournament" data-card-tournament="'+esc(t.id)+'">Abrir torneio</button></article>').join():'<div class="empty">'+esc(emptyMessage||"Nenhum torneio cadastrado neste clube.")+'</div>';
+    cards.querySelectorAll("[data-card-tournament]").forEach(button=>button.addEventListener("click",()=>openSidebarTournamentStages(tournaments.find(t=>String(t.id)===String(button.dataset.cardTournament)),tournaments)));
+  }
+  const createCardButton=$("staff-create-tournament-btn");
+  if(createCardButton)createCardButton.onclick=openSidebarTournamentCreation;
+  const items=tournaments.map(t=>'<button type="button" class="tournament-tree-item" data-sidebar-tournament="'+esc(t.id)+'">'+esc(t.name)+'</button>').join("");
   const createButton='<button type="button" class="tournament-tree-create" id="sidebar-create-tournament">+ Criar torneio</button>';
   renderTournamentTreePanel("TORNEIOS DO CLUBE","Voltar",()=>{
     $("tournament-tree").classList.add("hidden");
@@ -6771,6 +6804,7 @@ function showAdminHome() {
   $("tournament-app").classList.add("hidden");
   $("nearby-tournaments-screen").classList.add("hidden");
   $("home-tournaments").classList.remove("hidden");
+  $("staff-tournaments-cards")?.classList.add("hidden");
   ["manage-clubs-area","club-details-area","create-tournament-area","tournament-search-area","public-tournament-search","public-player-search"].forEach(id => {
     const el = $(id);
     if (el) el.classList.add("hidden");
