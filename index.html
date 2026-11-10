@@ -3639,6 +3639,14 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .stage-info-modal-field strong{display:block;color:#fff;font-size:15px;overflow-wrap:anywhere}
 .stage-info-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
 @media(max-width:480px){.stage-info-modal{padding:12px}.stage-info-modal-panel{padding:17px}.stage-info-modal-head h3{font-size:18px}.stage-info-modal-grid{gap:8px}.stage-info-modal-field{padding:11px}}
+
+.stage-info-modal-ranking-title{margin:23px 0 11px;color:#ff737d;font-size:12px;letter-spacing:1px}
+.stage-info-modal-table{width:100%;border-collapse:collapse}
+.stage-info-modal-table th,.stage-info-modal-table td{padding:11px 9px;text-align:left;border-bottom:1px solid #342d2e}
+.stage-info-modal-table th{color:#aaa;font-size:10px;letter-spacing:.6px}
+.stage-info-modal-table td{color:#eee;font-size:13px}
+.stage-info-modal-table th:first-child,.stage-info-modal-table td:first-child{width:78px}
+.stage-info-modal-table th:last-child,.stage-info-modal-table td:last-child{text-align:right;white-space:nowrap}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -7090,7 +7098,7 @@ async function setActiveTournamentStage(stageId) {
   await loadTournamentEntries();
 }
 
-function openStageInfoModal(stageId){
+async function openStageInfoModal(stageId){
   const stage=stages.find(item=>String(item.id)===String(stageId));
   if(!stage)return;
   const modal=$("stage-info-modal");
@@ -7102,9 +7110,11 @@ function openStageInfoModal(stageId){
     '<div class="stage-info-modal-grid">'+
       '<div class="stage-info-modal-field"><small>Número</small><strong>ETAPA '+String(stage.stage_number??"—").padStart(2,"0")+'</strong></div>'+
       '<div class="stage-info-modal-field"><small>Data</small><strong>'+esc(date)+'</strong></div>'+
-      '<div class="stage-info-modal-field"><small>Status</small><strong>'+ (stage.status==="published"?"Publicada":"Rascunho")+'</strong></div>'+
+      '<div class="stage-info-modal-field"><small>Status</small><strong>'+(stage.status==="published"?"Publicada":"Rascunho")+'</strong></div>'+
       '<div class="stage-info-modal-field"><small>Participantes</small><strong>'+(stage.participant_count||0)+'</strong></div>'+
-    '</div>';
+    '</div>'+
+    '<h4 class="stage-info-modal-ranking-title">CLASSIFICAÇÃO DA ETAPA</h4>'+
+    '<div id="stage-info-modal-ranking"><div class="empty">Carregando jogadores...</div></div>';
   $("stage-info-modal-actions").innerHTML=isStaff
     ? '<button type="button" class="btn" id="stage-info-modal-edit">Editar etapa</button>'
     : '';
@@ -7113,6 +7123,24 @@ function openStageInfoModal(stageId){
     openStage(stageId);
   });
   modal.classList.remove("hidden");
+
+  const {data:results,error}=await db
+    .from("results")
+    .select("position,points,player:players(display_name)")
+    .eq("stage_id",stageId)
+    .order("position");
+  const ranking=$("stage-info-modal-ranking");
+  if(!ranking||modal.classList.contains("hidden"))return;
+  if(error){
+    ranking.innerHTML='<div class="empty">Não foi possível carregar a classificação.</div>';
+    console.error("Erro ao carregar classificação da etapa:",error);
+    return;
+  }
+  ranking.innerHTML=results?.length
+    ? '<div class="table-wrap"><table class="stage-info-modal-table"><thead><tr><th>POSIÇÃO</th><th>JOGADOR</th><th>PONTOS</th></tr></thead><tbody>'+
+      results.map(player=>'<tr><td>'+esc(player.position)+'º</td><td>'+esc(player.player?.display_name||"Jogador")+'</td><td>'+Number(player.points||0).toLocaleString("pt-BR")+'</td></tr>').join("")+
+      '</tbody></table></div>'
+    : '<div class="empty">Nenhum jogador ou pontuação cadastrada nesta etapa.</div>';
 }
 function closeStageInfoModal(){
   $("stage-info-modal")?.classList.add("hidden");
