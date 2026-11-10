@@ -7674,7 +7674,10 @@ async function loadStageCommandCards() {
           command.tournament_player_id=player.player_id;
         }
       }else{
-        const {data:newCommand,error}=await db.from("stage_commands").insert({stage_id:currentStage.id,club_id:clubId,command_number:i+1,tournament_player_id:player.player_id}).select("id,command_number,club_player_id,club_id,tournament_player_id").single();
+        // Não use a posição do jogador como número da comanda: esse número
+        // pode já pertencer a outra comanda existente nesta etapa.
+        const nextCommandNumber=rows.reduce((max,item)=>Math.max(max,Number(item.command_number)||0),0)+1;
+        const {data:newCommand,error}=await db.from("stage_commands").insert({stage_id:currentStage.id,club_id:clubId,command_number:nextCommandNumber,tournament_player_id:player.player_id}).select("id,command_number,club_player_id,club_id,tournament_player_id").single();
         if(error){grid.innerHTML='<div class="notice">Não foi possível criar a comanda de '+esc(player.name)+': '+esc(error.message)+'</div>';return;}
         rows.push(newCommand);
       }
