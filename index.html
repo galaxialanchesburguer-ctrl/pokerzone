@@ -7153,7 +7153,64 @@ function updatePlayerSuggestions() {
     .map(p => `<option value="${esc(p.name)}"></option>`)
     .join("");
 }
- async function openStageResults(id) {
+ async function generateStageRankingImage(stage, results){
+ const rows=(results||[]).map(player=>({
+  position:String(player.position??""),
+  name:String(player.player?.display_name||"Jogador"),
+  points:Number(player.points||0).toLocaleString("pt-BR")
+ })).filter(row=>row.name);
+ if(!rows.length){alert("Não há jogadores classificados nesta etapa para gerar a imagem.");return;}
+ const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+ const width=1080,rowHeight=76,top=300,bottom=90;
+ canvas.width=width;canvas.height=top+rows.length*rowHeight+bottom;
+ const height=canvas.height;
+ ctx.fillStyle="#111014";ctx.fillRect(0,0,width,height);
+ const bg=ctx.createLinearGradient(0,0,width,height);
+ bg.addColorStop(0,"#241719");bg.addColorStop(1,"#111014");
+ ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
+ ctx.fillStyle="#f5443b";ctx.fillRect(0,0,width,14);
+ ctx.textAlign="center";
+ ctx.fillStyle="#f5443b";ctx.font="800 25px Arial";
+ ctx.fillText("POKERZONE",width/2,78);
+ ctx.fillStyle="#fff";ctx.font="800 43px Arial";
+ ctx.fillText((tournament?.name||"TORNEIO").toUpperCase(),width/2,137,width-100);
+ const stageTitle=(stage.name||("ETAPA "+stage.stage_number)).toUpperCase();
+ ctx.fillStyle="#d8cfd0";ctx.font="700 32px Arial";
+ ctx.fillText("CLASSIFICAÇÃO DA "+stageTitle,width/2,195,width-100);
+ ctx.fillStyle="#8f8588";ctx.font="20px Arial";
+ ctx.fillText("RESULTADO OFICIAL DA ETAPA",width/2,240);
+ const startY=top;
+ ctx.fillStyle="#f5443b";ctx.fillRect(50,startY,width-100,52);
+ ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font="700 18px Arial";
+ ctx.fillText("POS.",82,startY+33);ctx.fillText("JOGADOR",205,startY+33);
+ ctx.textAlign="right";ctx.fillText("PONTOS",950,startY+33);
+ rows.forEach((row,index)=>{
+  const y=startY+52+index*rowHeight;
+  ctx.fillStyle=index%2===0?"#211d22":"#19161b";
+  ctx.fillRect(50,y,width-100,rowHeight);
+  ctx.strokeStyle="#393238";ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(50,y+rowHeight);ctx.lineTo(width-50,y+rowHeight);ctx.stroke();
+  ctx.textAlign="left";ctx.font=index<3?"800 25px Arial":"600 23px Arial";
+  ctx.fillStyle=index===0?"#ffd166":index===1?"#d9dce2":index===2?"#d99a70":"#f5443b";
+  ctx.fillText(row.position+"º",82,y+47);
+  ctx.fillStyle="#fff";ctx.font=index<3?"700 24px Arial":"500 22px Arial";
+  ctx.fillText(row.name.length>34?row.name.slice(0,31)+"...":row.name,205,y+47);
+  ctx.textAlign="right";ctx.fillStyle="#fff";ctx.font="800 24px Arial";
+  ctx.fillText(row.points,950,y+47);
+ });
+ ctx.textAlign="center";ctx.fillStyle="#8f8588";ctx.font="18px Arial";
+ ctx.fillText("POKERZONE • CLASSIFICAÇÃO DA ETAPA",width/2,height-35);
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+ if(!blob){alert("Não foi possível gerar a imagem.");return;}
+ const url=URL.createObjectURL(blob);
+ const link=document.createElement("a");
+ const safeName=stageTitle.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").toLowerCase();
+ link.href=url;link.download="classificacao-"+(safeName||("etapa-"+stage.stage_number))+".png";
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+async function openStageResults(id) {
   const stage = stages.find(s => s.id === id);
 if (!stage) return;
 currentStage = stage;
@@ -7276,7 +7333,10 @@ resultsContent.innerHTML =
       ${podiumHtml}
     </div>
 
-    <h3 class="stage-results-heading">CLASSIFICAÇÃO COMPLETA</h3>
+    <div class="ranking-title-row">
+      <h3 class="stage-results-heading">CLASSIFICAÇÃO COMPLETA</h3>
+      <button type="button" class="btn secondary" id="generate-stage-ranking-image-${id}">📸 Gerar imagem</button>
+    </div>
 
     <div class="table-wrap">
       <table>
@@ -7293,6 +7353,7 @@ resultsContent.innerHTML =
       </table>
     </div>
   `;
+  $("generate-stage-ranking-image-"+id)?.addEventListener("click",()=>generateStageRankingImage(stage,results));
 }
  function setStageEditorTab(tab) {
   const commands = tab === "commands";
