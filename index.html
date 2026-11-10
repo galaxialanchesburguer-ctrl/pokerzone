@@ -5660,7 +5660,7 @@ async function generateFinalRankingImage(){
  ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
  ctx.fillStyle="#f5443b";ctx.fillRect(0,0,width,14);
  ctx.textAlign="center";
- ctx.fillStyle="#f5443b";ctx.font="800 25px Arial";ctx.fillText("POKERZONE",width/2,78);
+ ctx.fillStyle="#f5443b";ctx.font="800 25px Arial";ctx.fillText(headerName.toUpperCase(),width/2,78,width-100);
  ctx.fillStyle="#fff";ctx.font="800 43px Arial";
  ctx.fillText((tournament?.name||"RANKING DO TORNEIO").toUpperCase(),width/2,137);
  const tournamentDescription=(tournament && tournament.description ? String(tournament.description) : "").trim();
