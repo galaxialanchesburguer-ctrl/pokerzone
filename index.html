@@ -6291,7 +6291,7 @@ async function ensureConferenceCustomer(customer){
   let player=(existingPlayers||[]).find(p=>normalize(p.display_name)===normalize(customer.name));
   if(!player){
     const {data:newPlayer,error:newPlayerError}=await db.from("players").insert({
-      full_name:customer.name,display_name:customer.name,is_active:true,tournament_id:tournament.id
+      full_name:customer.name.toLocaleUpperCase("pt-BR"),display_name:customer.name.toLocaleUpperCase("pt-BR"),is_active:true,tournament_id:tournament.id
     }).select("id,display_name").single();
     if(newPlayerError){message.textContent="Não foi possível cadastrar o jogador no torneio: "+newPlayerError.message;return;}
     player=newPlayer;
@@ -6358,7 +6358,7 @@ function renderConferenceNewCustomer(initialName=""){
     const {data:userData}=await db.auth.getUser();
     const {data:customer,error}=await db.from("club_players").insert({
       club_id:stageInfo?.club_id||tournament.club_id||selectedClubId||managedClubId,
-      name,phone:phone||null,notes:notes||null,created_by:userData?.user?.id||null
+      name:name.toLocaleUpperCase("pt-BR"),phone:phone||null,notes:notes||null,created_by:userData?.user?.id||null
     }).select("id,name,phone,notes,club_id").single();
     if(error){alert("Não foi possível cadastrar o cliente: "+error.message);button.disabled=false;return;}
     tournamentEntryCustomers.push(customer);
@@ -7640,7 +7640,7 @@ async function createStageCommandForCustomer(customer,buyinEnabled=true){
     if(playersError){content.innerHTML='<div class="notice">Não foi possível localizar o jogador no torneio: '+esc(playersError.message)+'</div>';return;}
     tournamentPlayer=(playersData||[]).find(player=>normalize(player.display_name)===normalize(customer.name));
     if(!tournamentPlayer){
-      const {data:newPlayer,error:newPlayerError}=await db.from("players").insert({full_name:customer.name,display_name:customer.name,is_active:true,tournament_id:stageInfo.tournament_id}).select("id,display_name").single();
+      const {data:newPlayer,error:newPlayerError}=await db.from("players").insert({full_name:customer.name.toLocaleUpperCase("pt-BR"),display_name:customer.name.toLocaleUpperCase("pt-BR"),is_active:true,tournament_id:stageInfo.tournament_id}).select("id,display_name").single();
       if(newPlayerError){content.innerHTML='<div class="notice">Não foi possível cadastrar o jogador no torneio: '+esc(newPlayerError.message)+'</div>';return;}
       tournamentPlayer=newPlayer;
     }
@@ -7732,7 +7732,7 @@ async function openStagePlayerCommand(commandId){
     if(!stageCommandSelectedCustomer){
       const {data:userData}=await db.auth.getUser();
       const {data:newCustomer,error:newCustomerError}=await db.from("club_players").insert({
-        club_id:command.club_id,name:linkedPlayer.name,created_by:userData?.user?.id||null
+        club_id:command.club_id,name:linkedPlayer.name.toLocaleUpperCase("pt-BR"),created_by:userData?.user?.id||null
       }).select("id,name,phone,notes").single();
       if(newCustomerError){content.innerHTML='<div class="notice">Não foi possível vincular o jogador à comanda: '+esc(newCustomerError.message)+'</div>';return;}
       stageCommandSelectedCustomer=newCustomer;
@@ -7971,7 +7971,7 @@ function renderStagePlayerCommand(history=[],searchTerm=""){
         if(playersError){alert(playersError.message);button.disabled=false;return;}
         const norm=v=>String(v||"").normalize("NFD").replace(new RegExp("[\\u0300-\\u036f]","g"),"").trim().toLowerCase();
         let found=(playersData||[]).find(p=>norm(p.display_name)===norm(stageCommandSelectedCustomer.name));
-        if(!found){const {data:newPlayer,error:newPlayerError}=await db.from("players").insert({full_name:stageCommandSelectedCustomer.name,display_name:stageCommandSelectedCustomer.name,is_active:true,tournament_id:stageInfo.tournament_id}).select("id,display_name").single();if(newPlayerError){alert(newPlayerError.message);button.disabled=false;return;}found=newPlayer;}
+        if(!found){const {data:newPlayer,error:newPlayerError}=await db.from("players").insert({full_name:stageCommandSelectedCustomer.name.toLocaleUpperCase("pt-BR"),display_name:stageCommandSelectedCustomer.name.toLocaleUpperCase("pt-BR"),is_active:true,tournament_id:stageInfo.tournament_id}).select("id,display_name").single();if(newPlayerError){alert(newPlayerError.message);button.disabled=false;return;}found=newPlayer;}
         tournamentPlayerId=found.id;
       }
       const [{data:details,error:detailsError},{data:entries,error:entriesError}]=await Promise.all([
@@ -8029,7 +8029,7 @@ function renderStageNewCustomer(history=[],initialName=""){
     const button=content.querySelector("#stage-command-create-customer");button.disabled=true;
     const {data:userData}=await db.auth.getUser();
     const {data:newCustomer,error}=await db.from("club_players").insert({
-      club_id:tournament.club_id||selectedClubId,name,phone:phone||null,notes:notes||null,created_by:userData?.user?.id||null
+      club_id:tournament.club_id||selectedClubId,name:name.toLocaleUpperCase("pt-BR"),phone:phone||null,notes:notes||null,created_by:userData?.user?.id||null
     }).select("id,name,phone,notes").single();
     if(error){alert("Não foi possível cadastrar o cliente: "+error.message);button.disabled=false;return;}
     stageCommandCustomers.push(newCustomer);
@@ -9898,7 +9898,7 @@ async function importGeneralRankingPlayersToClients(){
     if(userError)throw userError;
     const userId=userData?.user?.id||null;
     for(let i=0;i<pending.length;i+=100){
-      const batch=pending.slice(i,i+100).map(player=>({...player,created_by:userId}));
+      const batch=pending.slice(i,i+100).map(player=>({...player,name:String(player.name||"").toLocaleUpperCase("pt-BR"),created_by:userId}));
       const {error:insertError}=await db.from("club_players").insert(batch);
       if(insertError)throw insertError;
     }
@@ -10104,7 +10104,7 @@ async function saveClubHaverPlayer() {
   if (!name) { message.textContent = "Informe o nome do jogador."; return; }
   message.textContent = "Salvando...";
   const {data:userData} = await db.auth.getUser();
-  const {error} = await db.from("club_players").insert({club_id:selectedClubId,name,created_by:userData?.user?.id || null});
+  const {error} = await db.from("club_players").insert({club_id:selectedClubId,name:name.toLocaleUpperCase("pt-BR"),created_by:userData?.user?.id || null});
   if (error) { message.textContent = "Erro: " + error.message; return; }
   $("club-haver-player-name").value = "";
   message.textContent = "Jogador cadastrado!";
@@ -10661,7 +10661,7 @@ async function addClubHaverQuickProduct(product) {
     const normalize=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
     tournamentPlayer=(playersData||[]).find(p=>normalize(p.display_name)===normalize(clubHaverSelectedPlayer.name));
     if(!tournamentPlayer){
-      const {data:newPlayer,error:newPlayerError}=await db.from("players").insert({full_name:clubHaverSelectedPlayer.name,display_name:clubHaverSelectedPlayer.name,is_active:true,tournament_id:stage.tournament_id}).select("id,display_name").single();
+      const {data:newPlayer,error:newPlayerError}=await db.from("players").insert({full_name:clubHaverSelectedPlayer.name.toLocaleUpperCase("pt-BR"),display_name:clubHaverSelectedPlayer.name.toLocaleUpperCase("pt-BR"),is_active:true,tournament_id:stage.tournament_id}).select("id,display_name").single();
       if(newPlayerError){alert("Não foi possível vincular o jogador ao torneio: "+newPlayerError.message);renderClubHaverQuickProducts();return;}
       tournamentPlayer=newPlayer;
     }
