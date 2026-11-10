@@ -7182,7 +7182,7 @@ async function openStageInfoModal(stageId){
   }
   ranking.innerHTML=results?.length
     ? '<div class="stage-info-modal-columns">'+
-      [results.slice(0,15),results.slice(15)].map((group,index)=>
+      [results.slice(0,15),results.slice(15)].filter(group=>group.length).map((group,index)=>
         '<div class="stage-info-modal-column"><div class="stage-info-modal-column-label">'+(index===0?'POSIÇÕES 1–15':'POSIÇÕES 16–'+results.length)+'</div>'+
         '<table class="stage-info-modal-table"><thead><tr><th>POS.</th><th>JOGADOR</th><th>PONTOS</th></tr></thead><tbody>'+
         group.map(player=>'<tr><td>'+esc(player.position)+'º</td><td>'+esc(player.player?.display_name||"Jogador")+'</td><td>'+Number(player.points||0).toLocaleString("pt-BR")+'</td></tr>').join("")+
