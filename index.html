@@ -7620,7 +7620,7 @@ function renderStageCommandNewCustomer(initialName="",buyinEnabled=true){
     const button=content.querySelector("#stage-command-create-customer");button.disabled=true;
     const {data:userData}=await db.auth.getUser();
     const {data:newCustomer,error}=await db.from("club_players").insert({
-      club_id:stageCommandClubId||tournament?.club_id||selectedClubId||managedClubId,name,phone:phone||null,notes:notes||null,created_by:userData?.user?.id||null
+      club_id:stageCommandClubId||tournament?.club_id||selectedClubId||managedClubId,name:name.toLocaleUpperCase("pt-BR"),phone:phone||null,notes:notes||null,created_by:userData?.user?.id||null
     }).select("id,name,phone,notes").single();
     if(error){alert("Não foi possível cadastrar o cliente: "+error.message);button.disabled=false;return;}
     stageCommandCustomers.push(newCustomer);
