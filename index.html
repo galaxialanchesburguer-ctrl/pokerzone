@@ -4869,7 +4869,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   </div>
  <div id="stage-list"><div class="empty">Carregando etapas...</div></div></div>
  <div id="stage-editor" class="box hidden">
-  <div class="box-head"><h2 id="editor-title">Editar etapa</h2><div class="actions"><button class="btn secondary" id="close-editor">Fechar</button><button class="btn admin-only" id="publish-stage">Publicar etapa</button><button class="btn admin-only" id="save-stage">Salvar etapa e resultados</button></div></div>
+  <div class="box-head"><h2 id="editor-title">Editar etapa</h2><div class="actions"><button class="btn secondary" id="close-editor">Fechar</button><button class="btn secondary admin-only" id="reopen-stage" hidden>Reabrir etapa</button><button class="btn admin-only" id="publish-stage">Publicar etapa</button><button class="btn admin-only" id="save-stage">Salvar etapa e resultados</button></div></div>
   <div class="stage-editor-tabs">
     <button type="button" class="stage-editor-tab" data-stage-editor-tab="commands">Comandas</button>
     <button type="button" class="stage-editor-tab" data-stage-editor-tab="data">Classificação</button>
@@ -7599,6 +7599,8 @@ async function openStage(id) {
   ["stage-number","stage-name","stage-date","add-player","calculate-points","player-search","save-stage"].forEach(fieldId => { $(fieldId).disabled = !canEditStage; });
   $("publish-stage").hidden = !isStaff || selectedStage.status !== "draft";
   $("publish-stage").disabled = !isStaff;
+  $("reopen-stage").hidden = !isStaff || selectedStage.status !== "published";
+  $("reopen-stage").disabled = !isStaff;
 
   const { data, error } = await db
     .from("results")
@@ -8606,6 +8608,7 @@ async function saveStage() {
 }
  $("save-stage").addEventListener("click", saveStage);
  $("publish-stage").addEventListener("click", publishCurrentStage);
+ $("reopen-stage").addEventListener("click", reopenCurrentStage);
  $("close-editor").addEventListener("click", () => {
   $("stage-editor").classList.add("hidden");
   stageEditorReturnVisible = false;
@@ -8615,6 +8618,31 @@ async function saveStage() {
   updateDeleteActionButton();
 });
  
+async function reopenCurrentStage() {
+  if (!isStaff || !currentStage?.id || currentStage.status !== "published") return;
+  if (!confirm("Deseja reabrir esta etapa para edição? Ela ficará temporariamente fora da classificação pública até ser publicada novamente.")) return;
+
+  const button = $("reopen-stage");
+  button.disabled = true;
+
+  const { data, error } = await db
+    .from("stages")
+    .update({ status: "draft" })
+    .eq("id", currentStage.id)
+    .eq("status", "published")
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    alert("Não foi possível reabrir a etapa: " + (error?.message || "Etapa não encontrada ou sem permissão."));
+    button.disabled = false;
+    return;
+  }
+
+  alert("Etapa reaberta! Agora você pode editar os dados e publicar novamente quando terminar.");
+  await refreshAll();
+  await openStage(data.id);
+}
 async function publishCurrentStage() {
   if (!isStaff || !currentStage?.id || currentStage.status !== "draft") return;
   if (!confirm("Deseja publicar esta etapa? Após a publicação, os resultados e a classificação ficarão definitivos.")) return;
