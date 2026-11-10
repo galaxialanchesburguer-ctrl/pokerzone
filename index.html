@@ -3585,6 +3585,46 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
  .plan-description { min-height:0; }
  .demo-club-card { padding:14px; }
 }
+
+/* ETAPAS EM CARDS — PADRÃO VISUAL DO PAINEL */
+#stage-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+  gap:14px;
+  align-items:stretch;
+}
+#stage-list > .stage-item{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:space-between;
+  gap:18px;
+  min-width:0;
+  min-height:190px;
+  padding:18px;
+  border:1px solid #3b3031;
+  border-radius:12px;
+  border-top:1px solid #3b3031;
+  background:linear-gradient(145deg,#242020,#171717);
+  box-shadow:0 8px 22px rgba(0,0,0,.18);
+  transition:border-color .2s,transform .2s,box-shadow .2s;
+  cursor:pointer;
+}
+#stage-list > .stage-item:hover{
+  border-color:#ed2939;
+  transform:translateY(-2px);
+  box-shadow:0 12px 26px rgba(0,0,0,.28);
+}
+#stage-list .stage-main{display:flex;flex-direction:column;align-items:flex-start;gap:12px;width:100%}
+#stage-list .stage-number{display:inline-flex;align-items:center;padding:6px 10px;border-radius:6px;background:rgba(237,41,57,.13);border:1px solid rgba(237,41,57,.3);color:#ff7b83;font-size:11px;font-weight:900;letter-spacing:1px}
+#stage-list .stage-info{width:100%;min-width:0}
+#stage-list .stage-results-link{display:block;width:100%;padding:0;border:0;background:transparent;color:#fff;text-align:left;font-size:17px;font-weight:800;line-height:1.35;overflow-wrap:anywhere;cursor:pointer}
+#stage-list .stage-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:9px;color:#aaa;font-size:11px}
+#stage-list .actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;width:100%;margin-top:auto}
+#stage-list .actions .tag{margin-right:auto;color:#c8c0c0;font-size:11px}
+#stage-list .actions .btn{flex:1 1 auto;min-width:105px;margin:0}
+#stage-list > [id^="stage-results-"]{grid-column:1 / -1;width:100%;margin:0 0 8px}
+@media(max-width:600px){#stage-list{grid-template-columns:1fr;gap:11px}#stage-list > .stage-item{min-height:0;padding:16px}#stage-list .actions .btn{min-width:0}}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
