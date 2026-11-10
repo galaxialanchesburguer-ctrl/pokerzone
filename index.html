@@ -4588,10 +4588,16 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 <section id="tournament-info-view" class="hidden">
   <h2 class="section-title">Informações do torneio</h2>
  
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
 <button class="btn admin-only" id="edit-tournament-info-btn"
   style="width:auto; display:inline-block; padding:10px 18px;">
   Editar informações
 </button>
+<button class="btn secondary" id="generate-tournament-flyer-btn" type="button"
+  style="width:auto;display:inline-block;padding:10px 18px;">
+  📸 Gerar flyer
+</button>
+</div>
 
 
   <section class="box">
@@ -8470,6 +8476,80 @@ let currentTournamentDetails = null;
  let recentTournamentsStorageKey = "pokerzone_recent_tournaments_public";
 let recentClubsStorageKey = "pokerzone_recent_clubs_public";
  
+async function generateTournamentFlyer(){
+ if(!tournament?.id){alert("Abra um torneio antes de gerar o flyer.");return;}
+ const details=currentTournamentDetails||{};
+ let clubId=tournament.club_id||selectedClubId||managedClubId;
+ if(!clubId){
+  const {data:tournamentData,error}=await db.from("tournaments").select("club_id").eq("id",tournament.id).maybeSingle();
+  if(error){alert("Não foi possível identificar o clube do torneio.");return;}
+  clubId=tournamentData?.club_id||null;
+ }
+ let club=null;
+ if(clubId){
+  const {data,error}=await db.from("clubs").select("name,city,state,address").eq("id",clubId).maybeSingle();
+  if(error){console.error("Erro ao buscar clube do flyer:",error);}
+  club=data;
+ }
+ const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+ const width=1080,height=1350;
+ canvas.width=width;canvas.height=height;
+ const bg=ctx.createLinearGradient(0,0,width,height);
+ bg.addColorStop(0,"#351619");bg.addColorStop(.52,"#171316");bg.addColorStop(1,"#09090b");
+ ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
+ ctx.fillStyle="#f5443b";ctx.fillRect(0,0,width,18);
+ ctx.strokeStyle="rgba(245,68,59,.28)";ctx.lineWidth=3;
+ ctx.beginPath();ctx.arc(540,420,360,0,Math.PI*2);ctx.stroke();
+ ctx.beginPath();ctx.arc(540,420,300,0,Math.PI*2);ctx.stroke();
+ ctx.textAlign="center";
+ const fit=(value,max,font)=>{ctx.font=font;let text=String(value||"");while(ctx.measureText(text).width>max&&text.length>4)text=text.slice(0,-2)+"…";return text;};
+ ctx.fillStyle="#f5443b";ctx.font="800 30px Arial";
+ ctx.fillText(fit(club?.name||"TORNEIO",940,"800 30px Arial").toUpperCase(),540,105);
+ ctx.fillStyle="#fff";ctx.font="900 76px Arial";
+ const title=fit(tournament.name||"TORNEIO",940,"900 76px Arial");
+ ctx.fillText(title.toUpperCase(),540,285);
+ if(tournament.description){
+  ctx.fillStyle="#d8cfd0";ctx.font="26px Arial";
+  ctx.fillText(fit(tournament.description,880,"26px Arial"),540,345);
+ }
+ ctx.fillStyle="#f5443b";ctx.fillRect(110,410,860,8);
+ ctx.fillStyle="#fff";ctx.font="800 28px Arial";
+ ctx.fillText("INFORMAÇÕES DO EVENTO",540,485);
+ const dateText=details.event_date?new Date(details.event_date+"T12:00:00").toLocaleDateString("pt-BR"):"Data a confirmar";
+ const timeText=details.start_time?String(details.start_time).slice(0,5):"Horário a confirmar";
+ const place=[club?.city,club?.state].filter(Boolean).join(" - ")||club?.address||"Local a confirmar";
+ const money=value=>value!=null?Number(value).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}):"A confirmar";
+ const cards=[
+  ["DATA",dateText],["HORÁRIO",timeText],["LOCAL",place],
+  ["BUY-IN",money(details.buy_in)],["REBUY",money(details.rebuy_amount)],["ADD-ON",money(details.addon_amount)]
+ ];
+ const cardW=410,cardH=132,gap=30,startX=100,startY=545;
+ cards.forEach((item,i)=>{
+  const col=i%2,row=Math.floor(i/2),x=startX+col*(cardW+gap),y=startY+row*(cardH+24);
+  ctx.fillStyle="rgba(255,255,255,.07)";
+  ctx.beginPath();ctx.roundRect(x,y,cardW,cardH,18);ctx.fill();
+  ctx.strokeStyle="rgba(245,68,59,.55)";ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle="#f5443b";ctx.font="700 20px Arial";ctx.textAlign="center";
+  ctx.fillText(item[0],x+cardW/2,y+42);
+  ctx.fillStyle="#fff";ctx.font="800 29px Arial";
+  ctx.fillText(fit(item[1],cardW-32,"800 29px Arial"),x+cardW/2,y+91);
+ });
+ if(details.guaranteed_prize!=null){
+  ctx.fillStyle="#f5443b";ctx.font="700 22px Arial";ctx.fillText("PREMIAÇÃO GARANTIDA",540,1055);
+  ctx.fillStyle="#fff";ctx.font="900 58px Arial";ctx.fillText(money(details.guaranteed_prize),540,1125);
+ }
+ ctx.fillStyle="#a99da0";ctx.font="20px Arial";
+ ctx.fillText("INFORMAÇÕES E INSCRIÇÕES COM A ORGANIZAÇÃO",540,1260);
+ ctx.fillStyle="#f5443b";ctx.fillRect(0,height-14,width,14);
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+ if(!blob){alert("Não foi possível gerar o flyer.");return;}
+ const url=URL.createObjectURL(blob),link=document.createElement("a");
+ const safeName=String(tournament.name||"torneio").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").toLowerCase();
+ link.href=url;link.download="flyer-"+(safeName||"torneio")+".png";
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+
 async function openTournament(selectedTournament) {
   if (blindClockTick) {
     clearInterval(blindClockTick);
@@ -9639,7 +9719,9 @@ $("delete-tournament-btn").addEventListener("click", () => {
   }
 });
  
- $("edit-tournament-info-btn").addEventListener("click", () => {
+ $("generate-tournament-flyer-btn")?.addEventListener("click", generateTournamentFlyer);
+
+$("edit-tournament-info-btn").addEventListener("click", () => {
   if (!isStaff) return;
   isEditingTournamentInfo = true;
   renderTournamentDetails(currentTournamentDetails);
