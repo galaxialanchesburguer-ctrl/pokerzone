@@ -3641,56 +3641,12 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 @media(max-width:480px){.stage-info-modal{padding:12px}.stage-info-modal-panel{padding:17px}.stage-info-modal-head h3{font-size:18px}.stage-info-modal-grid{gap:8px}.stage-info-modal-field{padding:11px}}
 
 .stage-info-modal-ranking-title{margin:23px 0 11px;color:#ff737d;font-size:12px;letter-spacing:1px}
-.stage-info-modal-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-height:55vh;overflow-y:auto;padding-right:3px}
-.stage-info-modal-column{min-width:0}
-.stage-info-modal-column-label{padding:8px 9px;margin-bottom:5px;border-radius:7px;background:#292122;color:#ff858b;font-size:10px;font-weight:800;letter-spacing:.5px}
-.stage-info-modal-table{width:100%;border-collapse:collapse;table-layout:fixed}
-.stage-info-modal-table th,.stage-info-modal-table td{padding:9px 5px}
-.stage-info-modal-table th{font-size:9px}
-.stage-info-modal-table td{font-size:11px;overflow-wrap:anywhere}
-.stage-info-modal-table th:first-child,.stage-info-modal-table td:first-child{width:42px}
-.stage-info-modal-table th:last-child,.stage-info-modal-table td:last-child{width:48px}
-@media(max-width:560px){.stage-info-modal-columns{grid-template-columns:1fr;max-height:55vh}.stage-info-modal-panel{max-height:92vh;overflow-y:auto}}
+.stage-info-modal-table{width:100%;border-collapse:collapse}
 .stage-info-modal-table th,.stage-info-modal-table td{padding:11px 9px;text-align:left;border-bottom:1px solid #342d2e}
 .stage-info-modal-table th{color:#aaa;font-size:10px;letter-spacing:.6px}
 .stage-info-modal-table td{color:#eee;font-size:13px}
 .stage-info-modal-table th:first-child,.stage-info-modal-table td:first-child{width:78px}
 .stage-info-modal-table th:last-child,.stage-info-modal-table td:last-child{text-align:right;white-space:nowrap}
-
-/* CLASSIFICACAO DA ETAPA: duas colunas sem rolagem */
-.stage-info-modal{padding:12px}
-.stage-info-modal-panel{width:min(1100px,96vw);max-width:1100px;max-height:none;overflow:visible;padding:20px 24px}
-.stage-info-modal-head{margin-bottom:14px}
-.stage-info-modal-grid{gap:8px}
-.stage-info-modal-field{padding:9px 12px}
-.stage-info-modal-field small{margin-bottom:4px}
-.stage-info-modal-ranking-title{margin:14px 0 8px}
-.stage-info-modal-columns{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;max-height:none;overflow:visible;padding:0}
-.stage-info-modal-column{min-width:0}
-.stage-info-modal-column-label{padding:6px 9px;margin-bottom:3px}
-.stage-info-modal-table{width:100%;table-layout:fixed}
-.stage-info-modal-table th,.stage-info-modal-table td{padding:5px 8px;line-height:1.15}
-.stage-info-modal-table th{font-size:9px}
-.stage-info-modal-table td{font-size:12px;overflow-wrap:anywhere}
-.stage-info-modal-table th:first-child,.stage-info-modal-table td:first-child{width:52px}
-.stage-info-modal-table th:last-child,.stage-info-modal-table td:last-child{width:62px}
-.stage-info-modal-actions{margin-top:12px}
-@media(max-width:560px){
-  .stage-info-modal{padding:7px}
-  .stage-info-modal-panel{width:100%;padding:12px}
-  .stage-info-modal-grid{gap:6px}
-  .stage-info-modal-field{padding:7px}
-  .stage-info-modal-field strong{font-size:12px}
-  .stage-info-modal-head{margin-bottom:10px}
-  .stage-info-modal-head h3{font-size:16px}
-  .stage-info-modal-columns{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-  .stage-info-modal-column-label{font-size:8px;padding:5px}
-  .stage-info-modal-table th,.stage-info-modal-table td{padding:5px 3px}
-  .stage-info-modal-table th{font-size:8px}
-  .stage-info-modal-table td{font-size:10px}
-  .stage-info-modal-table th:first-child,.stage-info-modal-table td:first-child{width:31px}
-  .stage-info-modal-table th:last-child,.stage-info-modal-table td:last-child{width:39px}
-}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -7181,14 +7137,9 @@ async function openStageInfoModal(stageId){
     return;
   }
   ranking.innerHTML=results?.length
-    ? '<div class="stage-info-modal-columns">'+
-      [results.slice(0,15),results.slice(15)].map((group,index)=>
-        '<div class="stage-info-modal-column"><div class="stage-info-modal-column-label">'+(index===0?'POSIÇÕES 1–15':'POSIÇÕES 16–'+results.length)+'</div>'+
-        '<table class="stage-info-modal-table"><thead><tr><th>POS.</th><th>JOGADOR</th><th>PONTOS</th></tr></thead><tbody>'+
-        group.map(player=>'<tr><td>'+esc(player.position)+'º</td><td>'+esc(player.player?.display_name||"Jogador")+'</td><td>'+Number(player.points||0).toLocaleString("pt-BR")+'</td></tr>').join("")+
-        '</tbody></table></div>'
-      ).join("")+
-      '</div>'
+    ? '<div class="table-wrap"><table class="stage-info-modal-table"><thead><tr><th>POSIÇÃO</th><th>JOGADOR</th><th>PONTOS</th></tr></thead><tbody>'+
+      results.map(player=>'<tr><td>'+esc(player.position)+'º</td><td>'+esc(player.player?.display_name||"Jogador")+'</td><td>'+Number(player.points||0).toLocaleString("pt-BR")+'</td></tr>').join("")+
+      '</tbody></table></div>'
     : '<div class="empty">Nenhum jogador ou pontuação cadastrada nesta etapa.</div>';
 }
 // Abre os detalhes mesmo quando a lista de etapas é recriada dinamicamente.
