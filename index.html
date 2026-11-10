@@ -7163,13 +7163,22 @@ function updatePlayerSuggestions() {
   points:Number(player.points||0).toLocaleString("pt-BR")
  })).filter(row=>row.name);
  if(!rows.length){alert("Não há jogadores classificados nesta etapa para gerar a imagem.");return;}
- const clubId=stage?.club_id||tournament?.club_id||selectedClubId;
+ let clubId=stage?.club_id||tournament?.club_id||selectedClubId||managedClubId;
+ if(!clubId&&stage?.id){
+  const {data:stageData}=await db.from("stages").select("club_id").eq("id",stage.id).maybeSingle();
+  clubId=stageData?.club_id||null;
+ }
+ if(!clubId&&tournament?.id){
+  const {data:tournamentData}=await db.from("tournaments").select("club_id").eq("id",tournament.id).maybeSingle();
+  clubId=tournamentData?.club_id||null;
+ }
  let clubName="";
  if(clubId){
   const {data:clubData,error:clubError}=await db.from("clubs").select("name").eq("id",clubId).maybeSingle();
   if(!clubError) clubName=clubData?.name||"";
  }
- const headerName=clubName||"POKERZONE";
+ if(!clubName){alert("Não foi possível identificar o nome do clube deste torneio. Confira o vínculo do torneio com o clube.");return;}
+ const headerName=clubName;
  const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
  const width=1080,rowHeight=76,top=300,bottom=90;
  canvas.width=width;canvas.height=top+rows.length*rowHeight+bottom;
@@ -7181,7 +7190,7 @@ function updatePlayerSuggestions() {
  ctx.fillStyle="#f5443b";ctx.fillRect(0,0,width,14);
  ctx.textAlign="center";
  ctx.fillStyle="#f5443b";ctx.font="800 25px Arial";
- ctx.fillText("POKERZONE",width/2,78);
+ ctx.fillText(headerName.toUpperCase(),width/2,78,width-100);
  ctx.fillStyle="#fff";ctx.font="800 43px Arial";
  ctx.fillText((tournament?.name||"TORNEIO").toUpperCase(),width/2,137,width-100);
  const stageTitle=(stage.name||("ETAPA "+stage.stage_number)).toUpperCase();
@@ -7209,7 +7218,7 @@ function updatePlayerSuggestions() {
   ctx.fillText(row.points,950,y+47);
  });
  ctx.textAlign="center";ctx.fillStyle="#8f8588";ctx.font="18px Arial";
- ctx.fillText("POKERZONE • CLASSIFICAÇÃO DA ETAPA",width/2,height-35);
+ ctx.fillText(headerName.toUpperCase()+" • CLASSIFICAÇÃO DA ETAPA",width/2,height-35,width-100);
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
  if(!blob){alert("Não foi possível gerar a imagem.");return;}
  const url=URL.createObjectURL(blob);
