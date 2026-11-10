@@ -8624,24 +8624,39 @@ async function reopenCurrentStage() {
 
   const button = $("reopen-stage");
   button.disabled = true;
+  const stageId = currentStage.id;
 
   const { data, error } = await db
     .from("stages")
     .update({ status: "draft" })
-    .eq("id", currentStage.id)
+    .eq("id", stageId)
     .eq("status", "published")
-    .select("id")
+    .select("id,status")
     .maybeSingle();
 
-  if (error || !data) {
-    alert("Não foi possível reabrir a etapa: " + (error?.message || "Etapa não encontrada ou sem permissão."));
+  if (error || !data || data.status !== "draft") {
+    alert("Não foi possível reabrir a etapa: " + (error?.message || "O banco não confirmou a alteração do status."));
     button.disabled = false;
     return;
   }
 
-  alert("Etapa reaberta! Agora você pode editar os dados e publicar novamente quando terminar.");
-  await refreshAll();
-  await openStage(data.id);
+  // Atualiza o estado local imediatamente: não depende de uma nova leitura
+  // da lista para liberar os campos do editor.
+  currentStage = { ...currentStage, status: "draft" };
+  stages = stages.map(stage => stage.id === stageId ? { ...stage, status: "draft" } : stage);
+  $("stage-status").value = "Rascunho";
+  ["stage-number","stage-name","stage-date","add-player","calculate-points","player-search","save-stage"].forEach(fieldId => {
+    const field = $(fieldId);
+    if (field) field.disabled = false;
+  });
+  $("publish-stage").hidden = false;
+  $("publish-stage").disabled = false;
+  $("reopen-stage").hidden = true;
+  $("reopen-stage").disabled = false;
+  renderResultRows();
+
+  alert("Etapa reaberta! Os campos de dados e a classificação já estão liberados para edição.");
+  loadStages().catch(error => console.error("Erro ao atualizar a lista de etapas:", error));
 }
 async function publishCurrentStage() {
   if (!isStaff || !currentStage?.id || currentStage.status !== "draft") return;
