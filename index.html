@@ -5602,7 +5602,7 @@ async function generateRankingImage(){
  ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
  ctx.fillStyle="#f5443b";ctx.fillRect(0,0,width,14);
  ctx.textAlign="center";
- ctx.fillStyle="#f5443b";ctx.font="800 25px Arial";ctx.fillText("POKERZONE",width/2,78);
+ ctx.fillStyle="#f5443b";ctx.font="800 25px Arial";ctx.fillText(headerName.toUpperCase(),width/2,78,width-100);
  ctx.fillStyle="#ffffff";ctx.font="800 43px Arial";
  ctx.fillText((tournament?.name||"RANKING DO TORNEIO").toUpperCase(),width/2,137);
  ctx.fillStyle="#d8cfd0";ctx.font="600 30px Arial";
@@ -7163,6 +7163,13 @@ function updatePlayerSuggestions() {
   points:Number(player.points||0).toLocaleString("pt-BR")
  })).filter(row=>row.name);
  if(!rows.length){alert("Não há jogadores classificados nesta etapa para gerar a imagem.");return;}
+ const clubId=stage?.club_id||tournament?.club_id||selectedClubId;
+ let clubName="";
+ if(clubId){
+  const {data:clubData,error:clubError}=await db.from("clubs").select("name").eq("id",clubId).maybeSingle();
+  if(!clubError) clubName=clubData?.name||"";
+ }
+ const headerName=clubName||"POKERZONE";
  const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
  const width=1080,rowHeight=76,top=300,bottom=90;
  canvas.width=width;canvas.height=top+rows.length*rowHeight+bottom;
