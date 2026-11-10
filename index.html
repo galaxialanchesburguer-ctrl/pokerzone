@@ -3625,6 +3625,20 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 #stage-list .actions .btn{flex:1 1 auto;min-width:105px;margin:0}
 #stage-list > [id^="stage-results-"]{grid-column:1 / -1;width:100%;margin:0 0 8px}
 @media(max-width:600px){#stage-list{grid-template-columns:1fr;gap:11px}#stage-list > .stage-item{min-height:0;padding:16px}#stage-list .actions .btn{min-width:0}}
+
+/* JANELA DE DETALHES DA ETAPA */
+.stage-info-modal{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(5px)}
+.stage-info-modal.hidden{display:none}
+.stage-info-modal-panel{width:min(100%,480px);padding:22px;border:1px solid #493638;border-radius:16px;background:linear-gradient(145deg,#211b1c,#111);box-shadow:0 24px 80px rgba(0,0,0,.65)}
+.stage-info-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:22px}
+.stage-info-modal-head span{color:#ff737d;font-size:10px;font-weight:900;letter-spacing:1.5px}
+.stage-info-modal-head h3{margin:7px 0 0;color:#fff;font-size:21px}
+.stage-info-modal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stage-info-modal-field{padding:14px;border:1px solid #393031;border-radius:10px;background:#191617;min-width:0}
+.stage-info-modal-field small{display:block;margin-bottom:7px;color:#999;font-size:10px;text-transform:uppercase;letter-spacing:.8px}
+.stage-info-modal-field strong{display:block;color:#fff;font-size:15px;overflow-wrap:anywhere}
+.stage-info-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+@media(max-width:480px){.stage-info-modal{padding:12px}.stage-info-modal-panel{padding:17px}.stage-info-modal-head h3{font-size:18px}.stage-info-modal-grid{gap:8px}.stage-info-modal-field{padding:11px}}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -4887,6 +4901,16 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 </section>
 
 </section>
+  <div id="stage-info-modal" class="stage-info-modal hidden" role="dialog" aria-modal="true" aria-labelledby="stage-info-modal-title">
+    <div class="stage-info-modal-panel">
+      <div class="stage-info-modal-head">
+        <div><span>DETALHES DA ETAPA</span><h3 id="stage-info-modal-title">Etapa</h3></div>
+        <button type="button" class="btn secondary" id="stage-info-modal-close">Fechar ✕</button>
+      </div>
+      <div id="stage-info-modal-content"></div>
+      <div class="stage-info-modal-actions" id="stage-info-modal-actions"></div>
+    </div>
+  </div>
   <div id="stage-command-modal" class="stage-command-modal hidden" role="dialog" aria-modal="true" aria-labelledby="stage-command-modal-title">
     <div class="stage-command-modal-panel">
       <div class="stage-command-modal-head"><div><span>COMANDA INDIVIDUAL</span><h3 id="stage-command-modal-title">Jogador</h3></div><button type="button" class="btn secondary" id="stage-command-modal-close">Fechar ✕</button></div>
@@ -7066,6 +7090,41 @@ async function setActiveTournamentStage(stageId) {
   await loadTournamentEntries();
 }
 
+function openStageInfoModal(stageId){
+  const stage=stages.find(item=>String(item.id)===String(stageId));
+  if(!stage)return;
+  const modal=$("stage-info-modal");
+  const date=stage.played_at
+    ? new Date(stage.played_at+"T12:00:00").toLocaleDateString("pt-BR")
+    : "Não informada";
+  $("stage-info-modal-title").textContent=stage.name||"ETAPA "+stage.stage_number;
+  $("stage-info-modal-content").innerHTML=
+    '<div class="stage-info-modal-grid">'+
+      '<div class="stage-info-modal-field"><small>Número</small><strong>ETAPA '+String(stage.stage_number??"—").padStart(2,"0")+'</strong></div>'+
+      '<div class="stage-info-modal-field"><small>Data</small><strong>'+esc(date)+'</strong></div>'+
+      '<div class="stage-info-modal-field"><small>Status</small><strong>'+ (stage.status==="published"?"Publicada":"Rascunho")+'</strong></div>'+
+      '<div class="stage-info-modal-field"><small>Participantes</small><strong>'+(stage.participant_count||0)+'</strong></div>'+
+    '</div>';
+  $("stage-info-modal-actions").innerHTML=isStaff
+    ? '<button type="button" class="btn" id="stage-info-modal-edit">Editar etapa</button>'
+    : '';
+  $("stage-info-modal-edit")?.addEventListener("click",()=>{
+    closeStageInfoModal();
+    openStage(stageId);
+  });
+  modal.classList.remove("hidden");
+}
+function closeStageInfoModal(){
+  $("stage-info-modal")?.classList.add("hidden");
+}
+$("stage-info-modal-close")?.addEventListener("click",closeStageInfoModal);
+$("stage-info-modal")?.addEventListener("click",event=>{
+  if(event.target===$("stage-info-modal"))closeStageInfoModal();
+});
+document.addEventListener("keydown",event=>{
+  if(event.key==="Escape")closeStageInfoModal();
+});
+
 async function loadStages() {
   if (!season) {
     stages = [];
@@ -7124,9 +7183,7 @@ async function loadStages() {
   <div class="actions">
     <span class="tag">👥 ${s.participant_count || 0} participantes</span>
 
-    <button class="btn" data-edit-stage="${s.id}">
-      ${isStaff ? "Editar etapa" : "Ver etapa →"}
-    </button>
+
 
     ${isStaff ? `
       <button class="btn secondary" data-delete-stage="${s.id}">
@@ -7162,14 +7219,8 @@ document.querySelectorAll("[data-edit-stage]").forEach(b => {
 });
   document.querySelectorAll("[data-stage-card]").forEach(card => {
   card.addEventListener("click", (event) => {
-    if (
-      event.target.closest("[data-edit-stage]") ||
-      event.target.closest("[data-delete-stage]")
-    ) {
-      return;
-    }
-
-    openStageResults(card.dataset.stageCard);
+    if (event.target.closest("[data-delete-stage]")) return;
+    openStageInfoModal(card.dataset.stageCard);
   });
 });
    
