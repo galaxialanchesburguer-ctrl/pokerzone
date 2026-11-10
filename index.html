@@ -7142,6 +7142,15 @@ async function openStageInfoModal(stageId){
       '</tbody></table></div>'
     : '<div class="empty">Nenhum jogador ou pontuação cadastrada nesta etapa.</div>';
 }
+// Abre os detalhes mesmo quando a lista de etapas é recriada dinamicamente.
+$("stage-list")?.addEventListener("click",event=>{
+  if(event.target.closest("[data-delete-stage]"))return;
+  const card=event.target.closest("[data-stage-card]");
+  if(!card)return;
+  event.preventDefault();
+  openStageInfoModal(card.dataset.stageCard);
+});
+
 function closeStageInfoModal(){
   $("stage-info-modal")?.classList.add("hidden");
 }
@@ -7245,12 +7254,9 @@ document.querySelectorAll("[data-edit-stage]").forEach(b => {
     }
   });
 });
-  document.querySelectorAll("[data-stage-card]").forEach(card => {
-  card.addEventListener("click", (event) => {
-    if (event.target.closest("[data-delete-stage]")) return;
-    openStageInfoModal(card.dataset.stageCard);
-  });
-});
+  // O clique é tratado por delegação para continuar funcionando após
+  // qualquer atualização dinâmica da lista de etapas.
+
    
 document.querySelectorAll("[data-delete-stage]").forEach(b => {
   b.addEventListener("click", async () => {
