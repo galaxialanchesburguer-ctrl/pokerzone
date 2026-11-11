@@ -7362,6 +7362,12 @@ function renderMarketMapObjects() {
       if (event.button !== 0) return;
       selectMarketMapObject(item.id, true);
       board.querySelectorAll(".market-map-object").forEach(node => node.classList.toggle("selected", node === shape));
+      if (!shape.querySelector(".market-map-resize")) {
+        const resizeHandle = document.createElement("span");
+        resizeHandle.className = "market-map-resize";
+        resizeHandle.setAttribute("aria-label", "Redimensionar");
+        shape.appendChild(resizeHandle);
+      }
       const boardRect = board.getBoundingClientRect();
       const isResize = event.target.classList.contains("market-map-resize");
       marketMapPointerAction = { id: item.id, mode: isResize ? "resize" : "move", startX: event.clientX, startY: event.clientY, x: item.x, y: item.y, w: item.w, h: item.h, boardWidth: boardRect.width, boardHeight: boardRect.height };
