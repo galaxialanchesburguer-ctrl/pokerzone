@@ -3647,6 +3647,22 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .stage-info-modal-table td{color:#eee;font-size:13px}
 .stage-info-modal-table th:first-child,.stage-info-modal-table td:first-child{width:78px}
 .stage-info-modal-table th:last-child,.stage-info-modal-table td:last-child{text-align:right;white-space:nowrap}
+
+/* ===== CONTADOR DE DINHEIRO ===== */
+.admin-counter-box{max-width:1050px}
+.counter-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;padding:20px}
+.counter-group{min-width:0}
+.counter-group h3{color:#ff737d;font-size:11px;letter-spacing:1.5px;margin:0 0 12px}
+.counter-list{display:grid;gap:8px}
+.counter-row{display:grid;grid-template-columns:minmax(70px,1fr) 100px minmax(90px,1fr);align-items:center;gap:12px;padding:10px 12px;background:#171515;border:1px solid #342b2c;border-radius:8px}
+.counter-denomination{font-size:14px;font-weight:800;color:#fff}
+.counter-row input{width:100%;min-width:0;text-align:center;padding:9px 6px}
+.counter-row strong{text-align:right;color:#ddd;font-size:13px;white-space:nowrap}
+.counter-total{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:20px 22px;background:linear-gradient(110deg,#351719,#1b1112);border-top:1px solid #673036;border-radius:0 0 13px 13px}
+.counter-total span{font-size:11px;font-weight:800;letter-spacing:1.2px;color:#c9aeb0}
+.counter-total strong{font-size:clamp(22px,3vw,32px);color:#fff;font-weight:900}
+@media(max-width:650px){.counter-groups{grid-template-columns:1fr;gap:20px;padding:14px}.counter-row{grid-template-columns:minmax(65px,1fr) 82px minmax(82px,1fr);gap:8px;padding:9px}.counter-denomination{font-size:13px}.counter-row strong{font-size:12px}.counter-total{padding:17px 14px}}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -3662,6 +3678,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <button type="button" class="admin-sidebar-link" data-admin-nav="tournaments" title="Torneios"><span class="admin-sidebar-icon">♛</span><span class="admin-sidebar-text">Torneios</span></button><div id="tournament-tree" class="tournament-tree hidden"><div id="tournament-tree-list"></div></div>
       <button type="button" class="admin-sidebar-link" data-admin-nav="clients" title="Jogador"><span class="admin-sidebar-icon">♙</span><span class="admin-sidebar-text">Jogador</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="calendar" title="Calendário"><span class="admin-sidebar-icon">▦</span><span class="admin-sidebar-text">Calendário</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="counter" title="Contador"><span class="admin-sidebar-icon">＄</span><span class="admin-sidebar-text">Contador</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="appearance" title="Aparência"><span class="admin-sidebar-icon">◐</span><span class="admin-sidebar-text">Aparência</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="clubs" title="Meu clube"><span class="admin-sidebar-icon">♣</span><span class="admin-sidebar-text">Meu clube</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="settings" title="Configurações"><span class="admin-sidebar-icon">⚙</span><span class="admin-sidebar-text">Configurações</span></button>
@@ -4583,6 +4600,41 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     <div class="admin-calendar-weekdays"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div>
     <div id="admin-calendar-grid" class="admin-calendar-grid"><div class="empty">Carregando torneios...</div></div>
     <div id="admin-calendar-list" class="admin-calendar-list"></div>
+  </div>
+</section>
+
+<section id="admin-counter-screen" class="hidden">
+  <div class="admin-page-heading">
+    <div><div class="eyebrow">POKERZONE • CAIXA</div><h1>Contador</h1><p class="season-info">Informe a quantidade de cada cédula e moeda para calcular o dinheiro em caixa.</p></div>
+  </div>
+  <div class="box admin-counter-box">
+    <div class="box-head"><h2>CONTAGEM DE DINHEIRO</h2><button type="button" class="btn secondary" id="counter-clear">Limpar contagem</button></div>
+    <div class="counter-groups">
+      <div class="counter-group">
+        <h3>NOTAS</h3>
+        <div class="counter-list">
+          
+          <div class="counter-row"><span class="counter-denomination">R$ 200</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="200" aria-label="Quantidade de notas de 200 reais"><strong data-cash-subtotal="200">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination">R$ 100</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="100" aria-label="Quantidade de notas de 100 reais"><strong data-cash-subtotal="100">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination">R$ 50</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="50" aria-label="Quantidade de notas de 50 reais"><strong data-cash-subtotal="50">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination">R$ 20</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="20" aria-label="Quantidade de notas de 20 reais"><strong data-cash-subtotal="20">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination">R$ 10</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="10" aria-label="Quantidade de notas de 10 reais"><strong data-cash-subtotal="10">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination">R$ 5</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="5" aria-label="Quantidade de notas de 5 reais"><strong data-cash-subtotal="5">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination">R$ 2</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="2" aria-label="Quantidade de notas de 2 reais"><strong data-cash-subtotal="2">R$ 0,00</strong></div>
+        </div>
+      </div>
+      <div class="counter-group">
+        <h3>MOEDAS</h3>
+        <div class="counter-list">
+          <div class="counter-row"><span class="counter-denomination">R$ 1,00</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="1" aria-label="Quantidade de moedas de 1 real"><strong data-cash-subtotal="1">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination">R$ 0,50</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.5" aria-label="Quantidade de moedas de 50 centavos"><strong data-cash-subtotal="0.5">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination">R$ 0,25</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.25" aria-label="Quantidade de moedas de 25 centavos"><strong data-cash-subtotal="0.25">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination">R$ 0,10</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.1" aria-label="Quantidade de moedas de 10 centavos"><strong data-cash-subtotal="0.1">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination">R$ 0,05</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.05" aria-label="Quantidade de moedas de 5 centavos"><strong data-cash-subtotal="0.05">R$ 0,00</strong></div>
+        </div>
+      </div>
+    </div>
+    <div class="counter-total"><span>TOTAL EM DINHEIRO</span><strong id="cash-counter-total">R$ 0,00</strong></div>
   </div>
 </section>
 
@@ -6870,6 +6922,7 @@ function setAdminSidebarActive(key) {
 }
 function showAdminHome() {
   $("admin-calendar-screen")?.classList.add("hidden");
+  $("admin-counter-screen")?.classList.add("hidden");
   $("admin-appearance-screen")?.classList.add("hidden");
   hideStageSidebar();
   setPublicHomeChrome(true);
@@ -6920,7 +6973,7 @@ function showAdminScreen(screenId, navKey) {
   hideStageSidebar();
   $("tournament-tree")?.classList.add("hidden");
   $("admin-sidebar")?.classList.remove("mobile-expanded");
-  ["home-tournaments","nearby-tournaments-screen","tournament-app","admin-calendar-screen","admin-appearance-screen"].forEach(id => $(id)?.classList.add("hidden"));
+  ["home-tournaments","nearby-tournaments-screen","tournament-app","admin-calendar-screen","admin-counter-screen","admin-appearance-screen"].forEach(id => $(id)?.classList.add("hidden"));
   $("manage-clubs-area")?.classList.add("hidden");
   $("club-details-area")?.classList.add("hidden");
   $(screenId)?.classList.remove("hidden");
@@ -6990,7 +7043,7 @@ $("calendar-refresh")?.addEventListener("click",loadAdminCalendar);
 
 async function handleAdminSidebarNavigation(key) {
   if (!isStaff) return;
-  if (["home","clubs","clients","settings","calendar","appearance"].includes(key)) {
+  if (["home","clubs","clients","settings","calendar","counter","appearance"].includes(key)) {
     hideStageSidebar();
     $("tournament-tree")?.classList.add("hidden");
     $("admin-sidebar")?.classList.remove("mobile-expanded");
@@ -7003,6 +7056,11 @@ async function handleAdminSidebarNavigation(key) {
   if (key === "calendar") {
     showAdminScreen("admin-calendar-screen","calendar");
     loadAdminCalendar();
+    return;
+  }
+  if (key === "counter") {
+    showAdminScreen("admin-counter-screen","counter");
+    updateCashCounter();
     return;
   }
   if (key === "appearance") {
@@ -7082,6 +7140,33 @@ async function handleAdminSidebarNavigation(key) {
 document.querySelectorAll("[data-admin-nav]").forEach(button => {
   button.addEventListener("click", () => handleAdminSidebarNavigation(button.dataset.adminNav));
 });
+
+function updateCashCounter() {
+  const inputs = document.querySelectorAll("[data-cash-value]");
+  let total = 0;
+  inputs.forEach(input => {
+    const denomination = Number(input.dataset.cashValue);
+    const quantity = Math.max(0, Math.floor(Number(input.value) || 0));
+    if (input.value !== "" && Number(input.value) < 0) input.value = "0";
+    const subtotal = denomination * quantity;
+    total += subtotal;
+    const subtotalElement = document.querySelector('[data-cash-subtotal="' + input.dataset.cashValue + '"]');
+    if (subtotalElement) subtotalElement.textContent = formatCashCurrency(subtotal);
+  });
+  const totalElement = $("cash-counter-total");
+  if (totalElement) totalElement.textContent = formatCashCurrency(total);
+}
+function formatCashCurrency(value) {
+  return Number(value || 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"});
+}
+document.querySelectorAll("[data-cash-value]").forEach(input => {
+  input.addEventListener("input", updateCashCounter);
+});
+$("counter-clear")?.addEventListener("click", () => {
+  document.querySelectorAll("[data-cash-value]").forEach(input => input.value = "0");
+  updateCashCounter();
+});
+
 
 async function setActiveTournamentStage(stageId) {
   if (!isStaff || !tournament || !season) return;
