@@ -3658,6 +3658,14 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .cash-note-thumb span{font-size:7px;font-weight:800;letter-spacing:.4px}
 .cash-note-thumb strong{font-size:16px;font-weight:900}
 .cash-note-thumb i{position:absolute;inset:3px;border:1px solid rgba(255,255,255,.22);border-radius:2px;pointer-events:none}
+
+.cash-coin-thumb{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 34px;width:34px;height:34px;border-radius:50%;border:3px solid #b8a36b;box-shadow:inset 0 0 0 2px rgba(255,255,255,.28),0 2px 5px rgba(0,0,0,.3);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.65);font-size:11px;font-weight:900;background:radial-gradient(circle at 35% 30%,#d9c58c,#8e7541 72%)}
+.cash-coin-thumb:after{content:"";position:absolute;inset:4px;border:1px solid rgba(255,255,255,.42);border-radius:50%;pointer-events:none}
+.cash-coin-1{background:radial-gradient(circle at 35% 30%,#e2d4a3,#9a824d 72%);border-color:#c7b47d}
+.cash-coin-50{background:radial-gradient(circle at 35% 30%,#c9cdd0,#727b82 72%);border-color:#aeb5ba}
+.cash-coin-25{background:radial-gradient(circle at 35% 30%,#d7b17d,#95643d 72%);border-color:#c49a67}
+.cash-coin-10{background:radial-gradient(circle at 35% 30%,#d2d5d7,#858d93 72%);border-color:#b7bdc1}
+.cash-coin-5{background:radial-gradient(circle at 35% 30%,#d7b17d,#95643d 72%);border-color:#c49a67}
 .cash-note-200{background-color:#8a4c9b}.cash-note-100{background-color:#3478ad}.cash-note-50{background-color:#c47a32}.cash-note-20{background-color:#c6a62d}.cash-note-10{background-color:#b84c51}.cash-note-5{background-color:#8d6ca7}.cash-note-2{background-color:#8b8d91}
 @media(max-width:650px){.counter-row{grid-template-columns:minmax(130px,1fr) 76px minmax(75px,1fr);gap:7px}.counter-denomination-wrap{gap:7px}.cash-note-thumb{flex-basis:52px;width:52px;height:30px}.cash-note-thumb strong{font-size:14px}.counter-denomination{font-size:12px}}
 
@@ -4639,11 +4647,11 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <div class="counter-group">
         <h3>MOEDAS</h3>
         <div class="counter-list">
-          <div class="counter-row"><span class="counter-denomination">R$ 1,00</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="1" aria-label="Quantidade de moedas de 1 real"><strong data-cash-subtotal="1">R$ 0,00</strong></div>
-          <div class="counter-row"><span class="counter-denomination">R$ 0,50</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.5" aria-label="Quantidade de moedas de 50 centavos"><strong data-cash-subtotal="0.5">R$ 0,00</strong></div>
-          <div class="counter-row"><span class="counter-denomination">R$ 0,25</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.25" aria-label="Quantidade de moedas de 25 centavos"><strong data-cash-subtotal="0.25">R$ 0,00</strong></div>
-          <div class="counter-row"><span class="counter-denomination">R$ 0,10</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.1" aria-label="Quantidade de moedas de 10 centavos"><strong data-cash-subtotal="0.1">R$ 0,00</strong></div>
-          <div class="counter-row"><span class="counter-denomination">R$ 0,05</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.05" aria-label="Quantidade de moedas de 5 centavos"><strong data-cash-subtotal="0.05">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-coin-thumb cash-coin-1" aria-hidden="true">1</span><span class="counter-denomination">R$ 1,00</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="1" aria-label="Quantidade de moedas de 1 real"><strong data-cash-subtotal="1">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-coin-thumb cash-coin-50" aria-hidden="true">50</span><span class="counter-denomination">R$ 0,50</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.5" aria-label="Quantidade de moedas de 50 centavos"><strong data-cash-subtotal="0.5">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-coin-thumb cash-coin-25" aria-hidden="true">25</span><span class="counter-denomination">R$ 0,25</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.25" aria-label="Quantidade de moedas de 25 centavos"><strong data-cash-subtotal="0.25">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-coin-thumb cash-coin-10" aria-hidden="true">10</span><span class="counter-denomination">R$ 0,10</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.1" aria-label="Quantidade de moedas de 10 centavos"><strong data-cash-subtotal="0.1">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-coin-thumb cash-coin-5" aria-hidden="true">5</span><span class="counter-denomination">R$ 0,05</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="0.05" aria-label="Quantidade de moedas de 5 centavos"><strong data-cash-subtotal="0.05">R$ 0,00</strong></div>
         </div>
       </div>
     </div>
