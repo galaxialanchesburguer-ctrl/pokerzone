@@ -7279,13 +7279,13 @@ function loadMarketMapObjects() {
 function selectedMarketMapObject() {
   return marketMapObjects.find(item => item.id === selectedMarketMapObjectId) || null;
 }
-function selectMarketMapObject(id) {
+function selectMarketMapObject(id, skipRender) {
   selectedMarketMapObjectId = id;
   const item = selectedMarketMapObject();
   const input = $("market-map-object-name"), remove = $("market-map-delete-object");
   if (input) { input.disabled = !item; input.value = item ? item.name : ""; }
   if (remove) remove.disabled = !item;
-  renderMarketMapObjects();
+  if (!skipRender) renderMarketMapObjects();
 }
 function renderMarketMapObjects() {
   const board = $("market-map-board"), count = $("market-map-object-count");
@@ -7320,7 +7320,8 @@ function renderMarketMapObjects() {
     shape.addEventListener("pointerdown", event => {
       if (event.button !== 0) return;
       event.preventDefault();
-      selectMarketMapObject(item.id);
+      selectMarketMapObject(item.id, true);
+      board.querySelectorAll(".market-map-object").forEach(node => node.classList.toggle("selected", node === shape));
       const boardRect = board.getBoundingClientRect();
       const isResize = event.target.classList.contains("market-map-resize");
       marketMapPointerAction = { id: item.id, mode: isResize ? "resize" : "move", startX: event.clientX, startY: event.clientY, x: item.x, y: item.y, w: item.w, h: item.h, boardWidth: boardRect.width, boardHeight: boardRect.height };
