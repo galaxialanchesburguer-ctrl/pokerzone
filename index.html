@@ -3680,6 +3680,8 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .counter-row input{width:100%;min-width:0;text-align:center;padding:9px 6px}
 .counter-row strong{text-align:right;color:#ddd;font-size:13px;white-space:nowrap}
 
+
+.astro-tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,300px));gap:16px;margin-top:22px}.astro-tool-card{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:190px;padding:22px;text-align:left;border:1px solid #493638;border-radius:14px;background:linear-gradient(145deg,#21191a,#151213);color:#fff;cursor:pointer;transition:transform .18s,border-color .18s}.astro-tool-card:hover{transform:translateY(-3px);border-color:#d65360}.astro-tool-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:rgba(255,90,105,.14);color:#ff737d;font-size:24px}.astro-tool-title{font-size:17px;font-weight:850}.astro-tool-description{font-size:13px;line-height:1.5;color:#b8adae}.astro-tool-link{margin-top:auto;color:#ff737d;font-size:12px;font-weight:800}.counter-back-wrap{display:flex;align-items:center;gap:14px}
 .counter-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.counter-save-status{padding:10px 16px;margin:0 0 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.035);color:#c9bfc0;font-size:12px}
 @media(max-width:520px){.counter-actions{width:100%}.counter-actions button{flex:1}.counter-save-status{font-size:11px}}
 .counter-total{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:20px 22px;background:linear-gradient(110deg,#351719,#1b1112);border-top:1px solid #673036;border-radius:0 0 13px 13px}
@@ -3705,7 +3707,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <button type="button" class="admin-sidebar-link" data-admin-nav="appearance" title="Aparência"><span class="admin-sidebar-icon">◐</span><span class="admin-sidebar-text">Aparência</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="clubs" title="Meu clube"><span class="admin-sidebar-icon">♣</span><span class="admin-sidebar-text">Meu clube</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="settings" title="Configurações"><span class="admin-sidebar-icon">⚙</span><span class="admin-sidebar-text">Configurações</span></button>
-      <button type="button" class="admin-sidebar-link" data-admin-nav="counter" title="Contador"><span class="admin-sidebar-icon">＄</span><span class="admin-sidebar-text">Contador</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="astro" title="Astro"><span class="admin-sidebar-icon">✦</span><span class="admin-sidebar-text">Astro</span></button>
     </nav>
   </div>
   <div id="admin-sidebar-tournament-group">
@@ -4627,12 +4629,21 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   </div>
 </section>
 
+
+<section id="admin-astro-screen" class="hidden">
+  <div class="admin-screen-header"><div><h1>ASTRO</h1><p>Ferramentas e recursos do Astro.</p></div></div>
+  <div class="astro-tools-grid">
+    <button type="button" class="astro-tool-card" id="open-cash-counter-card">
+      <span class="astro-tool-icon">＄</span><span class="astro-tool-title">Contador de cédulas</span><span class="astro-tool-description">Conte notas e moedas e confira o total em dinheiro.</span><span class="astro-tool-link">Abrir ferramenta →</span>
+    </button>
+  </div>
+</section>
 <section id="admin-counter-screen" class="hidden">
   <div class="admin-page-heading">
     <div><div class="eyebrow">POKERZONE • CAIXA</div><h1>Contador</h1><p class="season-info">Informe a quantidade de cada cédula e moeda para calcular o dinheiro em caixa.</p></div>
   </div>
   <div class="box admin-counter-box">
-    <div class="box-head"><h2>CONTAGEM DE DINHEIRO</h2><div class="counter-actions"><button type="button" class="btn secondary" id="counter-clear">Limpar contagem</button><button type="button" class="btn primary" id="counter-save">Salvar</button></div></div><div id="counter-save-status" class="counter-save-status" aria-live="polite">Nenhuma contagem salva nesta tela.</div>
+    <div class="box-head"><div><button type="button" class="btn secondary" id="counter-back-astro">← Astro</button><h2>CONTAGEM DE DINHEIRO</h2></div><div class="counter-actions"><button type="button" class="btn secondary" id="counter-clear">Limpar contagem</button><button type="button" class="btn primary" id="counter-save">Salvar</button></div></div><div id="counter-save-status" class="counter-save-status" aria-live="polite">Nenhuma contagem salva nesta tela.</div>
     <div class="counter-groups">
       <div class="counter-group">
         <h3>NOTAS</h3>
@@ -6947,6 +6958,7 @@ function setAdminSidebarActive(key) {
 function showAdminHome() {
   $("admin-calendar-screen")?.classList.add("hidden");
   $("admin-counter-screen")?.classList.add("hidden");
+  $("admin-astro-screen")?.classList.add("hidden");
   $("admin-appearance-screen")?.classList.add("hidden");
   hideStageSidebar();
   setPublicHomeChrome(true);
@@ -6997,7 +7009,7 @@ function showAdminScreen(screenId, navKey) {
   hideStageSidebar();
   $("tournament-tree")?.classList.add("hidden");
   $("admin-sidebar")?.classList.remove("mobile-expanded");
-  ["home-tournaments","nearby-tournaments-screen","tournament-app","admin-calendar-screen","admin-counter-screen","admin-appearance-screen"].forEach(id => $(id)?.classList.add("hidden"));
+  ["home-tournaments","nearby-tournaments-screen","tournament-app","admin-calendar-screen","admin-astro-screen","admin-counter-screen","admin-appearance-screen"].forEach(id => $(id)?.classList.add("hidden"));
   $("manage-clubs-area")?.classList.add("hidden");
   $("club-details-area")?.classList.add("hidden");
   $(screenId)?.classList.remove("hidden");
@@ -7067,7 +7079,7 @@ $("calendar-refresh")?.addEventListener("click",loadAdminCalendar);
 
 async function handleAdminSidebarNavigation(key) {
   if (!isStaff) return;
-  if (["home","clubs","clients","settings","calendar","counter","appearance"].includes(key)) {
+  if (["home","clubs","clients","settings","calendar","astro","counter","appearance"].includes(key)) {
     hideStageSidebar();
     $("tournament-tree")?.classList.add("hidden");
     $("admin-sidebar")?.classList.remove("mobile-expanded");
@@ -7082,8 +7094,12 @@ async function handleAdminSidebarNavigation(key) {
     loadAdminCalendar();
     return;
   }
+  if (key === "astro") {
+    showAdminScreen("admin-astro-screen","astro");
+    return;
+  }
   if (key === "counter") {
-    showAdminScreen("admin-counter-screen","counter");
+    showAdminScreen("admin-counter-screen","astro");
     updateCashCounter();
     return;
   }
