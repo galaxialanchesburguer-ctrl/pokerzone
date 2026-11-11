@@ -7339,7 +7339,6 @@ function renderMarketMapObjects() {
     }
     shape.addEventListener("pointerdown", event => {
       if (event.button !== 0) return;
-      event.preventDefault();
       selectMarketMapObject(item.id, true);
       board.querySelectorAll(".market-map-object").forEach(node => node.classList.toggle("selected", node === shape));
       const boardRect = board.getBoundingClientRect();
@@ -7368,7 +7367,6 @@ function renderMarketMapObjects() {
       if (!marketMapPointerAction || marketMapPointerAction.id !== item.id) return;
       marketMapPointerAction = null;
       saveMarketMapObjects();
-      renderMarketMapObjects();
     };
     shape.addEventListener("pointerup", finishPointer);
     shape.addEventListener("pointercancel", finishPointer);
