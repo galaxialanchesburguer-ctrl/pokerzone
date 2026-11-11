@@ -3679,6 +3679,9 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .counter-denomination{font-size:14px;font-weight:800;color:#fff}
 .counter-row input{width:100%;min-width:0;text-align:center;padding:9px 6px}
 .counter-row strong{text-align:right;color:#ddd;font-size:13px;white-space:nowrap}
+
+.counter-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.counter-save-status{padding:10px 16px;margin:0 0 12px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.035);color:#c9bfc0;font-size:12px}
+@media(max-width:520px){.counter-actions{width:100%}.counter-actions button{flex:1}.counter-save-status{font-size:11px}}
 .counter-total{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:20px 22px;background:linear-gradient(110deg,#351719,#1b1112);border-top:1px solid #673036;border-radius:0 0 13px 13px}
 .counter-total span{font-size:11px;font-weight:800;letter-spacing:1.2px;color:#c9aeb0}
 .counter-total strong{font-size:clamp(22px,3vw,32px);color:#fff;font-weight:900}
@@ -4629,7 +4632,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     <div><div class="eyebrow">POKERZONE • CAIXA</div><h1>Contador</h1><p class="season-info">Informe a quantidade de cada cédula e moeda para calcular o dinheiro em caixa.</p></div>
   </div>
   <div class="box admin-counter-box">
-    <div class="box-head"><h2>CONTAGEM DE DINHEIRO</h2><button type="button" class="btn secondary" id="counter-clear">Limpar contagem</button></div>
+    <div class="box-head"><h2>CONTAGEM DE DINHEIRO</h2><div class="counter-actions"><button type="button" class="btn secondary" id="counter-clear">Limpar contagem</button><button type="button" class="btn primary" id="counter-save">Salvar</button></div></div><div id="counter-save-status" class="counter-save-status" aria-live="polite">Nenhuma contagem salva nesta tela.</div>
     <div class="counter-groups">
       <div class="counter-group">
         <h3>NOTAS</h3>
@@ -7180,13 +7183,42 @@ function updateCashCounter() {
 function formatCashCurrency(value) {
   return Number(value || 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"});
 }
+const CASH_COUNTER_STORAGE_KEY = "pokerzone_cash_counter_saved";
+function loadSavedCashCounter() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CASH_COUNTER_STORAGE_KEY) || "null");
+    if (!saved || !saved.values) return;
+    document.querySelectorAll("[data-cash-value]").forEach(input => {
+      const value = saved.values[input.dataset.cashValue];
+      if (value !== undefined) input.value = String(value);
+    });
+    updateCashCounter();
+    const status = $("counter-save-status");
+    if (status) status.textContent = "Última contagem salva: " + (saved.savedAt || "salva neste navegador") + " — Total: " + formatCashCurrency(saved.total);
+  } catch (error) {}
+}
 document.querySelectorAll("[data-cash-value]").forEach(input => {
   input.addEventListener("input", updateCashCounter);
+});
+$("counter-save")?.addEventListener("click", () => {
+  const values = {};
+  document.querySelectorAll("[data-cash-value]").forEach(input => values[input.dataset.cashValue] = Math.max(0, Math.floor(Number(input.value) || 0)));
+  const totalText = $("cash-counter-total")?.textContent || "R$ 0,00";
+  const total = Number(totalText.replace(/[^0-9,]/g, "").replace(",", ".")) || 0;
+  const savedAt = new Date().toLocaleString("pt-BR");
+  try {
+    localStorage.setItem(CASH_COUNTER_STORAGE_KEY, JSON.stringify({values,total,savedAt}));
+    const status = $("counter-save-status");
+    if (status) status.textContent = "Contagem salva nesta tela: " + savedAt + " — Total: " + formatCashCurrency(total);
+  } catch (error) {
+    alert("Não foi possível salvar a contagem neste navegador.");
+  }
 });
 $("counter-clear")?.addEventListener("click", () => {
   document.querySelectorAll("[data-cash-value]").forEach(input => input.value = "0");
   updateCashCounter();
 });
+loadSavedCashCounter();
 
 
 async function setActiveTournamentStage(stageId) {
