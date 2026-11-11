@@ -3648,6 +3648,19 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .stage-info-modal-table th:first-child,.stage-info-modal-table td:first-child{width:78px}
 .stage-info-modal-table th:last-child,.stage-info-modal-table td:last-child{text-align:right;white-space:nowrap}
 
+
+/* Miniaturas ilustrativas das cédulas brasileiras no contador */
+.counter-row{grid-template-columns:minmax(145px,1fr) 100px minmax(90px,1fr)}
+.counter-denomination-wrap{display:flex;align-items:center;gap:10px;min-width:0}
+.cash-note-thumb{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;flex:0 0 62px;width:62px;height:34px;border:1px solid rgba(255,255,255,.48);border-radius:4px;overflow:hidden;box-shadow:0 2px 5px rgba(0,0,0,.3);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);line-height:1;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.12) 0 2px,transparent 2px 5px)}
+.cash-note-thumb:before,.cash-note-thumb:after{content:"";position:absolute;border:1px solid rgba(255,255,255,.35);border-radius:50%;width:24px;height:24px;top:4px}
+.cash-note-thumb:before{left:-9px}.cash-note-thumb:after{right:-9px}
+.cash-note-thumb span{font-size:7px;font-weight:800;letter-spacing:.4px}
+.cash-note-thumb strong{font-size:16px;font-weight:900}
+.cash-note-thumb i{position:absolute;inset:3px;border:1px solid rgba(255,255,255,.22);border-radius:2px;pointer-events:none}
+.cash-note-200{background-color:#8a4c9b}.cash-note-100{background-color:#3478ad}.cash-note-50{background-color:#c47a32}.cash-note-20{background-color:#c6a62d}.cash-note-10{background-color:#b84c51}.cash-note-5{background-color:#8d6ca7}.cash-note-2{background-color:#8b8d91}
+@media(max-width:650px){.counter-row{grid-template-columns:minmax(130px,1fr) 76px minmax(75px,1fr);gap:7px}.counter-denomination-wrap{gap:7px}.cash-note-thumb{flex-basis:52px;width:52px;height:30px}.cash-note-thumb strong{font-size:14px}.counter-denomination{font-size:12px}}
+
 /* ===== CONTADOR DE DINHEIRO ===== */
 .admin-counter-box{max-width:1050px}
 .counter-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;padding:20px}
@@ -3678,10 +3691,10 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <button type="button" class="admin-sidebar-link" data-admin-nav="tournaments" title="Torneios"><span class="admin-sidebar-icon">♛</span><span class="admin-sidebar-text">Torneios</span></button><div id="tournament-tree" class="tournament-tree hidden"><div id="tournament-tree-list"></div></div>
       <button type="button" class="admin-sidebar-link" data-admin-nav="clients" title="Jogador"><span class="admin-sidebar-icon">♙</span><span class="admin-sidebar-text">Jogador</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="calendar" title="Calendário"><span class="admin-sidebar-icon">▦</span><span class="admin-sidebar-text">Calendário</span></button>
-      <button type="button" class="admin-sidebar-link" data-admin-nav="counter" title="Contador"><span class="admin-sidebar-icon">＄</span><span class="admin-sidebar-text">Contador</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="appearance" title="Aparência"><span class="admin-sidebar-icon">◐</span><span class="admin-sidebar-text">Aparência</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="clubs" title="Meu clube"><span class="admin-sidebar-icon">♣</span><span class="admin-sidebar-text">Meu clube</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="settings" title="Configurações"><span class="admin-sidebar-icon">⚙</span><span class="admin-sidebar-text">Configurações</span></button>
+      <button type="button" class="admin-sidebar-link" data-admin-nav="counter" title="Contador"><span class="admin-sidebar-icon">＄</span><span class="admin-sidebar-text">Contador</span></button>
     </nav>
   </div>
   <div id="admin-sidebar-tournament-group">
@@ -4614,13 +4627,13 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         <h3>NOTAS</h3>
         <div class="counter-list">
           
-          <div class="counter-row"><span class="counter-denomination">R$ 200</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="200" aria-label="Quantidade de notas de 200 reais"><strong data-cash-subtotal="200">R$ 0,00</strong></div>
-          <div class="counter-row"><span class="counter-denomination">R$ 100</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="100" aria-label="Quantidade de notas de 100 reais"><strong data-cash-subtotal="100">R$ 0,00</strong></div>
-          <div class="counter-row"><span class="counter-denomination">R$ 50</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="50" aria-label="Quantidade de notas de 50 reais"><strong data-cash-subtotal="50">R$ 0,00</strong></div>
-          <div class="counter-row"><span class="counter-denomination">R$ 20</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="20" aria-label="Quantidade de notas de 20 reais"><strong data-cash-subtotal="20">R$ 0,00</strong></div>
-          <div class="counter-row"><span class="counter-denomination">R$ 10</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="10" aria-label="Quantidade de notas de 10 reais"><strong data-cash-subtotal="10">R$ 0,00</strong></div>
-          <div class="counter-row"><span class="counter-denomination">R$ 5</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="5" aria-label="Quantidade de notas de 5 reais"><strong data-cash-subtotal="5">R$ 0,00</strong></div>
-          <div class="counter-row"><span class="counter-denomination">R$ 2</span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="2" aria-label="Quantidade de notas de 2 reais"><strong data-cash-subtotal="2">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-note-thumb cash-note-200" aria-hidden="true"><span>R$</span><strong>200</strong><i></i></span><span class="counter-denomination">R$ 200</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="200" aria-label="Quantidade de notas de 200 reais"><strong data-cash-subtotal="200">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-note-thumb cash-note-100" aria-hidden="true"><span>R$</span><strong>100</strong><i></i></span><span class="counter-denomination">R$ 100</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="100" aria-label="Quantidade de notas de 100 reais"><strong data-cash-subtotal="100">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-note-thumb cash-note-50" aria-hidden="true"><span>R$</span><strong>50</strong><i></i></span><span class="counter-denomination">R$ 50</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="50" aria-label="Quantidade de notas de 50 reais"><strong data-cash-subtotal="50">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-note-thumb cash-note-20" aria-hidden="true"><span>R$</span><strong>20</strong><i></i></span><span class="counter-denomination">R$ 20</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="20" aria-label="Quantidade de notas de 20 reais"><strong data-cash-subtotal="20">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-note-thumb cash-note-10" aria-hidden="true"><span>R$</span><strong>10</strong><i></i></span><span class="counter-denomination">R$ 10</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="10" aria-label="Quantidade de notas de 10 reais"><strong data-cash-subtotal="10">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-note-thumb cash-note-5" aria-hidden="true"><span>R$</span><strong>5</strong><i></i></span><span class="counter-denomination">R$ 5</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="5" aria-label="Quantidade de notas de 5 reais"><strong data-cash-subtotal="5">R$ 0,00</strong></div>
+          <div class="counter-row"><span class="counter-denomination-wrap"><span class="cash-note-thumb cash-note-2" aria-hidden="true"><span>R$</span><strong>2</strong><i></i></span><span class="counter-denomination">R$ 2</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-cash-value="2" aria-label="Quantidade de notas de 2 reais"><strong data-cash-subtotal="2">R$ 0,00</strong></div>
         </div>
       </div>
       <div class="counter-group">
