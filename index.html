@@ -7180,6 +7180,11 @@ async function handleAdminSidebarNavigation(key) {
 document.querySelectorAll("[data-admin-nav]").forEach(button => {
   button.addEventListener("click", () => handleAdminSidebarNavigation(button.dataset.adminNav));
 });
+$("open-cash-counter-card")?.addEventListener("click", () => {
+  showAdminScreen("admin-counter-screen","astro");
+  updateCashCounter();
+});
+$("counter-back-astro")?.addEventListener("click", () => showAdminScreen("admin-astro-screen","astro"));
 
 function updateCashCounter() {
   const inputs = document.querySelectorAll("[data-cash-value]");
