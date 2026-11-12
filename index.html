@@ -3695,6 +3695,9 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 
 /* Precificação Astro — visual de produto */
 .pricing-page{max-width:1500px;margin:18px auto 30px;color:#f7f3f3}
+.pricing-products-view{margin:18px auto 30px;max-width:1500px}.pricing-products-toolbar{display:grid;grid-template-columns:auto minmax(180px,1fr) auto;gap:12px;align-items:center;margin-bottom:18px}.pricing-products-toolbar input{max-width:520px}.pricing-products-toolbar>span{font-size:12px;color:#c6b7b8;white-space:nowrap}.pricing-products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px}.pricing-product-card{min-width:0;overflow:hidden;border:1px solid #493638;border-radius:14px;background:linear-gradient(145deg,#21191a,#151213);color:#fff;text-align:left;cursor:pointer;transition:transform .18s,border-color .18s;padding:0}.pricing-product-card:hover{transform:translateY(-3px);border-color:#f4777e}.pricing-product-card img,.pricing-product-card-placeholder{display:grid;width:100%;height:145px;object-fit:cover;background:#100e0f;place-items:center;color:#ff8b91;font-size:42px}.pricing-product-card-name{display:block;padding:12px 13px 14px;font-size:14px;font-weight:800;overflow-wrap:anywhere}.pricing-product-add{display:grid;place-items:center;min-height:205px;border:1px dashed #a65b61;background:linear-gradient(145deg,#291c1e,#191415);color:#ff9b9f}.pricing-product-add strong{display:grid;place-items:center;width:58px;height:58px;border:1px solid #a65b61;border-radius:50%;font-size:35px;font-weight:400}.pricing-product-add span{font-size:13px;font-weight:800}.pricing-empty{grid-column:1/-1;padding:28px;border:1px dashed #594448;border-radius:12px;text-align:center;color:#c6b7b8;font-size:13px}
+@media(max-width:600px){.pricing-products-toolbar{grid-template-columns:1fr auto}.pricing-products-toolbar #pricing-list-back-astro{grid-column:1/-1;justify-self:start}.pricing-products-toolbar input{grid-column:1/-1;max-width:none}.pricing-products-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.pricing-product-card img,.pricing-product-card-placeholder{height:120px}.pricing-product-add{min-height:180px}}
+
 .pricing-topbar{display:grid;grid-template-columns:180px minmax(220px,1fr) 230px;gap:18px;align-items:center;padding:18px;background:radial-gradient(ellipse at 85% 0%,#382020 0%,#201819 42%,#171415 100%);border:1px solid #563638;border-radius:17px;margin-bottom:16px;box-shadow:0 12px 30px #0003}
 .pricing-topbar>button{grid-column:1/-1;justify-self:start;height:36px;grid-row:1}
 .pricing-photo-wrap{grid-column:1;grid-row:2;display:grid;gap:9px;justify-items:center}
@@ -4720,7 +4723,12 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   </div>
 </section>
 <section id="admin-pricing-screen" class="hidden">
-  <div class="admin-page-heading"><div><div class="eyebrow">ASTRO • GESTÃO DE CUSTOS</div><h1>Precificação</h1><p class="season-info">Cadastre os ingredientes, informe as taxas e descubra quanto cobrar pelo seu produto.</p></div></div>
+  <div class="admin-page-heading"><div><div class="eyebrow">ASTRO • GESTÃO DE CUSTOS</div><h1>Precificação</h1><p class="season-info">Organize os produtos cadastrados e calcule o preço ideal de venda de cada um.</p></div></div>
+  <div id="pricing-products-view" class="pricing-products-view">
+    <div class="pricing-products-toolbar"><button type="button" class="btn secondary" id="pricing-list-back-astro">← Astro</button><input id="pricing-products-search" type="search" placeholder="Buscar produto..." autocomplete="off" aria-label="Buscar produto"><span id="pricing-products-count">0 produtos</span></div>
+    <div id="pricing-products-grid" class="pricing-products-grid"></div>
+  </div>
+  <div id="pricing-editor-view" class="hidden">
   <div class="pricing-page">
     <div class="pricing-topbar">
       <button type="button" class="btn secondary" id="pricing-back-astro">← Astro</button>
@@ -4748,6 +4756,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       </aside>
     </div>
     <div class="pricing-actions"><span id="pricing-save-status">Os dados ficam salvos neste navegador.</span><div><button type="button" class="btn secondary" id="pricing-clear">Limpar</button><button type="button" class="btn primary" id="pricing-save">Salvar precificação</button></div></div>
+  </div>
   </div>
 </section>
 <section id="admin-market-map-screen" class="hidden">
@@ -7317,6 +7326,34 @@ document.querySelectorAll("[data-admin-nav]").forEach(button => {
 
 const PRICING_STORAGE_KEY="pokerzone_astro_pricing_v1";
 let pricingIngredients=[];
+let pricingProducts=[];
+let pricingCurrentProductId=null;
+function pricingReadProducts(){
+  let stored=null;try{stored=JSON.parse(localStorage.getItem(PRICING_STORAGE_KEY)||"null");}catch(error){}
+  if(Array.isArray(stored))return stored;
+  if(stored&&typeof stored==="object"&&(stored.product||stored.photo||stored.ingredients?.length)){
+    const migrated={...stored,id:"legacy-"+Date.now(),updatedAt:Date.now()};
+    pricingProducts=[migrated];localStorage.setItem(PRICING_STORAGE_KEY,JSON.stringify(pricingProducts));return pricingProducts;
+  }
+  return [];
+}
+function pricingPersistProducts(){try{localStorage.setItem(PRICING_STORAGE_KEY,JSON.stringify(pricingProducts));}catch(error){console.warn("Falha ao salvar produtos de precificação",error);}}
+function pricingRenderProducts(){
+  const grid=$("pricing-products-grid");if(!grid)return;
+  const term=($("pricing-products-search")?.value||"").trim().toLocaleLowerCase("pt-BR");
+  const filtered=pricingProducts.filter(item=>(item.product||"Novo produto").toLocaleLowerCase("pt-BR").includes(term));
+  $("pricing-products-count").textContent=pricingProducts.length+" "+(pricingProducts.length===1?"produto":"produtos");
+  grid.innerHTML='<button type="button" class="pricing-product-card pricing-product-add" id="pricing-create-product"><strong>＋</strong><span>Adicionar produto</span></button>'+
+    (filtered.length?filtered.map(item=>'<button type="button" class="pricing-product-card" data-pricing-open="'+pricingEscape(item.id)+'">'+(item.photo?'<img src="'+item.photo+'" alt="">':'<span class="pricing-product-card-placeholder">％</span>')+'<span class="pricing-product-card-name">'+pricingEscape(item.product||"Novo produto")+'</span></button>').join(""):'<div class="pricing-empty">'+(pricingProducts.length?'Nenhum produto encontrado.':'Nenhum produto cadastrado ainda. Clique em “Adicionar produto” para começar.')+'</div>');
+}
+function pricingOpenList(){ $("pricing-editor-view").classList.add("hidden");$("pricing-products-view").classList.remove("hidden");pricingRenderProducts();}
+function pricingOpenEditor(productId){
+  let item=pricingProducts.find(product=>product.id===productId);
+  if(!item){item={id:String(Date.now()),product:"",photo:"",photoZoom:1,markup:100,delivery:0,card:0,app:0,tax:0,other:0,ingredients:[],updatedAt:Date.now()};pricingProducts.unshift(item);pricingPersistProducts();}
+  pricingCurrentProductId=item.id;
+  $("pricing-products-view").classList.add("hidden");$("pricing-editor-view").classList.remove("hidden");
+  loadPricingData(item);
+}
 function pricingMoney(value){return (Number(value)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 function pricingNumber(value){return Math.max(0,Number(String(value??"").replace(",","."))||0);}
 function pricingEscape(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));}
@@ -7344,18 +7381,30 @@ function updatePricingTotals(){
 let pricingPhotoData="";let pricingPhotoZoom=1;
 function renderPricingPhoto(){const preview=$("pricing-photo-preview");if(!preview)return;preview.innerHTML=pricingPhotoData?`<img src="${pricingPhotoData}" alt="Foto do produto">`:"<span>＋<br>Adicionar foto<br><small>(opcional)</small></span>";preview.style.setProperty("--pricing-photo-zoom",String(pricingPhotoZoom));const slider=$("pricing-photo-zoom");if(slider){slider.disabled=!pricingPhotoData;slider.value=String(pricingPhotoZoom);}const output=$("pricing-photo-zoom-value");if(output)output.textContent=pricingPhotoZoom.toFixed(1).replace(".",",")+"×";}
 function savePricingData(showMessage=true){
-  const data={photo:pricingPhotoData,photoZoom:pricingPhotoZoom,product:$("pricing-product-name")?.value||"",markup:$("pricing-markup")?.value||100,delivery:$("pricing-delivery")?.value||0,card:$("pricing-card-fee")?.value||0,app:$("pricing-app-fee")?.value||0,tax:$("pricing-tax")?.value||0,other:$("pricing-other-fee")?.value||0,ingredients:pricingIngredients};
-  try{localStorage.setItem(PRICING_STORAGE_KEY,JSON.stringify(data));if(showMessage&&$("pricing-save-status"))$("pricing-save-status").textContent="Precificação salva neste navegador.";}catch(error){console.warn("Falha ao salvar precificação",error);}
+  const data={id:pricingCurrentProductId||String(Date.now()),photo:pricingPhotoData,photoZoom:pricingPhotoZoom,product:$("pricing-product-name")?.value||"",markup:$("pricing-markup")?.value||100,delivery:$("pricing-delivery")?.value||0,card:$("pricing-card-fee")?.value||0,app:$("pricing-app-fee")?.value||0,tax:$("pricing-tax")?.value||0,other:$("pricing-other-fee")?.value||0,ingredients:pricingIngredients,updatedAt:Date.now()};
+  pricingCurrentProductId=data.id;
+  const index=pricingProducts.findIndex(item=>item.id===data.id);
+  if(index>=0)pricingProducts[index]=data;else pricingProducts.unshift(data);
+  pricingPersistProducts();
+  if(showMessage&&$("pricing-save-status"))$("pricing-save-status").textContent="Precificação salva neste navegador.";
 }
-function loadPricingData(){
-  let data={};try{data=JSON.parse(localStorage.getItem(PRICING_STORAGE_KEY)||"{}")||{};}catch(error){}
+function loadPricingData(data){
+  data=data||{};
   pricingPhotoData=typeof data.photo==="string"?data.photo:"";pricingPhotoZoom=Math.min(2.5,Math.max(1,Number(data.photoZoom)||1));renderPricingPhoto();$("pricing-product-name").value=data.product||"";$("pricing-markup").value=data.markup??100;$("pricing-delivery").value=data.delivery??0;
   $("pricing-card-fee").value=data.card??0;$("pricing-app-fee").value=data.app??0;$("pricing-tax").value=data.tax??0;$("pricing-other-fee").value=data.other??0;
   pricingIngredients=Array.isArray(data.ingredients)?data.ingredients:[];
   renderPricingIngredients();updatePricingTotals();
+  $("pricing-save-status").textContent=data.product?"Produto carregado.":"Preencha os dados do novo produto.";
 }
-$("open-pricing-card")?.addEventListener("click",()=>{showAdminScreen("admin-pricing-screen","astro");loadPricingData();});
-$("pricing-back-astro")?.addEventListener("click",()=>showAdminScreen("admin-astro-screen","astro"));
+pricingProducts=pricingReadProducts();
+$("open-pricing-card")?.addEventListener("click",()=>{showAdminScreen("admin-pricing-screen","astro");pricingOpenList();});
+$("pricing-list-back-astro")?.addEventListener("click",()=>showAdminScreen("admin-astro-screen","astro"));
+$("pricing-products-search")?.addEventListener("input",pricingRenderProducts);
+$("pricing-products-grid")?.addEventListener("click",event=>{
+  if(event.target.closest("#pricing-create-product")){pricingOpenEditor(null);return;}
+  const card=event.target.closest("[data-pricing-open]");if(card)pricingOpenEditor(card.dataset.pricingOpen);
+});
+$("pricing-back-astro")?.addEventListener("click",pricingOpenList);
 $("pricing-add-ingredient")?.addEventListener("click",()=>{pricingIngredients.push({name:"",unit:"un.",purchased:1,paid:0,used:1});renderPricingIngredients();savePricingData(false);const inputs=document.querySelectorAll("#pricing-ingredients-body .pricing-name-input");inputs[inputs.length-1]?.focus();});
 $("pricing-ingredients-body")?.addEventListener("input",event=>{const row=event.target.closest("[data-pricing-row]");if(!row)return;const item=pricingIngredients[Number(row.dataset.pricingRow)];if(!item)return;item[event.target.dataset.pricingField]=event.target.value;const cost=row.querySelector("[data-pricing-cost]");if(cost)cost.textContent=pricingMoney(pricingIngredientCost(item));updatePricingTotals();savePricingData(false);});
 $("pricing-ingredients-body")?.addEventListener("change",event=>{const row=event.target.closest("[data-pricing-row]");if(!row)return;const item=pricingIngredients[Number(row.dataset.pricingRow)];if(!item)return;item[event.target.dataset.pricingField]=event.target.value;updatePricingTotals();savePricingData(false);});
