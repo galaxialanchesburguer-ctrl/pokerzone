@@ -3693,10 +3693,59 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 @media(max-width:650px){.counter-groups{grid-template-columns:1fr;gap:20px;padding:14px}.counter-row{grid-template-columns:minmax(65px,1fr) 82px minmax(82px,1fr);gap:8px;padding:9px}.counter-denomination{font-size:13px}.counter-row strong{font-size:12px}.counter-total{padding:17px 14px}}
 
 
-/* Precificação Astro */
-.pricing-page{max-width:1500px;margin:18px auto 30px;color:#f7f3f3}.pricing-topbar{display:grid;grid-template-columns:auto minmax(220px,1fr) minmax(190px,260px);align-items:end;gap:14px;padding:16px;background:#171415;border:1px solid #443536;border-radius:13px;margin-bottom:16px}.pricing-topbar>button{height:42px}.pricing-product-field,.pricing-margin-field{display:grid;gap:7px}.pricing-product-field label,.pricing-margin-field label{font-size:11px;font-weight:900;color:#c9bfc0;letter-spacing:.5px}.pricing-topbar input,.pricing-page input,.pricing-page select{width:100%;min-width:0;box-sizing:border-box;background:#0f0d0e;color:#fff;border:1px solid #514344;border-radius:7px;padding:10px;font:inherit}.pricing-layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:16px;align-items:start}.pricing-panel{background:#191516;border:1px solid #403334;border-radius:11px;overflow:hidden}.pricing-ingredients{padding:16px;min-width:0}.pricing-panel-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.pricing-panel-heading h2{margin:3px 0 0;font-size:18px}.pricing-panel-heading .eyebrow{font-size:10px;color:#ff858d;font-weight:900}.pricing-table-wrap{overflow-x:auto}.pricing-table{width:100%;border-collapse:collapse;min-width:850px;font-size:12px}.pricing-table th{background:#2d2425;color:#f7c7ca;padding:10px 7px;text-align:left;font-size:10px;white-space:nowrap}.pricing-table td{padding:7px;border-bottom:1px solid #352d2e}.pricing-table input,.pricing-table select{padding:8px 6px;font-size:12px;min-width:70px}.pricing-table .pricing-name-input{min-width:145px}.pricing-table .pricing-cost-cell{font-weight:850;color:#8ce0b2;white-space:nowrap}.pricing-remove-row{border:0;background:transparent;color:#ff8189;font-size:18px;cursor:pointer;padding:5px}.pricing-hint{font-size:11px;color:#a99fa0;line-height:1.5;margin:12px 0 0}.pricing-side{display:grid;gap:11px}.pricing-metric{padding:13px 15px;display:grid;gap:5px;border-top:3px solid #43ad76}.pricing-metric>span,.pricing-field-panel>label{font-size:10px;font-weight:900;letter-spacing:.5px;color:#d6cbcc}.pricing-metric>strong{font-size:24px;color:#8de0b2;font-variant-numeric:tabular-nums}.pricing-metric small{font-size:10px;color:#a99fa0}.pricing-field-panel{padding:13px 15px;display:grid;gap:8px}.pricing-field-panel input{font-size:18px;font-weight:800}.pricing-simple{border-top-color:#d39b47}.pricing-simple>strong{color:#f1c779}.pricing-fees{padding:13px 15px}.pricing-fees h3,.pricing-overview h3{margin:0 0 12px;font-size:12px}.pricing-fee-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pricing-fee-grid label{display:grid;gap:5px;font-size:10px;color:#bdb2b3}.pricing-fee-grid input{padding:8px;font-size:13px}.pricing-final{border-top-color:#ff6975;background:linear-gradient(140deg,#32191d,#1b1415)}.pricing-final>strong{font-size:29px;color:#ff9299}.pricing-overview{padding:13px 15px}.pricing-overview>div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #342b2c;font-size:11px}.pricing-overview>div strong{font-variant-numeric:tabular-nums}.pricing-overview-highlight{color:#8de0b2;font-weight:900}.pricing-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 2px;color:#aaa0a1;font-size:11px}.pricing-actions>div{display:flex;gap:8px}.pricing-actions button{min-width:130px}
+/* Precificação Astro — visual de produto */
+.pricing-page{max-width:1500px;margin:18px auto 30px;color:#f7f3f3}
+.pricing-topbar{display:grid;grid-template-columns:180px minmax(220px,1fr) 230px;gap:18px;align-items:center;padding:18px;background:radial-gradient(ellipse at 85% 0%,#382020 0%,#201819 42%,#171415 100%);border:1px solid #563638;border-radius:17px;margin-bottom:16px;box-shadow:0 12px 30px #0003}
+.pricing-topbar>button{grid-column:1/-1;justify-self:start;height:36px;grid-row:1}
+.pricing-photo-wrap{grid-column:1;grid-row:2;display:grid;gap:9px;justify-items:center}
+.pricing-photo-preview{width:145px;height:125px;border:1px dashed #8b5b5d;border-radius:13px;background:#100e0f;display:grid;place-items:center;overflow:hidden;color:#c2aeb0;font-size:12px;text-align:center;cursor:pointer}
+.pricing-photo-preview img{width:100%;height:100%;object-fit:cover}
+.pricing-photo-actions{display:flex;gap:7px;align-items:center}
+.pricing-photo-actions button{font-size:11px;padding:7px 9px}
+.pricing-product-field{grid-column:2;grid-row:2;display:grid;gap:8px;align-self:center}
+.pricing-margin-field{grid-column:3;grid-row:2;display:grid;gap:8px;align-self:center}
+.pricing-product-field label,.pricing-margin-field label{font-size:10px;font-weight:900;color:#d4bfc0;letter-spacing:.7px}
+.pricing-topbar input,.pricing-page input,.pricing-page select{width:100%;min-width:0;box-sizing:border-box;background:#100e0f;color:#fff;border:1px solid #5b4547;border-radius:9px;padding:11px;font:inherit}
+.pricing-product-field input{font-size:21px;font-weight:750;padding:13px}
+.pricing-margin-field input{font-size:20px;font-weight:800}
+.pricing-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.pricing-panel{background:linear-gradient(145deg,#20191a,#171415);border:1px solid #463638;border-radius:14px;overflow:hidden;box-shadow:0 8px 22px #0002}
+.pricing-ingredients{padding:17px;min-width:0}
+.pricing-panel-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.pricing-panel-heading h2{margin:3px 0 0;font-size:19px}
+.pricing-panel-heading .eyebrow{font-size:10px;color:#ff9b70;font-weight:900;letter-spacing:.8px}
+.pricing-table-wrap{overflow-x:auto}
+.pricing-table{width:100%;border-collapse:collapse;min-width:850px;font-size:12px}
+.pricing-table th{background:#332526;color:#ffd0b4;padding:11px 7px;text-align:left;font-size:10px;white-space:nowrap}
+.pricing-table td{padding:8px 7px;border-bottom:1px solid #3b3031}
+.pricing-table input,.pricing-table select{padding:8px 6px;font-size:12px;min-width:70px}
+.pricing-table .pricing-name-input{min-width:145px}
+.pricing-table .pricing-cost-cell{font-weight:850;color:#9be2b5;white-space:nowrap}
+.pricing-remove-row{border:0;background:transparent;color:#ff8189;font-size:18px;cursor:pointer;padding:5px}
+.pricing-hint{font-size:11px;color:#b2a5a6;line-height:1.5;margin:12px 0 0}
+.pricing-side{display:grid;gap:11px}
+.pricing-metric{padding:15px 16px;display:grid;gap:6px;border-top:3px solid #55b77d}
+.pricing-metric>span,.pricing-field-panel>label{font-size:10px;font-weight:900;letter-spacing:.7px;color:#d9c9ca}
+.pricing-metric>strong{font-size:25px;color:#a0e9bd;font-variant-numeric:tabular-nums}
+.pricing-metric small{font-size:10px;color:#b4a6a7}
+.pricing-field-panel{padding:14px 16px;display:grid;gap:8px}
+.pricing-field-panel input{font-size:18px;font-weight:800}
+.pricing-simple{border-top-color:#e5ad58}.pricing-simple>strong{color:#ffd080}
+.pricing-fees{padding:14px 16px}.pricing-fees h3,.pricing-overview h3{margin:0 0 12px;font-size:12px}
+.pricing-fee-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pricing-fee-grid label{display:grid;gap:5px;font-size:10px;color:#c6b7b8}
+.pricing-fee-grid input{padding:8px;font-size:13px}
+.pricing-final{border-top-color:#ff805e;background:linear-gradient(140deg,#42201e,#211718)}
+.pricing-final>strong{font-size:30px;color:#ffad91}
+.pricing-overview{padding:14px 16px}
+.pricing-overview>div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #3b3031;font-size:11px}
+.pricing-overview>div strong{font-variant-numeric:tabular-nums}
+.pricing-overview-highlight{color:#a0e9bd;font-weight:900}
+.pricing-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 2px;color:#b8abad;font-size:11px}
+.pricing-actions>div{display:flex;gap:8px}.pricing-actions button{min-width:130px}
 @media(max-width:950px){.pricing-layout{grid-template-columns:1fr}.pricing-side{grid-template-columns:repeat(2,minmax(0,1fr))}.pricing-overview{grid-column:1/-1}}
-@media(max-width:600px){.pricing-topbar{grid-template-columns:1fr}.pricing-topbar>button{width:100%}.pricing-side{grid-template-columns:1fr}.pricing-actions{align-items:stretch;flex-direction:column}.pricing-actions>div{width:100%}.pricing-actions button{flex:1}.pricing-panel-heading{align-items:flex-start;flex-direction:column}}
+@media(max-width:650px){.pricing-topbar{grid-template-columns:1fr 1fr;gap:12px}.pricing-topbar>button{grid-column:1/-1;grid-row:auto}.pricing-photo-wrap{grid-column:1;grid-row:auto}.pricing-product-field{grid-column:1/-1;grid-row:auto}.pricing-margin-field{grid-column:2;grid-row:2}.pricing-side{grid-template-columns:1fr}.pricing-overview{grid-column:auto}.pricing-actions{align-items:stretch;flex-direction:column}.pricing-actions>div{width:100%}.pricing-actions button{flex:1}.pricing-panel-heading{align-items:flex-start;flex-direction:column}}
+@media(max-width:420px){.pricing-topbar{grid-template-columns:1fr}.pricing-photo-wrap,.pricing-product-field,.pricing-margin-field{grid-column:1;grid-row:auto}.pricing-photo-wrap{justify-items:start}.pricing-margin-field{max-width:none}}
 
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -4672,7 +4721,16 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 <section id="admin-pricing-screen" class="hidden">
   <div class="admin-page-heading"><div><div class="eyebrow">ASTRO • GESTÃO DE CUSTOS</div><h1>Precificação</h1><p class="season-info">Cadastre os ingredientes, informe as taxas e descubra quanto cobrar pelo seu produto.</p></div></div>
   <div class="pricing-page">
-    <div class="pricing-topbar"><button type="button" class="btn secondary" id="pricing-back-astro">← Astro</button><div class="pricing-product-field"><label for="pricing-product-name">NOME DO PRODUTO</label><input id="pricing-product-name" placeholder="Ex.: X-Salada" maxlength="100"></div><div class="pricing-margin-field"><label for="pricing-markup">MARGEM / ACRÉSCIMO PRETENDIDO (%)</label><input id="pricing-markup" type="number" min="0" step="1" value="100"></div></div>
+    <div class="pricing-topbar">
+      <button type="button" class="btn secondary" id="pricing-back-astro">← Astro</button>
+      <div class="pricing-photo-wrap">
+        <label class="pricing-photo-preview" id="pricing-photo-preview" for="pricing-photo-input"><span>＋<br>Adicionar foto<br><small>(opcional)</small></span></label>
+        <input id="pricing-photo-input" type="file" accept="image/*" hidden>
+        <div class="pricing-photo-actions"><button type="button" class="btn secondary" id="pricing-photo-remove">Remover foto</button></div>
+      </div>
+      <div class="pricing-product-field"><label for="pricing-product-name">NOME DO PRODUTO</label><input id="pricing-product-name" placeholder="Ex.: X-Salada" maxlength="100"></div>
+      <div class="pricing-margin-field"><label for="pricing-markup">MARGEM / ACRÉSCIMO PRETENDIDO (%)</label><input id="pricing-markup" type="number" min="0" step="1" value="100"></div>
+    </div>
     <div class="pricing-layout">
       <section class="pricing-panel pricing-ingredients"><div class="pricing-panel-heading"><div><span class="eyebrow">COMPOSIÇÃO</span><h2>Ingredientes</h2></div><button type="button" class="btn primary" id="pricing-add-ingredient">＋ Ingrediente</button></div>
         <div class="pricing-table-wrap"><table class="pricing-table"><thead><tr><th>INGREDIENTE</th><th>MEDIDA</th><th>QTDE. COMPRADA</th><th>VALOR PAGO (R$)</th><th>QTDE. USADA</th><th>VALOR USADO</th><th></th></tr></thead><tbody id="pricing-ingredients-body"></tbody></table></div>
@@ -7282,13 +7340,15 @@ function updatePricingTotals(){
   set("pricing-ingredients-total",pricingMoney(ingredients));set("pricing-total-cost",pricingMoney(total));set("pricing-simple-price",pricingMoney(simple));set("pricing-final-price",pricingMoney(final));
   set("pricing-overview-ingredients",pricingMoney(ingredients));set("pricing-overview-fixed",pricingMoney(fixed));set("pricing-overview-fees",fees.toFixed(2).replace(".",",")+"%");set("pricing-profit",pricingMoney(profit));set("pricing-real-margin",margin.toFixed(2).replace(".",",")+"%");
 }
+let pricingPhotoData="";
+function renderPricingPhoto(){const preview=$("pricing-photo-preview");if(!preview)return;preview.innerHTML=pricingPhotoData?`<img src="${pricingPhotoData}" alt="Foto do produto">`:"<span>＋<br>Adicionar foto<br><small>(opcional)</small></span>";}
 function savePricingData(showMessage=true){
-  const data={product:$("pricing-product-name")?.value||"",markup:$("pricing-markup")?.value||100,delivery:$("pricing-delivery")?.value||0,card:$("pricing-card-fee")?.value||0,app:$("pricing-app-fee")?.value||0,tax:$("pricing-tax")?.value||0,other:$("pricing-other-fee")?.value||0,ingredients:pricingIngredients};
+  const data={photo:pricingPhotoData,product:$("pricing-product-name")?.value||"",markup:$("pricing-markup")?.value||100,delivery:$("pricing-delivery")?.value||0,card:$("pricing-card-fee")?.value||0,app:$("pricing-app-fee")?.value||0,tax:$("pricing-tax")?.value||0,other:$("pricing-other-fee")?.value||0,ingredients:pricingIngredients};
   try{localStorage.setItem(PRICING_STORAGE_KEY,JSON.stringify(data));if(showMessage&&$("pricing-save-status"))$("pricing-save-status").textContent="Precificação salva neste navegador.";}catch(error){console.warn("Falha ao salvar precificação",error);}
 }
 function loadPricingData(){
   let data={};try{data=JSON.parse(localStorage.getItem(PRICING_STORAGE_KEY)||"{}")||{};}catch(error){}
-  $("pricing-product-name").value=data.product||"";$("pricing-markup").value=data.markup??100;$("pricing-delivery").value=data.delivery??0;
+  pricingPhotoData=typeof data.photo==="string"?data.photo:"";renderPricingPhoto();$("pricing-product-name").value=data.product||"";$("pricing-markup").value=data.markup??100;$("pricing-delivery").value=data.delivery??0;
   $("pricing-card-fee").value=data.card??0;$("pricing-app-fee").value=data.app??0;$("pricing-tax").value=data.tax??0;$("pricing-other-fee").value=data.other??0;
   pricingIngredients=Array.isArray(data.ingredients)?data.ingredients:[];
   renderPricingIngredients();updatePricingTotals();
@@ -7300,6 +7360,8 @@ $("pricing-ingredients-body")?.addEventListener("input",event=>{const row=event.
 $("pricing-ingredients-body")?.addEventListener("change",event=>{const row=event.target.closest("[data-pricing-row]");if(!row)return;const item=pricingIngredients[Number(row.dataset.pricingRow)];if(!item)return;item[event.target.dataset.pricingField]=event.target.value;updatePricingTotals();savePricingData(false);});
 $("pricing-ingredients-body")?.addEventListener("click",event=>{const button=event.target.closest("[data-pricing-remove]");if(!button)return;pricingIngredients.splice(Number(button.dataset.pricingRemove),1);renderPricingIngredients();savePricingData(false);});
 ["pricing-markup","pricing-delivery","pricing-card-fee","pricing-app-fee","pricing-tax","pricing-other-fee","pricing-product-name"].forEach(id=>$(id)?.addEventListener("input",()=>{updatePricingTotals();savePricingData(false);}));
+$("pricing-photo-input")?.addEventListener("change",event=>{const file=event.target.files?.[0];if(!file)return;if(!file.type.startsWith("image/")){alert("Selecione um arquivo de imagem.");event.target.value="";return;}if(file.size>4*1024*1024){alert("A imagem deve ter no máximo 4 MB.");event.target.value="";return;}const reader=new FileReader();reader.onload=()=>{pricingPhotoData=String(reader.result||"");renderPricingPhoto();savePricingData(false);};reader.readAsDataURL(file);});
+$("pricing-photo-remove")?.addEventListener("click",()=>{pricingPhotoData="";$("pricing-photo-input").value="";renderPricingPhoto();savePricingData(false);});
 $("pricing-save")?.addEventListener("click",()=>savePricingData(true));
 $("pricing-clear")?.addEventListener("click",()=>{if(!confirm("Deseja limpar toda a precificação atual?"))return;pricingIngredients=[];$("pricing-product-name").value="";$("pricing-markup").value=100;$("pricing-delivery").value=0;$("pricing-card-fee").value=0;$("pricing-app-fee").value=0;$("pricing-tax").value=0;$("pricing-other-fee").value=0;renderPricingIngredients();updatePricingTotals();savePricingData(false);$("pricing-save-status").textContent="Precificação limpa.";});
 
