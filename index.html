@@ -7494,7 +7494,7 @@ function refreshPurchaseSuggestions(){
  if(!typed){panel.classList.add("hidden");panel.innerHTML="";return;}
  const names=[...purchaseCatalog,...purchaseItems.map(item=>item.name||"")];
  const unique=[...new Map(names.map(name=>[normalizePurchaseName(name),String(name).trim()])).values()].filter(Boolean);
- const matches=unique.filter(name=>normalizePurchaseName(name).includes(normalized)&&normalizePurchaseName(name)!==normalized).slice(0,8);
+ const matches=unique.filter(name=>normalizePurchaseName(name).includes(normalized)).sort((a,b)=>{const aa=normalizePurchaseName(a),bb=normalizePurchaseName(b);return (aa===normalized?-1:bb===normalized?1:aa.startsWith(normalized)?-1:bb.startsWith(normalized)?1:0);}).slice(0,8);
  panel.innerHTML=matches.map(name=>'<button type="button" data-purchase-suggestion="'+esc(name)+'">'+esc(name)+'</button>').join("");
  panel.classList.toggle("hidden",!matches.length);
  panel.querySelectorAll("[data-purchase-suggestion]").forEach(button=>button.addEventListener("mousedown",event=>{
