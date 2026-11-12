@@ -3699,7 +3699,8 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .pricing-topbar>button{grid-column:1/-1;justify-self:start;height:36px;grid-row:1}
 .pricing-photo-wrap{grid-column:1;grid-row:2;display:grid;gap:9px;justify-items:center}
 .pricing-photo-preview{width:145px;height:125px;box-sizing:border-box;border:1px dashed #8b5b5d;border-radius:13px;background:#100e0f;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#c2aeb0;font-size:12px;text-align:center;cursor:pointer;padding:4px}
-.pricing-photo-preview img{display:block;width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important;object-fit:scale-down!important;object-position:center center!important;flex:0 1 auto;background:transparent}
+.pricing-photo-preview img{display:block;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center center!important;transform:scale(var(--pricing-photo-zoom,1));transform-origin:center center;flex:0 0 100%;background:transparent}
+.pricing-photo-zoom{width:145px;display:grid;grid-template-columns:1fr auto;gap:5px 8px;align-items:center;color:#d4bfc0;font-size:10px}.pricing-photo-zoom input{grid-column:1/-1;width:100%;accent-color:#f5443b;padding:0}.pricing-photo-zoom output{font-weight:800;color:#fff}
 .pricing-photo-actions{display:flex;gap:7px;align-items:center}
 .pricing-photo-actions button{font-size:11px;padding:7px 9px}
 .pricing-product-field{grid-column:2;grid-row:2;display:grid;gap:8px;align-self:center}
@@ -4726,7 +4727,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <div class="pricing-photo-wrap">
         <label class="pricing-photo-preview" id="pricing-photo-preview" for="pricing-photo-input"><span>＋<br>Adicionar foto<br><small>(opcional)</small></span></label>
         <input id="pricing-photo-input" type="file" accept="image/*" hidden>
-        <div class="pricing-photo-actions"><button type="button" class="btn secondary" id="pricing-photo-remove">Remover foto</button></div>
+        <div class="pricing-photo-zoom" id="pricing-photo-zoom-wrap"><label for="pricing-photo-zoom">ZOOM DA FOTO</label><output id="pricing-photo-zoom-value">1,0×</output><input id="pricing-photo-zoom" type="range" min="1" max="2.5" step="0.05" value="1" disabled></div><div class="pricing-photo-actions"><button type="button" class="btn secondary" id="pricing-photo-remove">Remover foto</button></div>
       </div>
       <div class="pricing-product-field"><label for="pricing-product-name">NOME DO PRODUTO</label><input id="pricing-product-name" placeholder="Ex.: X-Salada" maxlength="100"></div>
       <div class="pricing-margin-field"><label for="pricing-markup">MARGEM / ACRÉSCIMO PRETENDIDO (%)</label><input id="pricing-markup" type="number" min="0" step="1" value="100"></div>
@@ -7340,15 +7341,15 @@ function updatePricingTotals(){
   set("pricing-ingredients-total",pricingMoney(ingredients));set("pricing-total-cost",pricingMoney(total));set("pricing-simple-price",pricingMoney(simple));set("pricing-final-price",pricingMoney(final));
   set("pricing-overview-ingredients",pricingMoney(ingredients));set("pricing-overview-fixed",pricingMoney(fixed));set("pricing-overview-fees",fees.toFixed(2).replace(".",",")+"%");set("pricing-profit",pricingMoney(profit));set("pricing-real-margin",margin.toFixed(2).replace(".",",")+"%");
 }
-let pricingPhotoData="";
-function renderPricingPhoto(){const preview=$("pricing-photo-preview");if(!preview)return;preview.innerHTML=pricingPhotoData?`<img src="${pricingPhotoData}" alt="Foto do produto">`:"<span>＋<br>Adicionar foto<br><small>(opcional)</small></span>";}
+let pricingPhotoData="";let pricingPhotoZoom=1;
+function renderPricingPhoto(){const preview=$("pricing-photo-preview");if(!preview)return;preview.innerHTML=pricingPhotoData?`<img src="${pricingPhotoData}" alt="Foto do produto">`:"<span>＋<br>Adicionar foto<br><small>(opcional)</small></span>";preview.style.setProperty("--pricing-photo-zoom",String(pricingPhotoZoom));const slider=$("pricing-photo-zoom");if(slider){slider.disabled=!pricingPhotoData;slider.value=String(pricingPhotoZoom);}const output=$("pricing-photo-zoom-value");if(output)output.textContent=pricingPhotoZoom.toFixed(1).replace(".",",")+"×";}
 function savePricingData(showMessage=true){
-  const data={photo:pricingPhotoData,product:$("pricing-product-name")?.value||"",markup:$("pricing-markup")?.value||100,delivery:$("pricing-delivery")?.value||0,card:$("pricing-card-fee")?.value||0,app:$("pricing-app-fee")?.value||0,tax:$("pricing-tax")?.value||0,other:$("pricing-other-fee")?.value||0,ingredients:pricingIngredients};
+  const data={photo:pricingPhotoData,photoZoom:pricingPhotoZoom,product:$("pricing-product-name")?.value||"",markup:$("pricing-markup")?.value||100,delivery:$("pricing-delivery")?.value||0,card:$("pricing-card-fee")?.value||0,app:$("pricing-app-fee")?.value||0,tax:$("pricing-tax")?.value||0,other:$("pricing-other-fee")?.value||0,ingredients:pricingIngredients};
   try{localStorage.setItem(PRICING_STORAGE_KEY,JSON.stringify(data));if(showMessage&&$("pricing-save-status"))$("pricing-save-status").textContent="Precificação salva neste navegador.";}catch(error){console.warn("Falha ao salvar precificação",error);}
 }
 function loadPricingData(){
   let data={};try{data=JSON.parse(localStorage.getItem(PRICING_STORAGE_KEY)||"{}")||{};}catch(error){}
-  pricingPhotoData=typeof data.photo==="string"?data.photo:"";renderPricingPhoto();$("pricing-product-name").value=data.product||"";$("pricing-markup").value=data.markup??100;$("pricing-delivery").value=data.delivery??0;
+  pricingPhotoData=typeof data.photo==="string"?data.photo:"";pricingPhotoZoom=Math.min(2.5,Math.max(1,Number(data.photoZoom)||1));renderPricingPhoto();$("pricing-product-name").value=data.product||"";$("pricing-markup").value=data.markup??100;$("pricing-delivery").value=data.delivery??0;
   $("pricing-card-fee").value=data.card??0;$("pricing-app-fee").value=data.app??0;$("pricing-tax").value=data.tax??0;$("pricing-other-fee").value=data.other??0;
   pricingIngredients=Array.isArray(data.ingredients)?data.ingredients:[];
   renderPricingIngredients();updatePricingTotals();
@@ -7360,8 +7361,9 @@ $("pricing-ingredients-body")?.addEventListener("input",event=>{const row=event.
 $("pricing-ingredients-body")?.addEventListener("change",event=>{const row=event.target.closest("[data-pricing-row]");if(!row)return;const item=pricingIngredients[Number(row.dataset.pricingRow)];if(!item)return;item[event.target.dataset.pricingField]=event.target.value;updatePricingTotals();savePricingData(false);});
 $("pricing-ingredients-body")?.addEventListener("click",event=>{const button=event.target.closest("[data-pricing-remove]");if(!button)return;pricingIngredients.splice(Number(button.dataset.pricingRemove),1);renderPricingIngredients();savePricingData(false);});
 ["pricing-markup","pricing-delivery","pricing-card-fee","pricing-app-fee","pricing-tax","pricing-other-fee","pricing-product-name"].forEach(id=>$(id)?.addEventListener("input",()=>{updatePricingTotals();savePricingData(false);}));
+$("pricing-photo-zoom")?.addEventListener("input",event=>{pricingPhotoZoom=Number(event.target.value)||1;renderPricingPhoto();savePricingData(false);});
 $("pricing-photo-input")?.addEventListener("change",event=>{const file=event.target.files?.[0];if(!file)return;if(!file.type.startsWith("image/")){alert("Selecione um arquivo de imagem.");event.target.value="";return;}if(file.size>4*1024*1024){alert("A imagem deve ter no máximo 4 MB.");event.target.value="";return;}const reader=new FileReader();reader.onload=()=>{pricingPhotoData=String(reader.result||"");renderPricingPhoto();savePricingData(false);};reader.readAsDataURL(file);});
-$("pricing-photo-remove")?.addEventListener("click",()=>{pricingPhotoData="";$("pricing-photo-input").value="";renderPricingPhoto();savePricingData(false);});
+$("pricing-photo-remove")?.addEventListener("click",()=>{pricingPhotoData="";pricingPhotoZoom=1;$("pricing-photo-input").value="";renderPricingPhoto();savePricingData(false);savePricingData(false);});
 $("pricing-save")?.addEventListener("click",()=>savePricingData(true));
 $("pricing-clear")?.addEventListener("click",()=>{if(!confirm("Deseja limpar toda a precificação atual?"))return;pricingIngredients=[];$("pricing-product-name").value="";$("pricing-markup").value=100;$("pricing-delivery").value=0;$("pricing-card-fee").value=0;$("pricing-app-fee").value=0;$("pricing-tax").value=0;$("pricing-other-fee").value=0;renderPricingIngredients();updatePricingTotals();savePricingData(false);$("pricing-save-status").textContent="Precificação limpa.";});
 
