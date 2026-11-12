@@ -7349,7 +7349,7 @@ function pricingRenderProducts(){
 function pricingOpenList(){ $("pricing-editor-view").classList.add("hidden");$("pricing-products-view").classList.remove("hidden");pricingRenderProducts();}
 function pricingOpenEditor(productId){
   let item=pricingProducts.find(product=>product.id===productId);
-  if(!item){item={id:String(Date.now()),product:"",photo:"",photoZoom:1,markup:100,delivery:0,card:0,app:0,tax:0,other:0,ingredients:[],updatedAt:Date.now()};pricingProducts.unshift(item);pricingPersistProducts();}
+  if(!item){item={id:"draft-"+Date.now(),product:"",photo:"",photoZoom:1,markup:100,delivery:0,card:0,app:0,tax:0,other:0,ingredients:[],updatedAt:Date.now()};}
   pricingCurrentProductId=item.id;
   $("pricing-products-view").classList.add("hidden");$("pricing-editor-view").classList.remove("hidden");
   loadPricingData(item);
@@ -7386,7 +7386,7 @@ function savePricingData(showMessage=true){
   const index=pricingProducts.findIndex(item=>item.id===data.id);
   if(index>=0)pricingProducts[index]=data;else pricingProducts.unshift(data);
   pricingPersistProducts();
-  if(showMessage&&$("pricing-save-status"))$("pricing-save-status").textContent="Precificação salva neste navegador.";
+  if(showMessage&&$("pricing-save-status"))$("pricing-save-status").textContent="✓ Produto salvo com sucesso!";
 }
 function loadPricingData(data){
   data=data||{};
@@ -7394,7 +7394,7 @@ function loadPricingData(data){
   $("pricing-card-fee").value=data.card??0;$("pricing-app-fee").value=data.app??0;$("pricing-tax").value=data.tax??0;$("pricing-other-fee").value=data.other??0;
   pricingIngredients=Array.isArray(data.ingredients)?data.ingredients:[];
   renderPricingIngredients();updatePricingTotals();
-  $("pricing-save-status").textContent=data.product?"Produto carregado.":"Preencha os dados do novo produto.";
+  $("pricing-save-status").textContent=pricingProducts.some(item=>item.id===data.id)?"Produto carregado. As alterações ainda não foram salvas.":"Novo produto em rascunho. Clique em “Salvar precificação” para cadastrar.";
 }
 pricingProducts=pricingReadProducts();
 $("open-pricing-card")?.addEventListener("click",()=>{showAdminScreen("admin-pricing-screen","astro");pricingOpenList();});
@@ -7405,16 +7405,16 @@ $("pricing-products-grid")?.addEventListener("click",event=>{
   const card=event.target.closest("[data-pricing-open]");if(card)pricingOpenEditor(card.dataset.pricingOpen);
 });
 $("pricing-back-astro")?.addEventListener("click",pricingOpenList);
-$("pricing-add-ingredient")?.addEventListener("click",()=>{pricingIngredients.push({name:"",unit:"un.",purchased:1,paid:0,used:1});renderPricingIngredients();savePricingData(false);const inputs=document.querySelectorAll("#pricing-ingredients-body .pricing-name-input");inputs[inputs.length-1]?.focus();});
-$("pricing-ingredients-body")?.addEventListener("input",event=>{const row=event.target.closest("[data-pricing-row]");if(!row)return;const item=pricingIngredients[Number(row.dataset.pricingRow)];if(!item)return;item[event.target.dataset.pricingField]=event.target.value;const cost=row.querySelector("[data-pricing-cost]");if(cost)cost.textContent=pricingMoney(pricingIngredientCost(item));updatePricingTotals();savePricingData(false);});
-$("pricing-ingredients-body")?.addEventListener("change",event=>{const row=event.target.closest("[data-pricing-row]");if(!row)return;const item=pricingIngredients[Number(row.dataset.pricingRow)];if(!item)return;item[event.target.dataset.pricingField]=event.target.value;updatePricingTotals();savePricingData(false);});
-$("pricing-ingredients-body")?.addEventListener("click",event=>{const button=event.target.closest("[data-pricing-remove]");if(!button)return;pricingIngredients.splice(Number(button.dataset.pricingRemove),1);renderPricingIngredients();savePricingData(false);});
-["pricing-markup","pricing-delivery","pricing-card-fee","pricing-app-fee","pricing-tax","pricing-other-fee","pricing-product-name"].forEach(id=>$(id)?.addEventListener("input",()=>{updatePricingTotals();savePricingData(false);}));
-$("pricing-photo-zoom")?.addEventListener("input",event=>{pricingPhotoZoom=Number(event.target.value)||1;renderPricingPhoto();savePricingData(false);});
-$("pricing-photo-input")?.addEventListener("change",event=>{const file=event.target.files?.[0];if(!file)return;if(!file.type.startsWith("image/")){alert("Selecione um arquivo de imagem.");event.target.value="";return;}if(file.size>4*1024*1024){alert("A imagem deve ter no máximo 4 MB.");event.target.value="";return;}const reader=new FileReader();reader.onload=()=>{pricingPhotoData=String(reader.result||"");renderPricingPhoto();savePricingData(false);};reader.readAsDataURL(file);});
-$("pricing-photo-remove")?.addEventListener("click",()=>{pricingPhotoData="";pricingPhotoZoom=1;$("pricing-photo-input").value="";renderPricingPhoto();savePricingData(false);savePricingData(false);});
+$("pricing-add-ingredient")?.addEventListener("click",()=>{pricingIngredients.push({name:"",unit:"un.",purchased:1,paid:0,used:1});renderPricingIngredients();$("pricing-save-status").textContent="Alterações não salvas.";const inputs=document.querySelectorAll("#pricing-ingredients-body .pricing-name-input");inputs[inputs.length-1]?.focus();});
+$("pricing-ingredients-body")?.addEventListener("input",event=>{const row=event.target.closest("[data-pricing-row]");if(!row)return;const item=pricingIngredients[Number(row.dataset.pricingRow)];if(!item)return;item[event.target.dataset.pricingField]=event.target.value;const cost=row.querySelector("[data-pricing-cost]");if(cost)cost.textContent=pricingMoney(pricingIngredientCost(item));updatePricingTotals();$("pricing-save-status").textContent="Alterações não salvas.";});
+$("pricing-ingredients-body")?.addEventListener("change",event=>{const row=event.target.closest("[data-pricing-row]");if(!row)return;const item=pricingIngredients[Number(row.dataset.pricingRow)];if(!item)return;item[event.target.dataset.pricingField]=event.target.value;updatePricingTotals();$("pricing-save-status").textContent="Alterações não salvas.";});
+$("pricing-ingredients-body")?.addEventListener("click",event=>{const button=event.target.closest("[data-pricing-remove]");if(!button)return;pricingIngredients.splice(Number(button.dataset.pricingRemove),1);renderPricingIngredients();$("pricing-save-status").textContent="Alterações não salvas.";});
+["pricing-markup","pricing-delivery","pricing-card-fee","pricing-app-fee","pricing-tax","pricing-other-fee","pricing-product-name"].forEach(id=>$(id)?.addEventListener("input",()=>{updatePricingTotals();$("pricing-save-status").textContent="Alterações não salvas."; }));
+$("pricing-photo-zoom")?.addEventListener("input",event=>{pricingPhotoZoom=Number(event.target.value)||1;renderPricingPhoto();$("pricing-save-status").textContent="Alterações não salvas.";});
+$("pricing-photo-input")?.addEventListener("change",event=>{const file=event.target.files?.[0];if(!file)return;if(!file.type.startsWith("image/")){alert("Selecione um arquivo de imagem.");event.target.value="";return;}if(file.size>4*1024*1024){alert("A imagem deve ter no máximo 4 MB.");event.target.value="";return;}const reader=new FileReader();reader.onload=()=>{pricingPhotoData=String(reader.result||"");renderPricingPhoto();$("pricing-save-status").textContent="Alterações não salvas.";};reader.readAsDataURL(file);});
+$("pricing-photo-remove")?.addEventListener("click",()=>{pricingPhotoData="";pricingPhotoZoom=1;$("pricing-photo-input").value="";renderPricingPhoto();$("pricing-save-status").textContent="Alterações não salvas.";});
 $("pricing-save")?.addEventListener("click",()=>savePricingData(true));
-$("pricing-clear")?.addEventListener("click",()=>{if(!confirm("Deseja limpar toda a precificação atual?"))return;pricingIngredients=[];$("pricing-product-name").value="";$("pricing-markup").value=100;$("pricing-delivery").value=0;$("pricing-card-fee").value=0;$("pricing-app-fee").value=0;$("pricing-tax").value=0;$("pricing-other-fee").value=0;renderPricingIngredients();updatePricingTotals();savePricingData(false);$("pricing-save-status").textContent="Precificação limpa.";});
+$("pricing-clear")?.addEventListener("click",()=>{if(!confirm("Deseja limpar toda a precificação atual?"))return;pricingIngredients=[];$("pricing-product-name").value="";$("pricing-markup").value=100;$("pricing-delivery").value=0;$("pricing-card-fee").value=0;$("pricing-app-fee").value=0;$("pricing-tax").value=0;$("pricing-other-fee").value=0;renderPricingIngredients();updatePricingTotals();$("pricing-save-status").textContent="Campos limpos. Clique em “Salvar precificação” para gravar.";});
 
 $("open-cash-counter-card")?.addEventListener("click", () => {
   showAdminScreen("admin-counter-screen","astro");
