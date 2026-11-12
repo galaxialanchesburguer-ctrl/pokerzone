@@ -3698,8 +3698,8 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .pricing-topbar{display:grid;grid-template-columns:180px minmax(220px,1fr) 230px;gap:18px;align-items:center;padding:18px;background:radial-gradient(ellipse at 85% 0%,#382020 0%,#201819 42%,#171415 100%);border:1px solid #563638;border-radius:17px;margin-bottom:16px;box-shadow:0 12px 30px #0003}
 .pricing-topbar>button{grid-column:1/-1;justify-self:start;height:36px;grid-row:1}
 .pricing-photo-wrap{grid-column:1;grid-row:2;display:grid;gap:9px;justify-items:center}
-.pricing-photo-preview{width:145px;height:125px;border:1px dashed #8b5b5d;border-radius:13px;background:#100e0f;display:grid;place-items:center;overflow:hidden;color:#c2aeb0;font-size:12px;text-align:center;cursor:pointer}
-.pricing-photo-preview img{width:100%;height:100%;object-fit:contain;background:#100e0f}
+.pricing-photo-preview{width:145px;height:125px;box-sizing:border-box;border:1px dashed #8b5b5d;border-radius:13px;background:#100e0f;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#c2aeb0;font-size:12px;text-align:center;cursor:pointer;padding:4px}
+.pricing-photo-preview img{display:block;width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important;object-fit:scale-down!important;object-position:center center!important;flex:0 1 auto;background:transparent}
 .pricing-photo-actions{display:flex;gap:7px;align-items:center}
 .pricing-photo-actions button{font-size:11px;padding:7px 9px}
 .pricing-product-field{grid-column:2;grid-row:2;display:grid;gap:8px;align-self:center}
