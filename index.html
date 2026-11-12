@@ -4755,7 +4755,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         <section class="pricing-panel pricing-overview"><h3>VISÃO GERAL</h3><div><span>Insumos</span><strong id="pricing-overview-ingredients">R$ 0,00</strong></div><div><span>Custo fixo / entrega</span><strong id="pricing-overview-fixed">R$ 0,00</strong></div><div><span>Taxas totais</span><strong id="pricing-overview-fees">0%</strong></div><div><span>Lucro estimado</span><strong id="pricing-profit">R$ 0,00</strong></div><div class="pricing-overview-highlight"><span>Margem sobre a venda</span><strong id="pricing-real-margin">0%</strong></div></section>
       </aside>
     </div>
-    <div class="pricing-actions"><span id="pricing-save-status">Os dados ficam salvos neste navegador.</span><div><button type="button" class="btn secondary" id="pricing-clear">Limpar</button><button type="button" class="btn primary" id="pricing-save">Salvar precificação</button></div></div>
+    <div class="pricing-actions"><span id="pricing-save-status">Os dados ficam salvos neste navegador.</span><div><button type="button" class="btn secondary" id="pricing-delete" hidden>Remover produto</button><button type="button" class="btn secondary" id="pricing-clear">Limpar</button><button type="button" class="btn primary" id="pricing-save">Salvar precificação</button></div></div>
   </div>
   </div>
 </section>
@@ -7386,7 +7386,7 @@ function savePricingData(showMessage=true){
   const index=pricingProducts.findIndex(item=>item.id===data.id);
   if(index>=0)pricingProducts[index]=data;else pricingProducts.unshift(data);
   pricingPersistProducts();
-  if(showMessage&&$("pricing-save-status"))$("pricing-save-status").textContent="✓ Produto salvo com sucesso!";
+  $("pricing-delete").hidden=false;if(showMessage&&$("pricing-save-status"))$("pricing-save-status").textContent="✓ Produto salvo com sucesso!";
 }
 function loadPricingData(data){
   data=data||{};
@@ -7394,7 +7394,7 @@ function loadPricingData(data){
   $("pricing-card-fee").value=data.card??0;$("pricing-app-fee").value=data.app??0;$("pricing-tax").value=data.tax??0;$("pricing-other-fee").value=data.other??0;
   pricingIngredients=Array.isArray(data.ingredients)?data.ingredients:[];
   renderPricingIngredients();updatePricingTotals();
-  $("pricing-save-status").textContent=pricingProducts.some(item=>item.id===data.id)?"Produto carregado. As alterações ainda não foram salvas.":"Novo produto em rascunho. Clique em “Salvar precificação” para cadastrar.";
+  const savedProduct=pricingProducts.some(item=>item.id===data.id);$("pricing-delete").hidden=!savedProduct;$("pricing-save-status").textContent=savedProduct?"Produto carregado. As alterações ainda não foram salvas.":"Novo produto em rascunho. Clique em “Salvar precificação” para cadastrar.";
 }
 pricingProducts=pricingReadProducts();
 $("open-pricing-card")?.addEventListener("click",()=>{showAdminScreen("admin-pricing-screen","astro");pricingOpenList();});
@@ -7414,6 +7414,7 @@ $("pricing-photo-zoom")?.addEventListener("input",event=>{pricingPhotoZoom=Numbe
 $("pricing-photo-input")?.addEventListener("change",event=>{const file=event.target.files?.[0];if(!file)return;if(!file.type.startsWith("image/")){alert("Selecione um arquivo de imagem.");event.target.value="";return;}if(file.size>4*1024*1024){alert("A imagem deve ter no máximo 4 MB.");event.target.value="";return;}const reader=new FileReader();reader.onload=()=>{pricingPhotoData=String(reader.result||"");renderPricingPhoto();$("pricing-save-status").textContent="Alterações não salvas.";};reader.readAsDataURL(file);});
 $("pricing-photo-remove")?.addEventListener("click",()=>{pricingPhotoData="";pricingPhotoZoom=1;$("pricing-photo-input").value="";renderPricingPhoto();$("pricing-save-status").textContent="Alterações não salvas.";});
 $("pricing-save")?.addEventListener("click",()=>savePricingData(true));
+$("pricing-delete")?.addEventListener("click",()=>{if(!pricingCurrentProductId||!pricingProducts.some(item=>item.id===pricingCurrentProductId))return;if(!confirm("Tem certeza que deseja remover este produto? Esta ação não pode ser desfeita."))return;pricingProducts=pricingProducts.filter(item=>item.id!==pricingCurrentProductId);pricingPersistProducts();pricingCurrentProductId=null;pricingIngredients=[];pricingPhotoData="";pricingPhotoZoom=1;pricingOpenList();});
 $("pricing-clear")?.addEventListener("click",()=>{if(!confirm("Deseja limpar toda a precificação atual?"))return;pricingIngredients=[];$("pricing-product-name").value="";$("pricing-markup").value=100;$("pricing-delivery").value=0;$("pricing-card-fee").value=0;$("pricing-app-fee").value=0;$("pricing-tax").value=0;$("pricing-other-fee").value=0;renderPricingIngredients();updatePricingTotals();$("pricing-save-status").textContent="Campos limpos. Clique em “Salvar precificação” para gravar.";});
 
 $("open-cash-counter-card")?.addEventListener("click", () => {
