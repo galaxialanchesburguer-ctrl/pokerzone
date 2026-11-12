@@ -3715,7 +3715,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .pricing-margin-field input{font-size:20px;font-weight:800}
 .pricing-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
 .pricing-panel{background:linear-gradient(145deg,#20191a,#171415);border:1px solid #463638;border-radius:14px;overflow:hidden;box-shadow:0 8px 22px #0002}
-.pricing-ingredients{padding:17px;min-width:0}
+.pricing-ingredients-summary{margin-top:18px;padding:16px;border:1px solid #49383a;border-radius:12px;background:linear-gradient(145deg,#251d1e,#1a1617)}.pricing-summary-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:13px}.pricing-summary-heading .eyebrow{font-size:9px;color:#ff9b70;font-weight:900;letter-spacing:.8px}.pricing-summary-heading h3{font-size:14px;margin:4px 0 0;color:#f4e6e6}.pricing-summary-icon{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:#49302b;color:#ffb18f}.pricing-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.pricing-summary-grid>div{min-width:0;padding:11px;background:#171314;border:1px solid #3b3031;border-radius:9px;display:grid;gap:6px}.pricing-summary-grid span{font-size:9px;line-height:1.4;color:#bcaeb0}.pricing-summary-grid strong{font-size:19px;color:#f7eeee;font-variant-numeric:tabular-nums}.pricing-summary-grid>div:last-child strong{color:#9be2b5}.pricing-summary-tip{margin-top:12px;padding:11px 12px;border-left:3px solid #f5443b;background:#21191a;border-radius:0 8px 8px 0}.pricing-summary-tip strong{font-size:10px;color:#ffb18f}.pricing-summary-tip p{font-size:10px;line-height:1.55;color:#c9babb;margin:5px 0 0}.pricing-summary-tip b{color:#ffb18f}@media(max-width:650px){.pricing-summary-grid{grid-template-columns:1fr}.pricing-summary-grid>div{grid-template-columns:1fr auto;align-items:center}.pricing-summary-grid strong{font-size:16px}}.pricing-ingredients{padding:17px;min-width:0}
 .pricing-panel-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
 .pricing-panel-heading h2{margin:3px 0 0;font-size:19px}
 .pricing-panel-heading .eyebrow{font-size:10px;color:#ff9b70;font-weight:900;letter-spacing:.8px}
@@ -4746,6 +4746,15 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <section class="pricing-panel pricing-ingredients"><div class="pricing-panel-heading"><div><span class="eyebrow">COMPOSIÇÃO</span><h2>Ingredientes</h2></div><button type="button" class="btn primary" id="pricing-add-ingredient">＋ Ingrediente</button></div>
         <div class="pricing-table-wrap"><table class="pricing-table"><thead><tr><th>INGREDIENTE</th><th>MEDIDA</th><th>QTDE. COMPRADA</th><th>VALOR PAGO (R$)</th><th>QTDE. USADA</th><th>VALOR USADO</th><th></th></tr></thead><tbody id="pricing-ingredients-body"></tbody></table></div>
         <p class="pricing-hint">Informe a quantidade comprada e quanto dela é usado em uma unidade do produto. O custo utilizado será calculado automaticamente.</p>
+        <section class="pricing-ingredients-summary">
+          <div class="pricing-summary-heading"><div><span class="eyebrow">RESUMO DA COMPOSIÇÃO</span><h3>Como está o custo deste produto</h3></div><span class="pricing-summary-icon">✦</span></div>
+          <div class="pricing-summary-grid">
+            <div><span>Ingredientes cadastrados</span><strong id="pricing-summary-count">0</strong></div>
+            <div><span>Considerados no cálculo</span><strong id="pricing-summary-active">0</strong></div>
+            <div><span>Custo por unidade</span><strong id="pricing-summary-cost">R$ 0,00</strong></div>
+          </div>
+          <div class="pricing-summary-tip"><strong>Dica rápida</strong><p>Informe o preço e a quantidade comprada de cada ingrediente. Em “quantidade usada”, coloque apenas o que vai em um lanche. O sistema calcula automaticamente o custo proporcional.</p><p>Se algum ingrediente não deve entrar no custo, use o botão <b>⊘</b> ao lado do nome para desconsiderá-lo temporariamente.</p></div>
+        </section>
       </section>
       <aside class="pricing-side">
         <section class="pricing-panel pricing-metric"><span>INSUMOS</span><strong id="pricing-ingredients-total">R$ 0,00</strong><small>Subtotal dos ingredientes</small></section>
@@ -7389,6 +7398,7 @@ function updatePricingTotals(){
   const set=(id,value)=>{const el=$(id);if(el)el.textContent=value;};
   set("pricing-ingredients-total",pricingMoney(ingredients));set("pricing-total-cost",pricingMoney(total));set("pricing-simple-price",pricingMoney(simple));set("pricing-final-price",pricingMoney(final));
   set("pricing-overview-ingredients",pricingMoney(ingredients));set("pricing-overview-fixed",pricingMoney(fixed));set("pricing-overview-fees",fees.toFixed(2).replace(".",",")+"%");set("pricing-profit",pricingMoney(profit));set("pricing-real-margin",margin.toFixed(2).replace(".",",")+"%");
+  set("pricing-summary-count",String(pricingIngredients.length));set("pricing-summary-active",String(pricingIngredients.filter(item=>!item.disregarded).length));set("pricing-summary-cost",pricingMoney(ingredients));
   updatePricingIfoodTotals(ingredients);
 }
 function updatePricingIfoodTotals(ingredients){
