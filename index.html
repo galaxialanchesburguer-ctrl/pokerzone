@@ -7329,6 +7329,7 @@ const PRICING_STORAGE_KEY="pokerzone_astro_pricing_v1";
 let pricingIngredients=[];
 let pricingProducts=[];
 let pricingCurrentProductId=null;
+let pricingSaveStatusTimer=null;
 function pricingReadProducts(){
   let stored=null;try{stored=JSON.parse(localStorage.getItem(PRICING_STORAGE_KEY)||"null");}catch(error){}
   if(Array.isArray(stored))return stored;
@@ -7387,7 +7388,7 @@ function savePricingData(showMessage=true){
   const index=pricingProducts.findIndex(item=>item.id===data.id);
   if(index>=0)pricingProducts[index]=data;else pricingProducts.unshift(data);
   pricingPersistProducts();
-  $("pricing-delete").hidden=false;if(showMessage&&$("pricing-save-status"))$("pricing-save-status").textContent="✓ Produto salvo com sucesso!";
+  $("pricing-delete").hidden=false;if(showMessage&&$("pricing-save-status")){const status=$("pricing-save-status");clearTimeout(pricingSaveStatusTimer);status.textContent="✓ Produto salvo com sucesso!";pricingSaveStatusTimer=setTimeout(()=>{if(status.textContent==="✓ Produto salvo com sucesso!")status.textContent="";},2500);}
 }
 function loadPricingData(data){
   data=data||{};
