@@ -7526,7 +7526,7 @@ function generatePurchaseListImage(){
   ctx.fillText("Data da compra: "+(dateLabel||"Não informada"),66,150);
   ctx.fillStyle="#292a2e";ctx.fillRect(48,200,width-96,58);
   ctx.fillStyle="#ffaaa5";ctx.font="bold 20px Arial";
-  ctx.fillText("PRODUTO",70,237);ctx.fillText("QUANTIDADE",570,237);ctx.fillText("VALOR UN.",790,237);ctx.fillText("TOTAL ESTIMADO",1000,237);
+  ctx.fillText("PRODUTO",70,237);ctx.fillText("QUANTIDADE",570,237);ctx.fillText("VALOR UN.",790,237);ctx.fillText("VALOR ITEM",1000,237);
   let total=0,totalQty=0;
   purchaseItems.forEach((item,index)=>{
     const y=top+index*rowHeight,qty=Number(item.quantity||1),unit=Number(item.value||0),line=qty*unit;
