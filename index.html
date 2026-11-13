@@ -3774,7 +3774,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .pricing-combo-card strong{font-size:15px}.pricing-combo-card small{color:#c6b7b8}.pricing-combo-card span{color:#a0e9bd;font-weight:800}
 @media(max-width:700px){.pricing-combo-manual{grid-template-columns:1fr 85px}.pricing-combo-manual input:first-child{grid-column:1/-1}.pricing-combo-summary{grid-template-columns:1fr 1fr}.pricing-combo-item{grid-template-columns:minmax(0,1fr) 65px 95px 28px;gap:6px;padding:8px}}
 
-.employees-toolbar{display:flex;justify-content:flex-start;margin:16px 0 0}.employees-tabs{margin:16px 0}.employees-panel{margin-top:14px}.employees-panel .panel-pad{padding:18px}
+.employees-toolbar{display:flex;justify-content:flex-start;margin:16px 0 0}.motoboy-date-field{display:flex;align-items:center;gap:12px;margin:2px 0 16px;color:#ddd;font-size:13px;font-weight:750}.motoboy-date-field input{min-height:40px;padding:8px 11px;border:1px solid #5b4547;border-radius:8px;background:#100e0f;color:#fff}.motoboy-table-wrap{overflow-x:auto;border:1px solid #493638;border-radius:10px}.motoboy-table{width:100%;min-width:420px;border-collapse:collapse}.motoboy-table th{padding:12px;text-align:left;background:#281d1f;color:#c9bfc0;font-size:11px;text-transform:uppercase;letter-spacing:.6px}.motoboy-table td{padding:8px;border-top:1px solid #382a2c}.motoboy-table td:first-child{width:65%}.motoboy-table input{width:100%;min-height:40px;padding:8px 10px;border:1px solid #5b4547;border-radius:7px;background:#100e0f;color:#fff;font:inherit}.motoboy-table .motoboy-value{max-width:190px}.motoboy-row-delete{width:34px;height:34px;border:1px solid #594346;border-radius:7px;background:#2a2021;color:#ff929b;font-size:18px;cursor:pointer}.motoboy-entry-actions{margin-top:12px}.motoboy-day-total{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding:16px;border:1px solid #673036;border-radius:10px;background:#281719}.motoboy-day-total span{font-size:11px;font-weight:850;letter-spacing:.8px;color:#c9aeb0}.motoboy-day-total strong{font-size:25px;color:#fff}.motoboy-save-area{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}.motoboy-save-area span{font-size:12px;color:#9edbb5}.motoboy-history-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:28px 0 12px}.motoboy-history-head h3{font-size:13px;letter-spacing:.6px}.motoboy-history-head span{font-size:12px;color:#aaa}.motoboy-history{display:grid;gap:12px}.motoboy-history-card{padding:14px;border:1px solid #493638;border-radius:10px;background:#1b1516}.motoboy-history-card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.motoboy-history-card-head strong{font-size:14px}.motoboy-history-card-head span{font-size:13px;font-weight:850;color:#fff}.motoboy-history-lines{display:grid;gap:6px}.motoboy-history-line{display:flex;justify-content:space-between;gap:12px;color:#cfc4c5;font-size:12px}.motoboy-history-actions{display:flex;justify-content:flex-end;margin-top:10px}.motoboy-history-actions button{padding:6px 10px;border:1px solid #594346;border-radius:7px;background:#2a2021;color:#ff929b;font-size:11px;cursor:pointer}@media(max-width:520px){.motoboy-date-field{align-items:flex-start;flex-direction:column;gap:6px}.motoboy-day-total strong{font-size:22px}}.employees-tabs{margin:16px 0}.employees-panel{margin-top:14px}.employees-panel .panel-pad{padding:18px}
 .pricing-list-tabs{display:flex;gap:8px;margin:18px auto 0;max-width:1500px;padding:5px;border:1px solid #493638;border-radius:12px;background:#171314;width:max-content;max-width:100%}
 .pricing-list-tab{border:0;border-radius:9px;padding:10px 28px;background:transparent;color:#c6b7b8;font-weight:850;cursor:pointer;min-width:130px}
 .pricing-list-tab.is-active{background:#f5443b;color:#fff;box-shadow:0 4px 12px #f5443b35}
@@ -4767,8 +4767,21 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     <button type="button" class="pricing-list-tab" id="employees-tab-kitchen" role="tab" aria-selected="false" aria-controls="employees-kitchen-panel">Cozinha</button>
   </div>
   <section class="box employees-panel" id="employees-motoboys-panel" role="tabpanel" aria-labelledby="employees-tab-motoboys">
-    <div class="box-head"><h2>MOTOBOYS</h2></div>
-    <div class="panel-pad"><p class="season-info">Área de organização dos motoboys.</p></div>
+    <div class="box-head"><h2>CONTROLE DIÁRIO • MOTOBOYS</h2></div>
+    <div class="panel-pad">
+      <div class="motoboy-date-field"><label for="motoboy-entry-date">Data</label><input type="date" id="motoboy-entry-date"></div>
+      <div class="motoboy-table-wrap">
+        <table class="motoboy-table">
+          <thead><tr><th>Descrição / Taxa</th><th>Valor (R$)</th><th></th></tr></thead>
+          <tbody id="motoboy-entry-rows"></tbody>
+        </table>
+      </div>
+      <div class="motoboy-entry-actions"><button type="button" class="btn secondary" id="motoboy-add-row">+ Adicionar linha</button></div>
+      <div class="motoboy-day-total"><span>TOTAL DO DIA</span><strong id="motoboy-day-total">R$ 0,00</strong></div>
+      <div class="motoboy-save-area"><button type="button" class="btn primary" id="motoboy-save-day">Salvar lançamento do dia</button><span id="motoboy-save-status" aria-live="polite"></span></div>
+      <div class="motoboy-history-head"><h3>HISTÓRICO DE LANÇAMENTOS</h3><span id="motoboy-history-count">0 registros</span></div>
+      <div id="motoboy-history" class="motoboy-history"><div class="empty">Nenhum lançamento salvo ainda.</div></div>
+    </div>
   </section>
   <section class="box employees-panel hidden" id="employees-kitchen-panel" role="tabpanel" aria-labelledby="employees-tab-kitchen">
     <div class="box-head"><h2>COZINHA</h2></div>
@@ -7654,7 +7667,27 @@ function setEmployeesTab(tab) {
   $("employees-tab-kitchen")?.setAttribute("aria-selected", String(!motoboys));
 }
 $("employees-tab-motoboys")?.addEventListener("click", () => setEmployeesTab("motoboys"));
-$("employees-tab-kitchen")?.addEventListener("click", () => setEmployeesTab("kitchen"));
+$("employees-tab-kitchen")?.addEventListener("click", () => setEmployeesTab("kitchen")); 
+const MOTOBOY_HISTORY_KEY="pokerzone_motoboy_daily_history_v1";
+let motoboyHistory=[];
+function motoboyToday(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function motoboyParseValue(value){let raw=String(value||"").trim().replace(/R\\$/gi,"").replace(/\\s/g,"");if(!raw)return 0;if(raw.includes(","))raw=raw.replace(/\\./g,"").replace(",",".");const n=Number(raw);return Number.isFinite(n)&&n>=0?n:0;}
+function motoboyLoadHistory(){try{const data=JSON.parse(localStorage.getItem(MOTOBOY_HISTORY_KEY)||"[]");motoboyHistory=Array.isArray(data)?data:[];}catch(e){motoboyHistory=[];}motoboyRenderHistory();}
+function motoboyWriteHistory(){try{localStorage.setItem(MOTOBOY_HISTORY_KEY,JSON.stringify(motoboyHistory));}catch(e){$("motoboy-save-status").textContent="Não foi possível salvar neste navegador.";}}
+function motoboyAddRow(description="",value=""){const body=$("motoboy-entry-rows");if(!body)return;const tr=document.createElement("tr");tr.innerHTML='<td><input type="text" class="motoboy-description" maxlength="120" placeholder="Ex.: Diária, bairro, taxa extra..." value="'+esc(description)+'"></td><td><input type="text" class="motoboy-value" inputmode="decimal" placeholder="0,00" value="'+String(value??"")+'"></td><td><button type="button" class="motoboy-row-delete" aria-label="Remover linha">×</button></td>';body.appendChild(tr);}
+function motoboyUpdateTotal(){const total=[...$("motoboy-entry-rows").querySelectorAll(".motoboy-value")].reduce((sum,input)=>sum+motoboyParseValue(input.value),0);$("motoboy-day-total").textContent=formatCashCurrency(total);}
+function motoboyFormatDate(date){if(!date)return "Data não informada";const p=date.split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:date;}
+function motoboyRenderHistory(){const host=$("motoboy-history");if(!host)return;$("motoboy-history-count").textContent=motoboyHistory.length+" "+(motoboyHistory.length===1?"registro":"registros");host.innerHTML=motoboyHistory.length?[...motoboyHistory].sort((a,b)=>b.createdAt-a.createdAt).map(record=>'<article class="motoboy-history-card" data-motoboy-record="'+esc(record.id)+'"><div class="motoboy-history-card-head"><strong>'+motoboyFormatDate(record.date)+'</strong><span>'+formatCashCurrency(record.total)+'</span></div><div class="motoboy-history-lines">'+record.lines.map(line=>'<div class="motoboy-history-line"><span>'+esc(line.description)+'</span><strong>'+formatCashCurrency(line.value)+'</strong></div>').join("")+'</div><div class="motoboy-history-actions"><button type="button" data-motoboy-delete="'+esc(record.id)+'">Excluir histórico</button></div></article>').join(""):'<div class="empty">Nenhum lançamento salvo ainda.</div>';}
+$("motoboy-entry-date")?.setAttribute("value",motoboyToday());
+$("motoboy-entry-date") && ($("motoboy-entry-date").value=motoboyToday());
+motoboyAddRow();
+motoboyLoadHistory();
+$("motoboy-add-row")?.addEventListener("click",()=>{motoboyAddRow();$("motoboy-entry-rows").lastElementChild?.querySelector(".motoboy-description")?.focus();});
+$("motoboy-entry-rows")?.addEventListener("input",motoboyUpdateTotal);
+$("motoboy-entry-rows")?.addEventListener("click",event=>{if(event.target.closest(".motoboy-row-delete")){event.target.closest("tr")?.remove();if(!$("motoboy-entry-rows").children.length)motoboyAddRow();motoboyUpdateTotal();}});
+$("motoboy-save-day")?.addEventListener("click",()=>{const date=$("motoboy-entry-date").value;const lines=[...$("motoboy-entry-rows").querySelectorAll("tr")].map(row=>({description:row.querySelector(".motoboy-description").value.trim(),value:motoboyParseValue(row.querySelector(".motoboy-value").value)})).filter(line=>line.description);if(!date){$("motoboy-save-status").textContent="Informe a data.";return;}if(!lines.length){$("motoboy-save-status").textContent="Adicione ao menos uma descrição.";return;}const total=lines.reduce((sum,line)=>sum+line.value,0);motoboyHistory.push({id:"motoboy-"+Date.now(),date,lines,total,createdAt:Date.now()});motoboyWriteHistory();motoboyRenderHistory();$("motoboy-save-status").textContent="Lançamento salvo no histórico!";$("motoboy-entry-rows").innerHTML="";motoboyAddRow();motoboyUpdateTotal();});
+$("motoboy-history")?.addEventListener("click",event=>{const del=event.target.closest("[data-motoboy-delete]");if(!del)return;motoboyHistory=motoboyHistory.filter(record=>record.id!==del.dataset.motoboyDelete);motoboyWriteHistory();motoboyRenderHistory();});
+
 
 const MARKET_MAP_CORRIDORS_KEY = "pokerzone_market_map_corridors";
 let marketMapObjects = [];
