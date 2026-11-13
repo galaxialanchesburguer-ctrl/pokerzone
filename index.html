@@ -4770,7 +4770,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     <div class="box-head"><h2>CONTROLE DIÁRIO • MOTOBOYS</h2></div>
     <div class="panel-pad">
       <div class="motoboy-date-field"><label for="motoboy-entry-date">Data</label><input type="date" id="motoboy-entry-date"></div>
-      <div class="motoboy-driver-field"><label for="motoboy-driver-select">Motoboy</label><div class="motoboy-driver-controls"><select id="motoboy-driver-select"><option value="">Selecione o motoboy</option></select><button type="button" class="btn secondary" id="motoboy-register-open">+ Cadastrar motoboy</button></div></div>
+      <div class="motoboy-driver-field"><label for="motoboy-driver-select">Motoboy</label><div class="motoboy-driver-controls"><select id="motoboy-driver-select"><option value="">Selecione o motoboy</option></select><button type="button" class="btn secondary" id="motoboy-register-open">+ Cadastrar motoboy</button><button type="button" class="btn secondary" id="motoboy-rate-register-open">+ Cadastrar taxa</button></div></div>
       <div class="motoboy-register-modal hidden" id="motoboy-register-modal" role="dialog" aria-modal="true" aria-labelledby="motoboy-register-title">
         <div class="motoboy-register-panel">
           <div class="motoboy-register-head"><h3 id="motoboy-register-title">Cadastrar motoboy</h3><button type="button" id="motoboy-register-close" aria-label="Fechar">×</button></div>
@@ -4780,6 +4780,16 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
           <p id="motoboy-register-status" aria-live="polite"></p>
         </div>
       </div>
+      <div class="motoboy-register-modal hidden" id="motoboy-rate-modal" role="dialog" aria-modal="true" aria-labelledby="motoboy-rate-title">
+        <div class="motoboy-register-panel">
+          <div class="motoboy-register-head"><h3 id="motoboy-rate-title">Cadastrar taxa / bairro</h3><button type="button" id="motoboy-rate-close" aria-label="Fechar">×</button></div>
+          <label>Nome do bairro ou descrição<input id="motoboy-rate-name" type="text" maxlength="120" placeholder="Ex.: Centro, Presidente Vargas"></label>
+          <label>Valor da taxa (R$)<input id="motoboy-rate-value" type="text" inputmode="decimal" placeholder="Ex.: 7,00"></label>
+          <div class="motoboy-register-actions"><button type="button" class="btn secondary" id="motoboy-rate-cancel">Cancelar</button><button type="button" class="btn primary" id="motoboy-rate-save">Salvar taxa</button></div>
+          <p id="motoboy-rate-status" aria-live="polite"></p>
+        </div>
+      </div>
+      <datalist id="motoboy-rate-options"></datalist>
       <div class="motoboy-table-wrap">
         <table class="motoboy-table">
           <thead><tr><th>Descrição / Taxa</th><th>Valor (R$)</th><th></th></tr></thead>
@@ -7680,10 +7690,19 @@ $("employees-tab-motoboys")?.addEventListener("click", () => setEmployeesTab("mo
 $("employees-tab-kitchen")?.addEventListener("click", () => setEmployeesTab("kitchen")); 
 const MOTOBOY_HISTORY_KEY="pokerzone_motoboy_daily_history_v1";
 const MOTOBOY_PEOPLE_KEY="pokerzone_motoboy_people_v1";
+const MOTOBOY_RATES_KEY="pokerzone_motoboy_saved_rates_v1";
 let motoboyHistory=[];
 let motoboyPeople=[];
+let motoboySavedRates=[];
 function motoboyLoadPeople(){try{const data=JSON.parse(localStorage.getItem(MOTOBOY_PEOPLE_KEY)||"[]");motoboyPeople=Array.isArray(data)?data:[];}catch(e){motoboyPeople=[];}motoboyRenderPeople();}
 function motoboySavePeople(){try{localStorage.setItem(MOTOBOY_PEOPLE_KEY,JSON.stringify(motoboyPeople));const saved=JSON.parse(localStorage.getItem(MOTOBOY_PEOPLE_KEY)||"[]");return Array.isArray(saved)&&saved.some(person=>person.id===motoboyPeople[motoboyPeople.length-1]?.id);}catch(e){$("motoboy-register-status").textContent="Não foi possível salvar neste navegador.";return false;}}
+function motoboyLoadRates(){try{const data=JSON.parse(localStorage.getItem(MOTOBOY_RATES_KEY)||"[]");motoboySavedRates=Array.isArray(data)?data:[];}catch(e){motoboySavedRates=[];}motoboyRenderRateOptions();}
+function motoboySaveRates(){try{localStorage.setItem(MOTOBOY_RATES_KEY,JSON.stringify(motoboySavedRates));const saved=JSON.parse(localStorage.getItem(MOTOBOY_RATES_KEY)||"[]");return Array.isArray(saved)&&saved.some(rate=>rate.id===motoboySavedRates[motoboySavedRates.length-1]?.id);}catch(e){$("motoboy-rate-status").textContent="Não foi possível salvar neste navegador.";return false;}}
+function motoboyRenderRateOptions(){const list=$("motoboy-rate-options");if(!list)return;list.innerHTML=motoboySavedRates.map(rate=>'<option value="'+esc(rate.name)+'"></option>').join("");}
+function motoboyOpenRateRegister(){$("motoboy-rate-name").value="";$("motoboy-rate-value").value="";$("motoboy-rate-status").textContent="";$("motoboy-rate-modal").classList.remove("hidden");$("motoboy-rate-name").focus();}
+function motoboyCloseRateRegister(){$("motoboy-rate-modal").classList.add("hidden");}
+function motoboyApplySavedRate(input){const name=input.value.trim().toLocaleLowerCase();const rate=motoboySavedRates.find(item=>item.name.trim().toLocaleLowerCase()===name);if(!rate)return;const valueInput=input.closest("tr")?.querySelector(".motoboy-value");if(valueInput){valueInput.value=Number(rate.value).toFixed(2).replace(".",",");motoboyUpdateTotal();}}
+
 function motoboyRenderPeople(selectedId){const select=$("motoboy-driver-select");if(!select)return;const current=selectedId??select.value;select.innerHTML='<option value="">Selecione o motoboy</option>'+motoboyPeople.map(person=>'<option value="'+esc(person.id)+'">'+esc(person.name)+'</option>').join("");if(motoboyPeople.some(person=>person.id===current))select.value=current;}
 function motoboyOpenRegister(){ $("motoboy-register-name").value="";$("motoboy-register-phone").value="";$("motoboy-register-status").textContent="";$("motoboy-register-modal").classList.remove("hidden");$("motoboy-register-name").focus();}
 function motoboyCloseRegister(){$("motoboy-register-modal").classList.add("hidden");}
@@ -7691,7 +7710,7 @@ function motoboyToday(){const d=new Date();return d.getFullYear()+"-"+String(d.g
 function motoboyParseValue(value){let raw=String(value||"").trim().replace(/R\\$/gi,"").replace(/\\s/g,"");if(!raw)return 0;if(raw.includes(","))raw=raw.replace(/\\./g,"").replace(",",".");const n=Number(raw);return Number.isFinite(n)&&n>=0?n:0;}
 function motoboyLoadHistory(){try{const data=JSON.parse(localStorage.getItem(MOTOBOY_HISTORY_KEY)||"[]");motoboyHistory=Array.isArray(data)?data:[];}catch(e){motoboyHistory=[];}motoboyRenderHistory();}
 function motoboyWriteHistory(){try{localStorage.setItem(MOTOBOY_HISTORY_KEY,JSON.stringify(motoboyHistory));}catch(e){$("motoboy-save-status").textContent="Não foi possível salvar neste navegador.";}}
-function motoboyAddRow(description="",value=""){const body=$("motoboy-entry-rows");if(!body)return;const tr=document.createElement("tr");tr.innerHTML='<td><input type="text" class="motoboy-description" maxlength="120" placeholder="Ex.: Diária, bairro, taxa extra..." value="'+esc(description)+'"></td><td><input type="text" class="motoboy-value" inputmode="decimal" placeholder="0,00" value="'+String(value??"")+'"></td><td><button type="button" class="motoboy-row-delete" aria-label="Remover linha">×</button></td>';body.appendChild(tr);}
+function motoboyAddRow(description="",value=""){const body=$("motoboy-entry-rows");if(!body)return;const tr=document.createElement("tr");tr.innerHTML='<td><input type="text" class="motoboy-description" list="motoboy-rate-options" autocomplete="off" maxlength="120" placeholder="Digite para buscar bairro ou taxa..." value="'+esc(description)+'"></td><td><input type="text" class="motoboy-value" inputmode="decimal" placeholder="0,00" value="'+String(value??"")+'"></td><td><button type="button" class="motoboy-row-delete" aria-label="Remover linha">×</button></td>';body.appendChild(tr);}
 function motoboyUpdateTotal(){const total=[...$("motoboy-entry-rows").querySelectorAll(".motoboy-value")].reduce((sum,input)=>sum+motoboyParseValue(input.value),0);$("motoboy-day-total").textContent=formatCashCurrency(total);}
 function motoboyFormatDate(date){if(!date)return "Data não informada";const p=date.split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:date;}
 function motoboyRenderHistory(){const host=$("motoboy-history");if(!host)return;$("motoboy-history-count").textContent=motoboyHistory.length+" "+(motoboyHistory.length===1?"registro":"registros");host.innerHTML=motoboyHistory.length?[...motoboyHistory].sort((a,b)=>b.createdAt-a.createdAt).map(record=>'<article class="motoboy-history-card" data-motoboy-record="'+esc(record.id)+'"><div class="motoboy-history-card-head"><strong>'+motoboyFormatDate(record.date)+' • '+esc(record.motoboyName||"Motoboy não informado")+'</strong><span>'+formatCashCurrency(record.total)+'</span></div><div class="motoboy-history-lines">'+record.lines.map(line=>'<div class="motoboy-history-line"><span>'+esc(line.description)+'</span><strong>'+formatCashCurrency(line.value)+'</strong></div>').join("")+'</div><div class="motoboy-history-actions"><button type="button" data-motoboy-delete="'+esc(record.id)+'">Excluir histórico</button></div></article>').join(""):'<div class="empty">Nenhum lançamento salvo ainda.</div>';}
@@ -7700,14 +7719,21 @@ $("motoboy-entry-date") && ($("motoboy-entry-date").value=motoboyToday());
 motoboyAddRow();
 motoboyLoadHistory();
 motoboyLoadPeople();
+motoboyLoadRates();
 $("motoboy-add-row")?.addEventListener("click",()=>{motoboyAddRow();$("motoboy-entry-rows").lastElementChild?.querySelector(".motoboy-description")?.focus();});
-$("motoboy-entry-rows")?.addEventListener("input",motoboyUpdateTotal);
+$("motoboy-entry-rows")?.addEventListener("input",event=>{if(event.target.matches(".motoboy-description"))motoboyApplySavedRate(event.target);motoboyUpdateTotal();});
+$("motoboy-entry-rows")?.addEventListener("change",event=>{if(event.target.matches(".motoboy-description"))motoboyApplySavedRate(event.target);});
 $("motoboy-entry-rows")?.addEventListener("click",event=>{if(event.target.closest(".motoboy-row-delete")){event.target.closest("tr")?.remove();if(!$("motoboy-entry-rows").children.length)motoboyAddRow();motoboyUpdateTotal();}});
 $("motoboy-save-day")?.addEventListener("click",()=>{const selectedMotoboy=motoboyPeople.find(person=>person.id===$("motoboy-driver-select").value);if(!selectedMotoboy){$("motoboy-save-status").textContent="Selecione ou cadastre o motoboy.";motoboyOpenRegister();return;}const date=$("motoboy-entry-date").value;const lines=[...$("motoboy-entry-rows").querySelectorAll("tr")].map(row=>({description:row.querySelector(".motoboy-description").value.trim(),value:motoboyParseValue(row.querySelector(".motoboy-value").value)})).filter(line=>line.description);if(!date){$("motoboy-save-status").textContent="Informe a data.";return;}if(!lines.length){$("motoboy-save-status").textContent="Adicione ao menos uma descrição.";return;}const total=lines.reduce((sum,line)=>sum+line.value,0);motoboyHistory.push({id:"motoboy-"+Date.now(),date,motoboyId:selectedMotoboy.id,motoboyName:selectedMotoboy.name,motoboyPhone:selectedMotoboy.phone,lines,total,createdAt:Date.now()});motoboyWriteHistory();motoboyRenderHistory();$("motoboy-save-status").textContent="Lançamento salvo no histórico!";$("motoboy-entry-rows").innerHTML="";motoboyAddRow();motoboyUpdateTotal();});
 $("motoboy-register-open")?.addEventListener("click",motoboyOpenRegister);
 $("motoboy-register-close")?.addEventListener("click",motoboyCloseRegister);
 $("motoboy-register-cancel")?.addEventListener("click",motoboyCloseRegister);
 $("motoboy-register-save")?.addEventListener("click",()=>{const name=$("motoboy-register-name").value.trim(),phone=$("motoboy-register-phone").value.trim();if(!name){$("motoboy-register-status").textContent="Informe o nome do motoboy.";return;}if(!phone){$("motoboy-register-status").textContent="Informe o telefone.";return;}const existing=motoboyPeople.find(person=>person.name.toLocaleLowerCase()===name.toLocaleLowerCase());if(existing){$("motoboy-register-status").textContent="Já existe um motoboy cadastrado com esse nome.";return;}const person={id:"driver-"+Date.now(),name,phone};motoboyPeople.push(person);if(!motoboySavePeople()){motoboyPeople=motoboyPeople.filter(item=>item.id!==person.id);return;}motoboyRenderPeople(person.id);$("motoboy-register-status").textContent="✓ Motoboy salvo com sucesso!";$("motoboy-save-status").textContent="Motoboy cadastrado e selecionado.";const saveButton=$("motoboy-register-save");if(saveButton)saveButton.disabled=true;setTimeout(()=>{motoboyCloseRegister();if(saveButton)saveButton.disabled=false;},1800);});
+$("motoboy-rate-register-open")?.addEventListener("click",motoboyOpenRateRegister);
+$("motoboy-rate-close")?.addEventListener("click",motoboyCloseRateRegister);
+$("motoboy-rate-cancel")?.addEventListener("click",motoboyCloseRateRegister);
+$("motoboy-rate-save")?.addEventListener("click",()=>{const name=$("motoboy-rate-name").value.trim(),rawValue=$("motoboy-rate-value").value.trim(),value=motoboyParseValue(rawValue);if(!name){$("motoboy-rate-status").textContent="Informe o bairro ou a descrição.";return;}if(!rawValue||value<=0){$("motoboy-rate-status").textContent="Informe um valor válido para a taxa.";return;}const existing=motoboySavedRates.find(rate=>rate.name.toLocaleLowerCase()===name.toLocaleLowerCase());if(existing){$("motoboy-rate-status").textContent="Essa taxa já está cadastrada.";return;}const rate={id:"rate-"+Date.now(),name,value};motoboySavedRates.push(rate);if(!motoboySaveRates()){motoboySavedRates=motoboySavedRates.filter(item=>item.id!==rate.id);return;}motoboyRenderRateOptions();$("motoboy-rate-status").textContent="✓ Taxa salva com sucesso!";const saveButton=$("motoboy-rate-save");if(saveButton)saveButton.disabled=true;setTimeout(()=>{motoboyCloseRateRegister();if(saveButton)saveButton.disabled=false;},1800);});
+
 $("motoboy-history")?.addEventListener("click",event=>{const del=event.target.closest("[data-motoboy-delete]");if(!del)return;motoboyHistory=motoboyHistory.filter(record=>record.id!==del.dataset.motoboyDelete);motoboyWriteHistory();motoboyRenderHistory();});
 
 
