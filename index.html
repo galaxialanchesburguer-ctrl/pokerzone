@@ -4763,17 +4763,21 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     <button type="button" class="pricing-list-tab is-active" id="expenses-tab-fixed" role="tab" aria-selected="true">Despesas fixas</button>
     <button type="button" class="pricing-list-tab" id="expenses-tab-variable" role="tab" aria-selected="false">Despesas variáveis</button>
   </div>
-  <div class="box" style="padding:16px 18px;margin:14px 0">
-    <div style="font-weight:700;margin-bottom:12px">FILTRAR POR PERÍODO</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
-      <button type="button" class="btn secondary" data-expense-period="previous">Mês passado</button>
-      <button type="button" class="btn secondary" data-expense-period="current">Mês atual</button>
-      <button type="button" class="btn secondary" data-expense-period="next">Mês que vem</button>
-      <button type="button" class="btn secondary" data-expense-period="all">Todo o período</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:680px">
-      <label>De<input type="date" id="expenses-filter-start" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:42px"></label>
-      <label>Até<input type="date" id="expenses-filter-end" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:42px"></label>
+  <div style="position:relative;margin:14px 0">
+    <button type="button" class="btn secondary" id="expenses-calendar-toggle" aria-expanded="false" style="display:flex;align-items:center;gap:10px;min-height:44px">📅 <span id="expenses-period-label">Mês atual</span> <span aria-hidden="true">▾</span></button>
+    <div id="expenses-calendar-panel" class="box hidden" style="position:absolute;z-index:30;top:calc(100% + 8px);left:0;width:min(100%,560px);padding:18px;box-shadow:0 12px 32px rgba(0,0,0,.18)">
+      <div style="font-weight:700;margin-bottom:12px">ESCOLHER PERÍODO</div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:16px">
+        <button type="button" class="btn secondary" data-expense-period="previous">Mês passado</button>
+        <button type="button" class="btn secondary" data-expense-period="current">Mês atual</button>
+        <button type="button" class="btn secondary" data-expense-period="next">Mês que vem</button>
+        <button type="button" class="btn secondary" data-expense-period="all">Todo o período</button>
+      </div>
+      <div style="font-weight:600;margin-bottom:10px">Ou selecione as datas</div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+        <label>De<input type="date" id="expenses-filter-start" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:42px"></label>
+        <label>Até<input type="date" id="expenses-filter-end" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:42px"></label>
+      </div>
     </div>
   </div>
   <div class="accounts-summary"><span id="expenses-total-label">TOTAL DE DESPESAS FIXAS</span><strong id="expenses-grand-total">R$ 0,00</strong></div>
@@ -8167,12 +8171,13 @@ function expensesRead(){try{const data=JSON.parse(localStorage.getItem(EXPENSES_
 function expensesWrite(){try{localStorage.setItem(EXPENSES_STORAGE_KEY,JSON.stringify(astroExpenses));}catch(e){}}
 function expensesAddMonths(dateString,months){const parts=dateString.split("-").map(Number),year=parts[0],month=parts[1]-1,day=parts[2];const target=new Date(year,month+months,1);const lastDay=new Date(target.getFullYear(),target.getMonth()+1,0).getDate();target.setDate(Math.min(day,lastDay));return [target.getFullYear(),String(target.getMonth()+1).padStart(2,"0"),String(target.getDate()).padStart(2,"0")].join("-");}
 function expensesMonthRange(offset){const now=new Date(),first=new Date(now.getFullYear(),now.getMonth()+offset,1),last=new Date(now.getFullYear(),now.getMonth()+offset+1,0);const fmt=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");return [fmt(first),fmt(last)];}
-function expensesSetPeriod(period){if(period==="all"){expensesFilterStart="";expensesFilterEnd="";}else if(period==="custom"){expensesFilterStart=$("expenses-filter-start").value;expensesFilterEnd=$("expenses-filter-end").value;}else{const range=expensesMonthRange(period==="previous"?-1:period==="next"?1:0);expensesFilterStart=range[0];expensesFilterEnd=range[1];}$("expenses-filter-start").value=expensesFilterStart;$("expenses-filter-end").value=expensesFilterEnd;expensesRender();}
+function expensesSetPeriod(period){let label="Período personalizado";if(period==="all"){expensesFilterStart="";expensesFilterEnd="";label="Todo o período";}else if(period==="custom"){expensesFilterStart=$("expenses-filter-start").value;expensesFilterEnd=$("expenses-filter-end").value;if(expensesFilterStart&&expensesFilterEnd&&expensesFilterStart>expensesFilterEnd){const swap=expensesFilterStart;expensesFilterStart=expensesFilterEnd;expensesFilterEnd=swap;}$("expenses-filter-start").value=expensesFilterStart;$("expenses-filter-end").value=expensesFilterEnd;if(expensesFilterStart&&expensesFilterEnd)label=new Date(expensesFilterStart+"T12:00:00").toLocaleDateString("pt-BR")+" até "+new Date(expensesFilterEnd+"T12:00:00").toLocaleDateString("pt-BR");}else{const range=expensesMonthRange(period==="previous"?-1:period==="next"?1:0);expensesFilterStart=range[0];expensesFilterEnd=range[1];label=period==="previous"?"Mês passado":period==="next"?"Mês que vem":"Mês atual";}$("expenses-filter-start").value=expensesFilterStart;$("expenses-filter-end").value=expensesFilterEnd;$("expenses-period-label").textContent=label;expensesRender();if(period!=="custom"){$("expenses-calendar-panel").classList.add("hidden");$("expenses-calendar-toggle").setAttribute("aria-expanded","false");}}
 function expensesRender(){const list=$("expenses-list");if(!list)return;let filtered=astroExpenses.filter(x=>(x.type||"variable")===expensesActiveType);if(expensesFilterStart)filtered=filtered.filter(x=>(x.date||"")>=expensesFilterStart);if(expensesFilterEnd)filtered=filtered.filter(x=>(x.date||"")<=expensesFilterEnd);const total=filtered.reduce((a,x)=>a+(Number(x.amount)||0),0);const label=expensesActiveType==="fixed"?"FIXAS":"VARIÁVEIS";$("expenses-grand-total").textContent=formatCashCurrency(total);$("expenses-total-label").textContent="TOTAL DE DESPESAS "+label;$("expenses-count").textContent=filtered.length+" "+(filtered.length===1?"lançamento":"lançamentos");$("expense-form-title").textContent="LANÇAR DESPESA "+label;$("expenses-tab-fixed").classList.toggle("is-active",expensesActiveType==="fixed");$("expenses-tab-variable").classList.toggle("is-active",expensesActiveType==="variable");$("expenses-tab-fixed").setAttribute("aria-selected",String(expensesActiveType==="fixed"));$("expenses-tab-variable").setAttribute("aria-selected",String(expensesActiveType==="variable"));list.innerHTML=filtered.length?filtered.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0)).map(x=>'<tr><td>'+esc(x.date?new Date(x.date+"T12:00:00").toLocaleDateString("pt-BR"):"—")+'</td><td>'+esc(x.description)+(x.repeatGroup?'<small class="season-info" style="display:block">Repetição '+esc(String(x.repeatIndex))+'/'+esc(String(x.repeatTotal))+'</small>':'')+'</td><td>'+esc(x.category||"—")+'</td><td>'+formatCashCurrency(Number(x.amount)||0)+'</td><td><button type="button" class="accounts-row-delete" data-expense-delete="'+esc(x.id)+'">Excluir</button></td></tr>').join(""):'<tr><td colspan="5" class="empty">Nenhuma despesa encontrada neste período.</td></tr>';}
 $("open-expenses-card")?.addEventListener("click",()=>{expensesRead();expensesSetPeriod("current");$("expense-date").value=new Date().toISOString().slice(0,10);showAdminScreen("admin-expenses-screen","astro");});
 $("expenses-back-astro")?.addEventListener("click",()=>showAdminScreen("admin-astro-screen","astro"));
 $("expenses-tab-fixed")?.addEventListener("click",()=>{expensesActiveType="fixed";expensesRender();});
 $("expenses-tab-variable")?.addEventListener("click",()=>{expensesActiveType="variable";expensesRender();});
+$("expenses-calendar-toggle")?.addEventListener("click",()=>{const panel=$("expenses-calendar-panel"),opening=panel.classList.contains("hidden");panel.classList.toggle("hidden",!opening);$("expenses-calendar-toggle").setAttribute("aria-expanded",String(opening));});
 document.querySelectorAll("[data-expense-period]")?.forEach(button=>button.addEventListener("click",()=>expensesSetPeriod(button.dataset.expensePeriod)));
 $("expenses-filter-start")?.addEventListener("change",()=>expensesSetPeriod("custom"));
 $("expenses-filter-end")?.addEventListener("change",()=>expensesSetPeriod("custom"));
