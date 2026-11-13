@@ -3779,6 +3779,30 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .pricing-list-tab{border:0;border-radius:9px;padding:10px 28px;background:transparent;color:#c6b7b8;font-weight:850;cursor:pointer;min-width:130px}
 .pricing-list-tab.is-active{background:#f5443b;color:#fff;box-shadow:0 4px 12px #f5443b35}
 @media(max-width:600px){.pricing-list-tabs{width:100%;display:grid;grid-template-columns:1fr 1fr}.pricing-list-tab{min-width:0;padding:11px 10px}}
+
+/* Expenses: compact finance dashboard */
+.expenses-topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px;background:#fff;border:1px solid #e1e4e8;border-radius:8px;margin-bottom:12px}
+.expenses-month-nav{display:flex;align-items:center;gap:4px}.expenses-month-current{min-width:190px;justify-content:center}
+.expenses-search{display:flex;align-items:center;gap:9px;flex:1;min-width:180px;max-width:310px;border:1px solid #dfe3e8;border-radius:7px;padding:0 12px;height:40px;color:#687385}
+.expenses-search input{border:0!important;outline:0!important;box-shadow:none!important;width:100%;min-width:0;background:transparent!important}
+.expenses-top-spacer{flex:1}
+.expenses-calendar-popover{position:absolute;z-index:40;top:75px;left:240px;width:min(540px,calc(100% - 24px));padding:16px;box-shadow:0 12px 30px rgba(0,0,0,.16)}
+.expenses-period-presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.expenses-period-presets button{padding:9px;border:1px solid #dfe3e8;background:#f8f9fb;border-radius:6px;cursor:pointer}
+.expenses-date-range{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.expenses-date-range input{display:block;width:100%;margin-top:5px;min-height:38px;box-sizing:border-box}
+.expenses-summary-row{display:flex;gap:9px;flex-wrap:wrap;padding:2px 0 14px}
+.expense-stat{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;font-size:13px;font-weight:600;background:#eaf3ff;color:#2871bc}
+.expense-stat strong{background:rgba(255,255,255,.85);padding:4px 8px;border-radius:5px;white-space:nowrap}
+.expense-stat.overdue{background:#fdebea;color:#bd302b}.expense-stat.pending{background:#eaf3ff;color:#2871bc}.expense-stat.period{background:#f2eaff;color:#8052c7}
+.expenses-form-card{padding:18px;margin-bottom:14px}.expenses-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 20px;align-items:end}
+.expenses-form-grid>label{display:block}.expenses-form-grid input:not([type=checkbox]){display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:43px}
+.expense-repeat-area{grid-column:1/-1}.expense-repeat-area>label{display:flex;align-items:center;gap:8px}.expense-repeat-area input[type=checkbox]{width:18px;height:18px}
+#expense-repeat-count-wrap{max-width:240px;margin-top:10px}#expense-repeat-count-wrap input{width:100%}
+.expenses-form-actions{display:flex;justify-content:flex-end}
+.expenses-table-card{padding:0;overflow:hidden}.expenses-table thead th{background:#e7e9ed;color:#344054;font-weight:700;padding:17px 14px}
+.expenses-table tbody td{padding:15px 14px;border-bottom:1px solid #e6e8ec}.expenses-table tbody tr:last-child td{border-bottom:0}
+.expenses-table-footer{display:flex;justify-content:flex-end;padding:12px 16px;border-top:1px solid #e6e8ec;color:#667085;font-size:12px}
+@media(max-width:760px){.expenses-topbar>*{flex:1}.expenses-search{max-width:none;flex-basis:100%}.expenses-top-spacer{display:none}.expenses-calendar-popover{left:8px;top:120px}.expenses-form-grid{grid-template-columns:1fr}.expense-repeat-area{grid-column:auto}}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -4756,33 +4780,53 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   <div class="accounts-table-actions"><button type="button" class="btn primary" id="accounts-add-new">+ Adicionar linha</button><span id="accounts-count">0 contas</span></div>
 </section>
 
-<section id="admin-expenses-screen" class="hidden">
-  <div class="admin-page-heading"><div><div class="eyebrow">ASTRO • FINANCEIRO</div><h1>Despesas</h1><p class="season-info">Registre e acompanhe todos os gastos da operação.</p></div></div>
-  <div class="accounts-toolbar"><button type="button" class="btn secondary" id="expenses-back-astro">← Astro</button></div>
-  <div class="pricing-list-tabs employees-tabs" role="tablist" aria-label="Tipo de despesa">
-    <button type="button" class="pricing-list-tab is-active" id="expenses-tab-fixed" role="tab" aria-selected="true">Despesas fixas</button>
-    <button type="button" class="pricing-list-tab" id="expenses-tab-variable" role="tab" aria-selected="false">Despesas variáveis</button>
-  </div>
-  <div style="position:relative;margin:14px 0">
-    <button type="button" class="btn secondary" id="expenses-calendar-toggle" aria-expanded="false" style="display:flex;align-items:center;gap:10px;min-height:44px">📅 <span id="expenses-period-label">Mês atual</span> <span aria-hidden="true">▾</span></button>
-    <div id="expenses-calendar-panel" class="box hidden" style="position:absolute;z-index:30;top:calc(100% + 8px);left:0;width:min(100%,560px);padding:18px;box-shadow:0 12px 32px rgba(0,0,0,.18)">
-      <div style="font-weight:700;margin-bottom:12px">ESCOLHER PERÍODO</div>
-      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:16px">
-        <button type="button" class="btn secondary" data-expense-period="previous">Mês passado</button>
-        <button type="button" class="btn secondary" data-expense-period="current">Mês atual</button>
-        <button type="button" class="btn secondary" data-expense-period="next">Mês que vem</button>
-        <button type="button" class="btn secondary" data-expense-period="all">Todo o período</button>
-      </div>
-      <div style="font-weight:600;margin-bottom:10px">Ou selecione as datas</div>
-      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
-        <label>De<input type="date" id="expenses-filter-start" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:42px"></label>
-        <label>Até<input type="date" id="expenses-filter-end" style="display:block;width:100%;box-sizing:border-box;margin-top:6px;min-height:42px"></label>
-      </div>
+<section id="admin-expenses-screen" class="hidden expenses-modern">
+  <div class="expenses-topbar">
+    <button type="button" class="btn secondary" id="expenses-back-astro">← Astro</button>
+    <div class="expenses-month-nav">
+      <button type="button" class="btn secondary" id="expenses-month-prev" aria-label="Mês anterior">‹</button>
+      <button type="button" class="btn secondary expenses-month-current" id="expenses-calendar-toggle" aria-expanded="false">📅 <span id="expenses-period-label">Mês atual</span> ▾</button>
+      <button type="button" class="btn secondary" id="expenses-month-next" aria-label="Próximo mês">›</button>
     </div>
+    <button type="button" class="btn secondary" id="expenses-tab-fixed" aria-selected="true">Despesas fixas</button>
+    <button type="button" class="btn secondary" id="expenses-tab-variable" aria-selected="false">Despesas variáveis</button>
+    <label class="expenses-search"><span>⌕</span><input id="expenses-search" type="search" placeholder="Pesquise pela descrição"></label>
+    <button type="button" class="btn secondary" id="expenses-calendar-filter">＋ Filtro</button>
+    <span class="expenses-top-spacer"></span>
+    <button type="button" class="btn primary" id="expenses-add-toggle">＋ Adicionar</button>
+    <button type="button" class="btn secondary" id="expenses-actions-toggle">Ações ▾</button>
   </div>
-  <div class="accounts-summary"><span id="expenses-total-label">TOTAL DE DESPESAS FIXAS</span><strong id="expenses-grand-total">R$ 0,00</strong></div>
-  <div class="box" style="padding:18px;margin-bottom:18px"><h2 style="margin-bottom:14px" id="expense-form-title">LANÇAR DESPESA FIXA</h2><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 22px;align-items:end;width:100%"><label style="display:block;width:100%">Data<input type="date" id="expense-date" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;min-height:46px"></label><label style="display:block;width:100%">Descrição<input type="text" id="expense-description" maxlength="120" placeholder="Ex.: compra de bebidas" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;min-height:46px"></label><label style="display:block;width:100%">Categoria<input type="text" id="expense-category" maxlength="60" placeholder="Ex.: Fornecedor" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;min-height:46px"></label><label style="display:block;width:100%">Valor (R$)<input type="number" id="expense-amount" min="0.01" step="0.01" placeholder="0,00" style="display:block;width:100%;box-sizing:border-box;margin-top:8px;min-height:46px"></label><div id="expense-repeat-area" style="grid-column:1/-1;padding:10px 0"><label style="display:flex;align-items:center;gap:9px;font-weight:600"><input type="checkbox" id="expense-repeat" style="width:18px;height:18px"> Esta despesa se repete mensalmente?</label><div id="expense-repeat-count-wrap" class="hidden" style="max-width:240px;margin-top:10px"><label>Por quantos meses?<input type="number" id="expense-repeat-count" min="2" max="120" step="1" value="12" style="display:block;width:100%;margin-top:6px"></label><small class="season-info">A quantidade inclui o primeiro lançamento.</small></div></div><button type="button" class="btn primary" id="expense-save">+ Salvar despesa</button></div><p id="expense-message" class="season-info" style="margin-top:10px"></p></div>
-  <div class="box" style="padding:18px"><div class="box-head"><h2>DESPESAS CADASTRADAS</h2><span id="expenses-count">0 lançamentos</span></div><div class="accounts-table-wrap"><table class="accounts-table"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Ação</th></tr></thead><tbody id="expenses-list"><tr><td colspan="5" class="empty">Nenhuma despesa cadastrada.</td></tr></tbody></table></div></div>
+  <div id="expenses-calendar-panel" class="box hidden expenses-calendar-popover">
+    <strong>ESCOLHER PERÍODO</strong>
+    <div class="expenses-period-presets">
+      <button type="button" data-expense-period="previous">Mês passado</button>
+      <button type="button" data-expense-period="current">Mês atual</button>
+      <button type="button" data-expense-period="next">Mês que vem</button>
+      <button type="button" data-expense-period="all">Todo o período</button>
+    </div>
+    <div class="expenses-date-range"><label>De<input type="date" id="expenses-filter-start"></label><label>Até<input type="date" id="expenses-filter-end"></label></div>
+  </div>
+  <div class="expenses-summary-row">
+    <div class="expense-stat overdue"><span id="expenses-total-label">TOTAL DE DESPESAS FIXAS</span><strong id="expenses-grand-total">R$ 0,00</strong></div>
+    <div class="expense-stat pending"><span>Tipo de despesa</span><strong id="expenses-current-type">Fixas</strong></div>
+    <div class="expense-stat period"><span id="expenses-count">0 lançamentos</span></div>
+  </div>
+  <div class="box expenses-form-card" id="expense-form-card">
+    <div class="box-head"><h2 id="expense-form-title">LANÇAR DESPESA FIXA</h2><button type="button" class="btn secondary" id="expenses-form-close">Fechar</button></div>
+    <div class="expenses-form-grid">
+      <label>Data<input type="date" id="expense-date"></label>
+      <label>Descrição<input type="text" id="expense-description" maxlength="120" placeholder="Ex.: compra de bebidas"></label>
+      <label>Categoria<input type="text" id="expense-category" maxlength="60" placeholder="Ex.: Fornecedor"></label>
+      <label>Valor (R$)<input type="number" id="expense-amount" min="0.01" step="0.01" placeholder="0,00"></label>
+      <div id="expense-repeat-area" class="expense-repeat-area"><label><input type="checkbox" id="expense-repeat"> Esta despesa se repete mensalmente?</label><div id="expense-repeat-count-wrap" class="hidden"><label>Por quantos meses?<input type="number" id="expense-repeat-count" min="2" max="120" step="1" value="12"></label><small class="season-info">A quantidade inclui o primeiro lançamento.</small></div></div>
+      <div class="expenses-form-actions"><button type="button" class="btn primary" id="expense-save">＋ Salvar despesa</button></div>
+    </div>
+    <p id="expense-message" class="season-info"></p>
+  </div>
+  <div class="box expenses-table-card">
+    <div class="accounts-table-wrap"><table class="accounts-table expenses-table"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Ação</th></tr></thead><tbody id="expenses-list"><tr><td colspan="5" class="empty">Nenhuma despesa cadastrada.</td></tr></tbody></table></div>
+    <div class="expenses-table-footer"><span id="expenses-footer-count">0 lançamentos</span></div>
+  </div>
 </section>
 
 <section id="admin-employees-screen" class="hidden">
@@ -8187,6 +8231,15 @@ $("expenses-list")?.addEventListener("click",event=>{const del=event.target.clos
 
 
 
+
+$("expenses-add-toggle")?.addEventListener("click",()=>{$("expense-form-card").classList.toggle("hidden");});
+$("expenses-form-close")?.addEventListener("click",()=>{$("expense-form-card").classList.add("hidden");});
+$("expenses-calendar-filter")?.addEventListener("click",()=>{$("expenses-calendar-panel").classList.remove("hidden");$("expenses-calendar-toggle").setAttribute("aria-expanded","true");});
+$("expenses-month-prev")?.addEventListener("click",()=>expensesSetPeriod("previous"));
+$("expenses-month-next")?.addEventListener("click",()=>expensesSetPeriod("next"));
+$("expenses-search")?.addEventListener("input",event=>{const q=event.target.value.trim().toLowerCase();document.querySelectorAll("#expenses-list tr").forEach(row=>row.classList.toggle("hidden",!!q&&!row.textContent.toLowerCase().includes(q)));});
+$("expenses-tab-fixed")?.addEventListener("click",()=>{expensesActiveType="fixed";expensesRender();$("expenses-current-type").textContent="Fixas";});
+$("expenses-tab-variable")?.addEventListener("click",()=>{expensesActiveType="variable";expensesRender();$("expenses-current-type").textContent="Variáveis";});
 async function setActiveTournamentStage(stageId) {
   if (!isStaff || !tournament || !season) return;
   const stage = stages.find(item => item.id === stageId);
