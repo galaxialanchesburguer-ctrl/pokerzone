@@ -3774,6 +3774,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .pricing-combo-card strong{font-size:15px}.pricing-combo-card small{color:#c6b7b8}.pricing-combo-card span{color:#a0e9bd;font-weight:800}
 @media(max-width:700px){.pricing-combo-manual{grid-template-columns:1fr 85px}.pricing-combo-manual input:first-child{grid-column:1/-1}.pricing-combo-summary{grid-template-columns:1fr 1fr}.pricing-combo-item{grid-template-columns:minmax(0,1fr) 65px 95px 28px;gap:6px;padding:8px}}
 
+.employees-toolbar{display:flex;justify-content:flex-start;margin:16px 0 0}.employees-tabs{margin:16px 0}.employees-panel{margin-top:14px}.employees-panel .panel-pad{padding:18px}
 .pricing-list-tabs{display:flex;gap:8px;margin:18px auto 0;max-width:1500px;padding:5px;border:1px solid #493638;border-radius:12px;background:#171314;width:max-content;max-width:100%}
 .pricing-list-tab{border:0;border-radius:9px;padding:10px 28px;background:transparent;color:#c6b7b8;font-weight:850;cursor:pointer;min-width:130px}
 .pricing-list-tab.is-active{background:#f5443b;color:#fff;box-shadow:0 4px 12px #f5443b35}
@@ -4734,7 +4735,31 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     <button type="button" class="astro-tool-card" id="open-market-map-card">
       <span class="astro-tool-icon">🗺️</span><span class="astro-tool-title">Mapa do mercado</span><span class="astro-tool-description">Cadastre os corredores e organize a localização dos produtos para agilizar suas compras.</span><span class="astro-tool-link">Configurar mercado →</span>
     </button>
+    <button type="button" class="astro-tool-card" id="open-employees-card">
+      <span class="astro-tool-icon">👥</span><span class="astro-tool-title">Funcionários</span><span class="astro-tool-description">Organize as equipes de motoboys e cozinha.</span><span class="astro-tool-link">Abrir funcionários →</span>
+    </button>
   </div>
+</section>
+
+<section id="admin-employees-screen" class="hidden">
+  <div class="admin-page-heading">
+    <div><div class="eyebrow">ASTRO • EQUIPE</div><h1>Funcionários</h1><p class="season-info">Organize as equipes da operação.</p></div>
+  </div>
+  <div class="employees-toolbar">
+    <button type="button" class="btn secondary" id="employees-back-astro">← Astro</button>
+  </div>
+  <div class="pricing-list-tabs employees-tabs" role="tablist" aria-label="Setor dos funcionários">
+    <button type="button" class="pricing-list-tab is-active" id="employees-tab-motoboys" role="tab" aria-selected="true" aria-controls="employees-motoboys-panel">Motoboys</button>
+    <button type="button" class="pricing-list-tab" id="employees-tab-kitchen" role="tab" aria-selected="false" aria-controls="employees-kitchen-panel">Cozinha</button>
+  </div>
+  <section class="box employees-panel" id="employees-motoboys-panel" role="tabpanel" aria-labelledby="employees-tab-motoboys">
+    <div class="box-head"><h2>MOTOBOYS</h2></div>
+    <div class="panel-pad"><p class="season-info">Área de organização dos motoboys.</p></div>
+  </section>
+  <section class="box employees-panel hidden" id="employees-kitchen-panel" role="tabpanel" aria-labelledby="employees-tab-kitchen">
+    <div class="box-head"><h2>COZINHA</h2></div>
+    <div class="panel-pad"><p class="season-info">Área de organização da equipe da cozinha.</p></div>
+  </section>
 </section>
 
 <section id="admin-purchases-screen" class="hidden">
@@ -7201,7 +7226,7 @@ function showAdminScreen(screenId, navKey) {
   hideStageSidebar();
   $("tournament-tree")?.classList.add("hidden");
   $("admin-sidebar")?.classList.remove("mobile-expanded");
-  ["home-tournaments","nearby-tournaments-screen","tournament-app","admin-calendar-screen","admin-astro-screen","admin-counter-screen","admin-purchases-screen","admin-market-map-screen","admin-appearance-screen"].forEach(id => $(id)?.classList.add("hidden"));
+  ["home-tournaments","nearby-tournaments-screen","tournament-app","admin-calendar-screen","admin-astro-screen","admin-counter-screen","admin-purchases-screen","admin-market-map-screen","admin-employees-screen","admin-appearance-screen"].forEach(id => $(id)?.classList.add("hidden"));
   $("manage-clubs-area")?.classList.add("hidden");
   $("club-details-area")?.classList.add("hidden");
   $(screenId)?.classList.remove("hidden");
@@ -7567,6 +7592,19 @@ $("open-market-map-card")?.addEventListener("click", () => {
   renderMarketMapCorridors();
 });
 $("market-map-back-astro")?.addEventListener("click", () => showAdminScreen("admin-astro-screen","astro"));
+$("open-employees-card")?.addEventListener("click", () => showAdminScreen("admin-employees-screen","astro"));
+$("employees-back-astro")?.addEventListener("click", () => showAdminScreen("admin-astro-screen","astro"));
+function setEmployeesTab(tab) {
+  const motoboys = tab === "motoboys";
+  $("employees-motoboys-panel")?.classList.toggle("hidden", !motoboys);
+  $("employees-kitchen-panel")?.classList.toggle("hidden", motoboys);
+  $("employees-tab-motoboys")?.classList.toggle("is-active", motoboys);
+  $("employees-tab-kitchen")?.classList.toggle("is-active", !motoboys);
+  $("employees-tab-motoboys")?.setAttribute("aria-selected", String(motoboys));
+  $("employees-tab-kitchen")?.setAttribute("aria-selected", String(!motoboys));
+}
+$("employees-tab-motoboys")?.addEventListener("click", () => setEmployeesTab("motoboys"));
+$("employees-tab-kitchen")?.addEventListener("click", () => setEmployeesTab("kitchen"));
 
 const MARKET_MAP_CORRIDORS_KEY = "pokerzone_market_map_corridors";
 let marketMapObjects = [];
