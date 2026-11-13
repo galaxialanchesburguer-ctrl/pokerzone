@@ -4724,6 +4724,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   <div class="admin-screen-header"><div><h1>ASTRO</h1><p>Ferramentas e recursos do Astro.</p></div></div>
   <div class="astro-tools-grid">
     <button type="button" class="astro-tool-card" id="open-accounts-card"><span class="astro-tool-icon">🏦</span><span class="astro-tool-title">Minhas contas</span><span class="astro-tool-description">Cadastre o saldo disponível em cada conta e veja o total geral.</span><span class="astro-tool-link">Ver minhas contas →</span></button>
+    <button type="button" class="astro-tool-card" id="open-expenses-card"><span class="astro-tool-icon">🧾</span><span class="astro-tool-title">Despesas</span><span class="astro-tool-description">Cadastre e acompanhe todas as despesas da operação.</span><span class="astro-tool-link">Controlar despesas →</span></button>
     <button type="button" class="astro-tool-card" id="open-cash-counter-card">
       <span class="astro-tool-icon">＄</span><span class="astro-tool-title">Contador de cédulas</span><span class="astro-tool-description">Conte notas e moedas e confira o total em dinheiro.</span><span class="astro-tool-link">Abrir ferramenta →</span>
     </button>
@@ -4753,6 +4754,14 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     </table>
   </div>
   <div class="accounts-table-actions"><button type="button" class="btn primary" id="accounts-add-new">+ Adicionar linha</button><span id="accounts-count">0 contas</span></div>
+</section>
+
+<section id="admin-expenses-screen" class="hidden">
+  <div class="admin-page-heading"><div><div class="eyebrow">ASTRO • FINANCEIRO</div><h1>Despesas</h1><p class="season-info">Registre e acompanhe todos os gastos da operação.</p></div></div>
+  <div class="accounts-toolbar"><button type="button" class="btn secondary" id="expenses-back-astro">← Astro</button></div>
+  <div class="accounts-summary"><span>TOTAL DE DESPESAS</span><strong id="expenses-grand-total">R$ 0,00</strong></div>
+  <div class="box" style="padding:18px;margin-bottom:18px"><h2 style="margin-bottom:14px">LANÇAR DESPESA</h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end"><label>Data<input type="date" id="expense-date" style="display:block;width:100%;margin-top:6px"></label><label>Descrição<input type="text" id="expense-description" maxlength="120" placeholder="Ex.: compra de bebidas" style="display:block;width:100%;margin-top:6px"></label><label>Categoria<input type="text" id="expense-category" maxlength="60" placeholder="Ex.: Fornecedor" style="display:block;width:100%;margin-top:6px"></label><label>Valor (R$)<input type="number" id="expense-amount" min="0.01" step="0.01" placeholder="0,00" style="display:block;width:100%;margin-top:6px"></label><button type="button" class="btn primary" id="expense-save">+ Salvar despesa</button></div><p id="expense-message" class="season-info" style="margin-top:10px"></p></div>
+  <div class="box" style="padding:18px"><div class="box-head"><h2>DESPESAS CADASTRADAS</h2><span id="expenses-count">0 lançamentos</span></div><div class="accounts-table-wrap"><table class="accounts-table"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Ação</th></tr></thead><tbody id="expenses-list"><tr><td colspan="5" class="empty">Nenhuma despesa cadastrada.</td></tr></tbody></table></div></div>
 </section>
 
 <section id="admin-employees-screen" class="hidden">
@@ -7273,7 +7282,7 @@ function showAdminScreen(screenId, navKey) {
   hideStageSidebar();
   $("tournament-tree")?.classList.add("hidden");
   $("admin-sidebar")?.classList.remove("mobile-expanded");
-  ["home-tournaments","nearby-tournaments-screen","tournament-app","admin-calendar-screen","admin-astro-screen","admin-counter-screen","admin-purchases-screen","admin-market-map-screen","admin-employees-screen","admin-accounts-screen","admin-appearance-screen"].forEach(id => $(id)?.classList.add("hidden"));
+  ["home-tournaments","nearby-tournaments-screen","tournament-app","admin-calendar-screen","admin-astro-screen","admin-counter-screen","admin-purchases-screen","admin-market-map-screen","admin-employees-screen","admin-accounts-screen","admin-expenses-screen","admin-appearance-screen"].forEach(id => $(id)?.classList.add("hidden"));
   $("manage-clubs-area")?.classList.add("hidden");
   $("club-details-area")?.classList.add("hidden");
   $(screenId)?.classList.remove("hidden");
@@ -8132,6 +8141,16 @@ $("accounts-add-new")?.addEventListener("click",()=>{const item={id:"account-"+D
 $("accounts-list")?.addEventListener("input",event=>{const input=event.target.closest("[data-account-field]");if(!input)return;const row=input.closest("[data-account-row]");const item=astroAccounts.find(x=>x.id===row?.dataset.accountRow);if(!item)return;if(input.dataset.accountField==="name")item.name=input.value;else item.amount=accountsParseAmount(input.value);item.updatedAt=Date.now();accountsWrite();const total=astroAccounts.reduce((sum,x)=>sum+(Number(x.amount)||0),0);$("accounts-grand-total").textContent=formatCashCurrency(total);});
 $("accounts-list")?.addEventListener("change",event=>{const input=event.target.closest('[data-account-field="amount"]');if(!input)return;const amount=accountsParseAmount(input.value);input.value=amount.toFixed(2).replace(".",",");});
 $("accounts-list")?.addEventListener("click",event=>{const del=event.target.closest("[data-account-delete]");if(!del)return;astroAccounts=astroAccounts.filter(x=>x.id!==del.dataset.accountDelete);accountsWrite();accountsRender();});
+
+const EXPENSES_STORAGE_KEY="pokerzone_astro_expenses_v1";let astroExpenses=[];
+function expensesRead(){try{const data=JSON.parse(localStorage.getItem(EXPENSES_STORAGE_KEY)||"[]");astroExpenses=Array.isArray(data)?data:[];}catch(e){astroExpenses=[];}}
+function expensesWrite(){try{localStorage.setItem(EXPENSES_STORAGE_KEY,JSON.stringify(astroExpenses));}catch(e){}}
+function expensesRender(){const list=$("expenses-list");if(!list)return;const total=astroExpenses.reduce((a,x)=>a+(Number(x.amount)||0),0);$("expenses-grand-total").textContent=formatCashCurrency(total);$("expenses-count").textContent=astroExpenses.length+" "+(astroExpenses.length===1?"lançamento":"lançamentos");list.innerHTML=astroExpenses.length?astroExpenses.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0)).map(x=>'<tr><td>'+esc(x.date?new Date(x.date+"T12:00:00").toLocaleDateString("pt-BR"):"—")+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.category||"—")+'</td><td>'+formatCashCurrency(Number(x.amount)||0)+'</td><td><button type="button" class="accounts-row-delete" data-expense-delete="'+esc(x.id)+'">Excluir</button></td></tr>').join(""):'<tr><td colspan="5" class="empty">Nenhuma despesa cadastrada.</td></tr>';}
+$("open-expenses-card")?.addEventListener("click",()=>{expensesRead();expensesRender();$("expense-date").value=new Date().toISOString().slice(0,10);showAdminScreen("admin-expenses-screen","astro");});
+$("expenses-back-astro")?.addEventListener("click",()=>showAdminScreen("admin-astro-screen","astro"));
+$("expense-save")?.addEventListener("click",()=>{const date=$("expense-date").value,description=$("expense-description").value.trim(),category=$("expense-category").value.trim(),amount=Number($("expense-amount").value);const msg=$("expense-message");if(!date||!description||!Number.isFinite(amount)||amount<=0){msg.textContent="Preencha data, descrição e um valor válido.";return;}astroExpenses.push({id:"expense-"+Date.now()+"-"+Math.random().toString(36).slice(2,7),date,description,category,amount,createdAt:Date.now()});expensesWrite();expensesRender();$("expense-description").value="";$("expense-category").value="";$("expense-amount").value="";msg.textContent="Despesa salva com sucesso!";});
+$("expenses-list")?.addEventListener("click",event=>{const del=event.target.closest("[data-expense-delete]");if(!del)return;astroExpenses=astroExpenses.filter(x=>x.id!==del.dataset.expenseDelete);expensesWrite();expensesRender();});
+
 
 
 async function setActiveTournamentStage(stageId) {
