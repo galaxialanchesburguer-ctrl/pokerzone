@@ -4747,27 +4747,17 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   <div class="accounts-toolbar"><button type="button" class="btn secondary" id="accounts-back-astro">← Astro</button></div>
   <div class="accounts-summary"><span>TOTAL EM TODAS AS CONTAS</span><strong id="accounts-grand-total">R$ 0,00</strong></div>
   <div class="accounts-entry box">
-    <div class="accounts-entry-title"><h2 id="accounts-form-title">Adicionar conta</h2><p>Digite o nome da conta e informe o saldo usando o contador de cédulas.</p></div>
+    <div class="accounts-entry-title"><h2 id="accounts-form-title">Adicionar conta</h2><p>Digite o nome da conta e informe o saldo manualmente.</p></div>
     <div class="accounts-entry-fields">
       <label> NOME DA CONTA <input id="accounts-name" type="text" maxlength="70" placeholder="Ex.: Nubank, Caixa, Dinheiro em mãos"></label>
-      <label> SALDO (R$) <div class="accounts-money-field"><input id="accounts-amount" type="text" inputmode="decimal" placeholder="Toque para contar o dinheiro" readonly><button type="button" class="btn secondary" id="accounts-open-counter">Contar cédulas</button></div></label>
+      <label> VALOR (R$) <input id="accounts-amount" type="text" inputmode="decimal" placeholder="Digite o valor da conta"></label>
     </div>
     <div class="accounts-entry-actions"><button type="button" class="btn primary" id="accounts-save">Salvar conta</button><button type="button" class="btn secondary hidden" id="accounts-cancel-edit">Cancelar edição</button></div>
     <p class="accounts-status" id="accounts-status" aria-live="polite"></p>
   </div>
   <div class="accounts-list-heading"><h2>Contas cadastradas</h2><span id="accounts-count">0 contas</span></div>
   <div id="accounts-list" class="accounts-list"><div class="empty">Nenhuma conta cadastrada.</div></div>
-  <div class="accounts-counter-modal hidden" id="accounts-counter-modal" role="dialog" aria-modal="true" aria-labelledby="accounts-counter-title">
-    <div class="accounts-counter-panel">
-      <div class="accounts-counter-head"><div><span class="eyebrow">CONTAGEM DE DINHEIRO</span><h2 id="accounts-counter-title">Conte suas cédulas e moedas</h2></div><button type="button" id="accounts-counter-close" aria-label="Fechar">×</button></div>
-      <div class="counter-groups accounts-counter-groups">
-        <div class="counter-group"><h3>NOTAS</h3><div class="counter-list" id="accounts-counter-notes"></div></div>
-        <div class="counter-group"><h3>MOEDAS</h3><div class="counter-list" id="accounts-counter-coins"></div></div>
-      </div>
-      <div class="counter-total"><span>TOTAL CONTADO</span><strong id="accounts-counter-total">R$ 0,00</strong></div>
-      <div class="accounts-counter-actions"><button type="button" class="btn secondary" id="accounts-counter-clear">Limpar</button><button type="button" class="btn primary" id="accounts-counter-use">Usar este valor</button></div>
-    </div>
-  </div>
+>
 </section>
 
 <section id="admin-employees-screen" class="hidden">
@@ -8056,22 +8046,14 @@ loadSavedCashCounter();
 const ACCOUNTS_STORAGE_KEY="pokerzone_astro_accounts_v1";
 let astroAccounts=[];
 let editingAccountId=null;
-const accountDenominations=[{value:200,label:"R$ 200",type:"note",className:"cash-note-200"},{value:100,label:"R$ 100",type:"note",className:"cash-note-100"},{value:50,label:"R$ 50",type:"note",className:"cash-note-50"},{value:20,label:"R$ 20",type:"note",className:"cash-note-20"},{value:10,label:"R$ 10",type:"note",className:"cash-note-10"},{value:5,label:"R$ 5",type:"note",className:"cash-note-5"},{value:2,label:"R$ 2",type:"note",className:"cash-note-2"},{value:1,label:"R$ 1,00",type:"coin",className:"cash-coin-1"},{value:.5,label:"R$ 0,50",type:"coin",className:"cash-coin-50"},{value:.25,label:"R$ 0,25",type:"coin",className:"cash-coin-25"},{value:.1,label:"R$ 0,10",type:"coin",className:"cash-coin-10"},{value:.05,label:"R$ 0,05",type:"coin",className:"cash-coin-5"}];
 function accountsRead(){try{const data=JSON.parse(localStorage.getItem(ACCOUNTS_STORAGE_KEY)||"[]");astroAccounts=Array.isArray(data)?data:[];}catch(error){astroAccounts=[];}}
 function accountsWrite(){try{localStorage.setItem(ACCOUNTS_STORAGE_KEY,JSON.stringify(astroAccounts));}catch(error){$("accounts-status").textContent="Não foi possível salvar neste navegador.";}}
 function accountsRender(){const list=$("accounts-list");if(!list)return;const total=astroAccounts.reduce((sum,item)=>sum+(Number(item.amount)||0),0);$("accounts-grand-total").textContent=formatCashCurrency(total);$("accounts-count").textContent=astroAccounts.length+" "+(astroAccounts.length===1?"conta":"contas");list.innerHTML=astroAccounts.length?astroAccounts.map(item=>'<article class="accounts-item"><div class="accounts-item-top"><strong class="accounts-item-name">'+esc(item.name)+'</strong></div><strong class="accounts-item-amount">'+formatCashCurrency(item.amount)+'</strong><div class="accounts-item-actions"><button type="button" data-account-edit="'+item.id+'">Editar</button><button type="button" data-account-delete="'+item.id+'">Excluir</button></div></article>').join(""):'<div class="empty">Nenhuma conta cadastrada. Adicione sua primeira conta acima.</div>';}
 function accountsResetForm(){editingAccountId=null;$("accounts-name").value="";$("accounts-amount").value="";$("accounts-form-title").textContent="Adicionar conta";$("accounts-save").textContent="Salvar conta";$("accounts-cancel-edit").classList.add("hidden");}
-function accountsOpenCounter(){const notes=$("accounts-counter-notes"),coins=$("accounts-counter-coins");if(!notes||!coins)return;const makeRow=item=>'<div class="counter-row"><span class="counter-denomination-wrap">'+(item.type==="note"?'<span class="cash-note-thumb '+item.className+'"><span>R$</span><strong>'+item.value+'</strong><i></i></span>':'<span class="cash-coin-thumb '+item.className+'">'+(item.value*100).toFixed(0)+'</span>')+'<span class="counter-denomination">'+item.label+'</span></span><input type="number" min="0" step="1" inputmode="numeric" value="0" data-account-denom="'+item.value+'" aria-label="Quantidade de '+item.label+'"><strong data-account-subtotal="'+item.value+'">R$ 0,00</strong></div>';notes.innerHTML=accountDenominations.filter(x=>x.type==="note").map(makeRow).join("");coins.innerHTML=accountDenominations.filter(x=>x.type==="coin").map(makeRow).join("");$("accounts-counter-modal").classList.remove("hidden");accountsUpdateCounter();$("accounts-counter-modal").querySelector("input")?.focus();}
-function accountsUpdateCounter(){let total=0;$("accounts-counter-modal")?.querySelectorAll("[data-account-denom]").forEach(input=>{const value=Number(input.dataset.accountDenom),qty=Math.max(0,Math.floor(Number(input.value)||0)),subtotal=value*qty;total+=subtotal;const target=$("accounts-counter-modal").querySelector('[data-account-subtotal="'+input.dataset.accountDenom+'"]');if(target)target.textContent=formatCashCurrency(subtotal);});$("accounts-counter-total").textContent=formatCashCurrency(total);}
+function accountsParseAmount(value){let raw=String(value||"").trim().replace(/R\\$/gi,"").replace(/\\s/g,"");if(raw.includes(","))raw=raw.replace(/\\./g,"").replace(",",".");const amount=Number(raw);return Number.isFinite(amount)?amount:NaN;}
 $("open-accounts-card")?.addEventListener("click",()=>{accountsRead();accountsRender();accountsResetForm();showAdminScreen("admin-accounts-screen","astro");});
 $("accounts-back-astro")?.addEventListener("click",()=>showAdminScreen("admin-astro-screen","astro"));
-$("accounts-open-counter")?.addEventListener("click",accountsOpenCounter);
-$("accounts-counter-close")?.addEventListener("click",()=>$("accounts-counter-modal").classList.add("hidden"));
-$("accounts-counter-modal")?.addEventListener("click",event=>{if(event.target.id==="accounts-counter-modal")$("accounts-counter-modal").classList.add("hidden");if(event.target.matches("[data-account-denom]"))accountsUpdateCounter();});
-$("accounts-counter-modal")?.addEventListener("input",event=>{if(event.target.matches("[data-account-denom]"))accountsUpdateCounter();});
-$("accounts-counter-clear")?.addEventListener("click",()=>{$("accounts-counter-modal").querySelectorAll("[data-account-denom]").forEach(input=>input.value="0");accountsUpdateCounter();});
-$("accounts-counter-use")?.addEventListener("click",()=>{const total=accountDenominations.reduce((sum,item)=>sum+item.value*Math.max(0,Math.floor(Number($("accounts-counter-modal").querySelector('[data-account-denom="'+item.value+'"]')?.value)||0)),0);$("accounts-amount").value=total.toFixed(2).replace(".",",");$("accounts-counter-modal").classList.add("hidden");});
-$("accounts-save")?.addEventListener("click",()=>{const name=$("accounts-name").value.trim(),amount=Number(String($("accounts-amount").value||"").replace(/./g,"").replace(",", "."));if(!name){$("accounts-status").textContent="Informe o nome da conta.";return;}if(!Number.isFinite(amount)||amount<0){$("accounts-status").textContent="Conte o dinheiro para preencher o saldo.";return;}const data={id:editingAccountId||("account-"+Date.now()),name,amount,updatedAt:Date.now()};const index=astroAccounts.findIndex(x=>x.id===data.id);if(index>=0)astroAccounts[index]=data;else astroAccounts.push(data);accountsWrite();accountsRender();accountsResetForm();$("accounts-status").textContent="Conta salva com sucesso.";});
+$("accounts-save")?.addEventListener("click",()=>{const name=$("accounts-name").value.trim(),amount=accountsParseAmount($("accounts-amount").value);if(!name){$("accounts-status").textContent="Informe o nome da conta.";return;}if(!Number.isFinite(amount)||amount<0){$("accounts-status").textContent="Informe um valor válido para o saldo.";return;}const data={id:editingAccountId||("account-"+Date.now()),name,amount,updatedAt:Date.now()};const index=astroAccounts.findIndex(x=>x.id===data.id);if(index>=0)astroAccounts[index]=data;else astroAccounts.push(data);accountsWrite();accountsRender();accountsResetForm();$("accounts-status").textContent="Conta salva com sucesso.";});
 $("accounts-cancel-edit")?.addEventListener("click",accountsResetForm);
 $("accounts-list")?.addEventListener("click",event=>{const edit=event.target.closest("[data-account-edit]");if(edit){const item=astroAccounts.find(x=>x.id===edit.dataset.accountEdit);if(!item)return;editingAccountId=item.id;$("accounts-name").value=item.name;$("accounts-amount").value=Number(item.amount).toFixed(2).replace(".",",");$("accounts-form-title").textContent="Editar conta";$("accounts-save").textContent="Salvar alterações";$("accounts-cancel-edit").classList.remove("hidden");$("accounts-status").textContent="";return;}const del=event.target.closest("[data-account-delete]");if(del){astroAccounts=astroAccounts.filter(x=>x.id!==del.dataset.accountDelete);accountsWrite();accountsRender();if(editingAccountId===del.dataset.accountDelete)accountsResetForm();}});
 
