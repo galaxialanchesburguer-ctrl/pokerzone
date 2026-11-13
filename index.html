@@ -4744,8 +4744,8 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 
 <section id="admin-accounts-screen" class="hidden">
   <div class="admin-page-heading"><div><div class="eyebrow">ASTRO • FINANCEIRO</div><h1>Minhas contas</h1><p class="season-info">Informe quanto dinheiro você tem em cada conta e acompanhe seu saldo total.</p></div></div>
-  <div class="accounts-toolbar"><button type="button" class="btn secondary" id="accounts-back-astro">← Astro</button></div>
-  <div class="accounts-summary"><span>TOTAL EM TODAS AS CONTAS</span><strong id="accounts-grand-total">R$ 0,00</strong></div>
+  <div class="accounts-toolbar"><button type="button" class="btn secondary" id="accounts-back-astro">← Astro</button><button type="button" class="btn primary" id="accounts-add-new">+ Adicionar conta</button></div>
+  <div class="accounts-summary"><span>TOTAL EM CAIXA</span><strong id="accounts-grand-total">R$ 0,00</strong></div>
   <div class="accounts-entry box">
     <div class="accounts-entry-title"><h2 id="accounts-form-title">Adicionar conta</h2><p>Digite o nome da conta e informe o saldo manualmente.</p></div>
     <div class="accounts-entry-fields">
@@ -8053,6 +8053,7 @@ function accountsResetForm(){editingAccountId=null;$("accounts-name").value="";$
 function accountsParseAmount(value){let raw=String(value||"").trim().replace(/R\\$/gi,"").replace(/\\s/g,"");if(raw.includes(","))raw=raw.replace(/\\./g,"").replace(",",".");const amount=Number(raw);return Number.isFinite(amount)?amount:NaN;}
 $("open-accounts-card")?.addEventListener("click",()=>{accountsRead();accountsRender();accountsResetForm();showAdminScreen("admin-accounts-screen","astro");});
 $("accounts-back-astro")?.addEventListener("click",()=>showAdminScreen("admin-astro-screen","astro"));
+$("accounts-add-new")?.addEventListener("click",()=>{accountsResetForm();$("accounts-status").textContent="Preencha o nome e o valor para adicionar uma conta."; $("accounts-name").focus();});
 $("accounts-save")?.addEventListener("click",()=>{const name=$("accounts-name").value.trim(),amount=accountsParseAmount($("accounts-amount").value);if(!name){$("accounts-status").textContent="Informe o nome da conta.";return;}if(!Number.isFinite(amount)||amount<0){$("accounts-status").textContent="Informe um valor válido para o saldo.";return;}const data={id:editingAccountId||("account-"+Date.now()),name,amount,updatedAt:Date.now()};const index=astroAccounts.findIndex(x=>x.id===data.id);if(index>=0)astroAccounts[index]=data;else astroAccounts.push(data);accountsWrite();accountsRender();accountsResetForm();$("accounts-status").textContent="Conta salva com sucesso.";});
 $("accounts-cancel-edit")?.addEventListener("click",accountsResetForm);
 $("accounts-list")?.addEventListener("click",event=>{const edit=event.target.closest("[data-account-edit]");if(edit){const item=astroAccounts.find(x=>x.id===edit.dataset.accountEdit);if(!item)return;editingAccountId=item.id;$("accounts-name").value=item.name;$("accounts-amount").value=Number(item.amount).toFixed(2).replace(".",",");$("accounts-form-title").textContent="Editar conta";$("accounts-save").textContent="Salvar alterações";$("accounts-cancel-edit").classList.remove("hidden");$("accounts-status").textContent="";return;}const del=event.target.closest("[data-account-delete]");if(del){astroAccounts=astroAccounts.filter(x=>x.id!==del.dataset.accountDelete);accountsWrite();accountsRender();if(editingAccountId===del.dataset.accountDelete)accountsResetForm();}});
