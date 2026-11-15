@@ -5005,7 +5005,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         </table>
       </div>
       <div class="motoboy-daily-rate-field"><label for="motoboy-daily-rate">Diária (R$)</label><input type="text" id="motoboy-daily-rate" inputmode="decimal" placeholder="0,00" value="0,00"></div>
-      <div class="motoboy-entry-actions"><button type="button" class="btn secondary" id="motoboy-add-row">+ Adicionar taxa</button><button type="button" class="btn secondary motoboy-discount-add" id="motoboy-add-discount">− Adicionar desconto</button></div>
+      <div class="motoboy-entry-actions"><button type="button" class="btn secondary" id="motoboy-add-row">+ Adicionar taxa</button><button type="button" class="btn secondary motoboy-discount-add" id="motoboy-add-discount">− Adicionar desconto</button><button type="button" class="btn secondary" id="motoboy-add-other">+ Outros</button></div>
       <div class="motoboy-day-total"><span>TOTAL DO DIA</span><strong id="motoboy-day-total">R$ 0,00</strong></div>
       <div class="motoboy-save-area"><button type="button" class="btn primary" id="motoboy-save-day">Salvar lançamento do dia</button><button type="button" class="btn secondary" id="motoboy-generate-day-image">Gerar imagem do dia</button><span id="motoboy-save-status" aria-live="polite"></span></div>
       <div class="motoboy-history-head"><h3>HISTÓRICO DE LANÇAMENTOS</h3><span id="motoboy-history-count">0 registros</span></div>
@@ -7931,6 +7931,7 @@ function motoboyLoadHistory(){try{const data=JSON.parse(localStorage.getItem(MOT
 function motoboyWriteHistory(){try{localStorage.setItem(MOTOBOY_HISTORY_KEY,JSON.stringify(motoboyHistory));}catch(e){$("motoboy-save-status").textContent="Não foi possível salvar neste navegador.";}}
 function motoboyAddRow(description="",value="",isDiscount=false){const body=$("motoboy-entry-rows");if(!body)return;const tr=document.createElement("tr");if(isDiscount)tr.classList.add("motoboy-discount-row");tr.innerHTML='<td><input type="text" class="motoboy-description" list="motoboy-rate-options" autocomplete="off" maxlength="120" placeholder="Digite a taxa..." value="'+esc(description)+'"></td><td><input type="text" class="motoboy-value" inputmode="decimal" placeholder="0,00" value="'+String(value??"")+'"></td><td><button type="button" class="motoboy-row-delete" aria-label="Remover linha">×</button></td>';body.appendChild(tr);}
 function motoboyAddDiscountRow(){motoboyAddRow("Desconto","-0,00",true);const input=$("motoboy-entry-rows").lastElementChild?.querySelector(".motoboy-value");input?.focus();input?.select();}
+function motoboyAddOtherRow(){motoboyAddRow("Troco","");const input=$("motoboy-entry-rows").lastElementChild?.querySelector(".motoboy-value");input?.focus();}
 function motoboyUpdateTotal(){const linesTotal=[...$("motoboy-entry-rows").querySelectorAll(".motoboy-value")].reduce((sum,input)=>sum+motoboyParseValue(input.value),0);const total=motoboyParseValue($("motoboy-daily-rate")?.value)+linesTotal;$("motoboy-day-total").textContent=formatCashCurrency(total);}
 function motoboyFormatDate(date){if(!date)return "Data não informada";const p=date.split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:date;}
 function motoboyLoadEntryForSelection(){const date=$("motoboy-entry-date")?.value,driverId=$("motoboy-driver-select")?.value;if(!date||!driverId)return;const record=[...motoboyHistory].filter(item=>item.date===date&&item.motoboyId===driverId).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];const body=$("motoboy-entry-rows");if(!body)return;body.innerHTML="";$("motoboy-daily-rate").value=record?String(record.dailyRate??0).replace(".",","):"0,00";if(record&&Array.isArray(record.lines)&&record.lines.length){record.lines.forEach(line=>motoboyAddRow(line.description||"",String(line.value??"").replace(".",","),motoboyParseValue(line.value)<0));$("motoboy-save-status").textContent="Histórico encontrado. Você pode editar os lançamentos e salvar as alterações.";}else{motoboyAddRow();$("motoboy-save-status").textContent="Nenhum histórico para este motoboy nesta data. Novo lançamento.";}motoboyUpdateTotal();}
@@ -7946,6 +7947,7 @@ motoboySeedDefaultRates();
 motoboyRenderRateOptions();
 $("motoboy-add-row")?.addEventListener("click",()=>{motoboyAddRow();$("motoboy-entry-rows").lastElementChild?.querySelector(".motoboy-description")?.focus();});
 $("motoboy-add-discount")?.addEventListener("click",motoboyAddDiscountRow);
+$("motoboy-add-other")?.addEventListener("click",motoboyAddOtherRow);
 $("motoboy-daily-rate")?.addEventListener("input",motoboyUpdateTotal);
 $("motoboy-generate-day-image")?.addEventListener("click",motoboyGenerateDayImage);
 $("motoboy-entry-date")?.addEventListener("change",motoboyLoadEntryForSelection);
