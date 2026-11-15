@@ -11274,7 +11274,55 @@ if ($("login-close")) {
     $("login-box").classList.add("hidden");
   });
 }
-$("login-btn").addEventListener("click",async()=>{const {error}=await db.auth.signInWithPassword({email:$("email").value,password:$("password").value});if(error){$("login-message").textContent=error.message;return} $("login-box").classList.add("hidden");await checkSession();await refreshAll()});
+async function handleSystemLogin() {
+  const button = $("login-btn");
+  const message = $("login-message");
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  message.textContent = "";
+  if (!email || !password) {
+    message.textContent = "Informe seu e-mail e sua senha.";
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Entrando...";
+  try {
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    if (error) {
+      message.textContent = error.message === "Invalid login credentials"
+        ? "E-mail ou senha incorretos."
+        : "Não foi possível entrar: " + error.message;
+      return;
+    }
+    if (!data || !data.session) {
+      message.textContent = "Login não confirmado. Tente novamente.";
+      return;
+    }
+
+    await checkSession();
+    $("login-box").classList.add("hidden");
+    try {
+      await refreshAll();
+    } catch (refreshError) {
+      console.error("Erro ao atualizar o sistema após o login:", refreshError);
+      msg("Login realizado. Atualize a página se alguma informação não carregar.");
+    }
+  } catch (error) {
+    console.error("Erro no login:", error);
+    message.textContent = "Falha de conexão ao entrar. Verifique sua internet e tente novamente.";
+  } finally {
+    button.disabled = false;
+    button.textContent = "Entrar";
+  }
+}
+$("login-btn").addEventListener("click", handleSystemLogin);
+["email", "password"].forEach(id => {
+  $(id).addEventListener("keydown", event => {
+    if (event.key === "Enter") handleSystemLogin();
+  });
+});
 $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await checkSession();await refreshAll()});
 
 
