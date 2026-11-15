@@ -8021,7 +8021,8 @@ function motoboyGeneratePeriodDetailedImage(){
   ctx.fillStyle="#171112";ctx.fillRect(0,0,width,height);ctx.fillStyle="#f5443b";ctx.fillRect(0,0,width,12);
   ctx.fillStyle="#fff";ctx.font="bold 34px Arial";ctx.fillText("EXTRATO DETALHADO DO PERÍODO",48,66);
   ctx.fillStyle="#cbbabb";ctx.font="20px Arial";ctx.fillText(motoboyFormatDate(start)+" até "+motoboyFormatDate(end),48,105);
-  const totalDeliveries=list.reduce((sum,group)=>sum+(group.deliveryCount||0),0);\n  ctx.font="16px Arial";ctx.fillText(list.length+" motoboy(s) • "+records.length+" lançamento(s) • "+totalDeliveries+" entregas no período",48,140);
+  const totalDeliveries=list.reduce((sum,group)=>sum+(group.deliveryCount||0),0);
+  ctx.font="16px Arial";ctx.fillText(list.length+" motoboy(s) • "+records.length+" lançamento(s) • "+totalDeliveries+" entregas no período",48,140);
   let y=190;
   const drawRow=(label,value,opts={})=>{
     ctx.fillStyle=opts.background||"#241b1d";ctx.fillRect(42,y,width-84,rowH);
