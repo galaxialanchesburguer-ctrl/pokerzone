@@ -5022,8 +5022,6 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         </div>
         <div id="motoboy-period-summary" class="motoboy-period-summary"><div class="empty">Selecione um período para consultar.</div></div>
       </div>
-      <div class="motoboy-history-head"><h3>HISTÓRICO DE LANÇAMENTOS</h3><span id="motoboy-history-count">0 registros</span></div>
-      <div id="motoboy-history" class="motoboy-history"><div class="empty">Nenhum lançamento salvo ainda.</div></div>
     </div>
   </section>
   <section class="box employees-panel hidden" id="employees-kitchen-panel" role="tabpanel" aria-labelledby="employees-tab-kitchen">
@@ -8051,7 +8049,6 @@ function motoboyGeneratePeriodDetailedImage(){
 }
 
 function motoboyRenderHistory(){
-  const host=$("motoboy-history");if(!host)return;
   const startDate=$("motoboy-period-start")?.value||"0000-01-01";
   const endDate=$("motoboy-period-end")?.value||"9999-12-31";
   const inPeriod=motoboyHistory.filter(record=>record.date>=startDate&&record.date<=endDate);
@@ -8076,8 +8073,6 @@ function motoboyRenderHistory(){
     });
     summaryHost.innerHTML=groups.size?[...groups.values()].sort((a,b)=>a.name.localeCompare(b.name,"pt-BR")).map(group=>'<article class="motoboy-period-card"><h4>'+esc(group.name)+'</h4><div class="motoboy-period-metric"><span>Diárias</span><strong>'+formatCashCurrency(group.daily)+'</strong></div><div class="motoboy-period-metric"><span>Entregas ('+group.feeCount+')</span><strong>'+formatCashCurrency(group.fees)+'</strong></div><div class="motoboy-period-metric"><span>Descontos</span><strong>− '+formatCashCurrency(group.discounts)+'</strong></div><div class="motoboy-period-metric"><span>Outros / troco</span><strong>'+formatCashCurrency(group.others)+'</strong></div><div class="motoboy-period-metric motoboy-period-balance"><span>SALDO DO PERÍODO</span><strong>'+formatCashCurrency(group.total)+'</strong></div></article>').join(""):'<div class="empty">Nenhum lançamento encontrado neste período.</div>';
   }
-  $("motoboy-history-count").textContent=inPeriod.length+" "+(inPeriod.length===1?"registro":"registros");
-  host.innerHTML=inPeriod.length?[...inPeriod].sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0)).map(record=>'<article class="motoboy-history-card" data-motoboy-record="'+esc(record.id)+'"><div class="motoboy-history-card-head"><strong>'+motoboyFormatDate(record.date)+' • '+esc(record.motoboyName||"Motoboy não informado")+'</strong><span>'+formatCashCurrency(record.total)+'</span></div><div class="motoboy-history-lines">'+(Number(record.dailyRate||0)!==0?'<div class="motoboy-history-line"><span>Diária</span><strong>'+formatCashCurrency(record.dailyRate)+'</strong></div>':'')+(record.lines||[]).map(line=>'<div class="motoboy-history-line"><span>'+esc(line.description)+'</span><strong>'+formatCashCurrency(line.value)+'</strong></div>').join("")+'</div><div class="motoboy-history-actions"><button type="button" data-motoboy-delete="'+esc(record.id)+'">Excluir histórico</button></div></article>').join(""):'<div class="empty">Nenhum lançamento salvo neste período.</div>';
 }
 $("motoboy-entry-date")?.setAttribute("value",motoboyToday());
 $("motoboy-entry-date") && ($("motoboy-entry-date").value=motoboyToday());
@@ -8120,7 +8115,6 @@ $("motoboy-rate-close")?.addEventListener("click",motoboyCloseRateRegister);
 $("motoboy-rate-cancel")?.addEventListener("click",motoboyCloseRateRegister);
 $("motoboy-rate-save")?.addEventListener("click",()=>{const name=$("motoboy-rate-name").value.trim(),city=$("motoboy-rate-city").value,rawValue=$("motoboy-rate-value").value.trim(),value=motoboyParseValue(rawValue);if(!name){$("motoboy-rate-status").textContent="Informe o bairro ou a descrição.";return;}if(!city){$("motoboy-rate-status").textContent="Selecione a cidade.";return;}if(!rawValue||value<=0){$("motoboy-rate-status").textContent="Informe um valor válido para a taxa.";return;}const existing=motoboySavedRates.find(rate=>rate.name.trim().toLocaleLowerCase("pt-BR")===name.toLocaleLowerCase("pt-BR")&&rate.city===city);if(existing){$("motoboy-rate-status").textContent="Esse bairro já está cadastrado para essa cidade.";return;}const rate={id:"rate-"+Date.now(),name,city,value};motoboySavedRates.push(rate);if(!motoboySaveRates()){motoboySavedRates=motoboySavedRates.filter(item=>item.id!==rate.id);return;}motoboyRenderRateOptions();$("motoboy-rate-status").textContent="✓ Taxa salva com sucesso!";const saveButton=$("motoboy-rate-save");if(saveButton)saveButton.disabled=true;setTimeout(()=>{motoboyCloseRateRegister();if(saveButton)saveButton.disabled=false;},1800);});
 
-$("motoboy-history")?.addEventListener("click",event=>{const del=event.target.closest("[data-motoboy-delete]");if(!del)return;motoboyHistory=motoboyHistory.filter(record=>record.id!==del.dataset.motoboyDelete);motoboyWriteHistory();motoboyRenderHistory();});
 
 
 const MARKET_MAP_CORRIDORS_KEY = "pokerzone_market_map_corridors";
