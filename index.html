@@ -8008,8 +8008,9 @@ function motoboyGeneratePeriodDetailedImage(){
       return {description:line.description||"Sem descrição",value,kind};
     });
     const daily=Number(record.dailyRate)||0;
+    const deliveryCount=lines.filter(line=>line.kind==="fee"&&line.value>0&&line.description.trim()).length;
     const total=Number.isFinite(Number(record.total))?Number(record.total):daily+lines.reduce((sum,line)=>sum+line.value,0);
-    const group=groups.get(key);group.days.push({date:record.date,daily,lines,total});group.total+=total;
+    const group=groups.get(key);group.days.push({date:record.date,daily,lines,total,deliveryCount});group.total+=total;group.deliveryCount=(group.deliveryCount||0)+deliveryCount;
   });
   const list=[...groups.values()].sort((a,b)=>a.name.localeCompare(b.name,"pt-BR"));
   list.forEach(group=>group.days.sort((a,b)=>a.date.localeCompare(b.date)));
@@ -8020,7 +8021,7 @@ function motoboyGeneratePeriodDetailedImage(){
   ctx.fillStyle="#171112";ctx.fillRect(0,0,width,height);ctx.fillStyle="#f5443b";ctx.fillRect(0,0,width,12);
   ctx.fillStyle="#fff";ctx.font="bold 34px Arial";ctx.fillText("EXTRATO DETALHADO DO PERÍODO",48,66);
   ctx.fillStyle="#cbbabb";ctx.font="20px Arial";ctx.fillText(motoboyFormatDate(start)+" até "+motoboyFormatDate(end),48,105);
-  ctx.font="16px Arial";ctx.fillText(list.length+" motoboy(s) • "+records.length+" lançamento(s)",48,140);
+  const totalDeliveries=list.reduce((sum,group)=>sum+(group.deliveryCount||0),0);\n  ctx.font="16px Arial";ctx.fillText(list.length+" motoboy(s) • "+records.length+" lançamento(s) • "+totalDeliveries+" entregas no período",48,140);
   let y=190;
   const drawRow=(label,value,opts={})=>{
     ctx.fillStyle=opts.background||"#241b1d";ctx.fillRect(42,y,width-84,rowH);
@@ -8030,7 +8031,7 @@ function motoboyGeneratePeriodDetailedImage(){
   list.forEach(group=>{
     ctx.fillStyle="#3a2022";ctx.fillRect(42,y,width-84,groupHeader);ctx.fillStyle="#fff";ctx.font="bold 23px Arial";ctx.fillText(group.name,62,y+37);y+=groupHeader;
     group.days.forEach(day=>{
-      ctx.fillStyle="#302326";ctx.fillRect(42,y,width-84,dayHeader);ctx.fillStyle="#ffaaa4";ctx.font="bold 17px Arial";ctx.fillText(motoboyFormatDate(day.date),62,y+27);y+=dayHeader;
+      ctx.fillStyle="#302326";ctx.fillRect(42,y,width-84,dayHeader);ctx.fillStyle="#ffaaa4";ctx.font="bold 17px Arial";ctx.fillText(motoboyFormatDate(day.date)+" • "+day.deliveryCount+" "+(day.deliveryCount===1?"entrega":"entregas"),62,y+27);y+=dayHeader;
       drawRow("Diária",day.daily,{bold:true,color:"#fff"});
       day.lines.forEach(line=>{
         const label=(line.kind==="discount"||line.value<0?"Desconto: ":line.kind==="other"?"Outro: ":"Taxa: ")+line.description;
@@ -8039,7 +8040,7 @@ function motoboyGeneratePeriodDetailedImage(){
       drawRow("TOTAL DO DIA",day.total,{bold:true,color:"#fff",background:"#3a2022"});
       y+=dayGap;
     });
-    drawRow("TOTAL DO PERÍODO — "+group.name,group.total,{bold:true,color:"#fff",background:"#492326"});
+    drawRow("TOTAL DO PERÍODO — "+group.name+" • "+group.deliveryCount+" "+(group.deliveryCount===1?"entrega":"entregas"),group.total,{bold:true,color:"#fff",background:"#492326"});
     y+=groupGap;
   });
   ctx.fillStyle="#a99496";ctx.font="13px Arial";ctx.fillText("ASTRO • CONTROLE DE ENTREGAS",48,height-24);
