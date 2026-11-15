@@ -8054,10 +8054,12 @@ function motoboyRenderHistory(){
   const startDate=$("motoboy-period-start")?.value||"0000-01-01";
   const endDate=$("motoboy-period-end")?.value||"9999-12-31";
   const inPeriod=motoboyHistory.filter(record=>record.date>=startDate&&record.date<=endDate);
+  const selectedDriverId=$("motoboy-driver-select")?.value||"";
+  const summaryRecords=selectedDriverId?inPeriod.filter(record=>String(record.motoboyId)===String(selectedDriverId)):inPeriod;
   const summaryHost=$("motoboy-period-summary");
   if(summaryHost){
     const groups=new Map();
-    inPeriod.forEach(record=>{
+    summaryRecords.forEach(record=>{
       const key=record.motoboyId||record.motoboyName||"unknown";
       if(!groups.has(key))groups.set(key,{name:record.motoboyName||"Motoboy não informado",daily:0,fees:0,feeCount:0,discounts:0,others:0,total:0});
       const group=groups.get(key);
@@ -8099,7 +8101,7 @@ $("motoboy-daily-rate")?.addEventListener("input",motoboyUpdateTotal);
 $("motoboy-generate-day-image")?.addEventListener("click",()=>motoboyGenerateDayImage("detailed"));
 $("motoboy-generate-summary-image")?.addEventListener("click",()=>motoboyGenerateDayImage("summary"));
 $("motoboy-entry-date")?.addEventListener("change",motoboyLoadEntryForSelection);
-$("motoboy-driver-select")?.addEventListener("change",motoboyLoadEntryForSelection);
+$("motoboy-driver-select")?.addEventListener("change",()=>{motoboyLoadEntryForSelection();motoboyRenderHistory();});
 $("motoboy-entry-rows")?.addEventListener("input",event=>{if(event.target.matches(".motoboy-description"))motoboyApplySavedRate(event.target);motoboyUpdateTotal();});
 $("motoboy-entry-rows")?.addEventListener("change",event=>{if(event.target.matches(".motoboy-description"))motoboyApplySavedRate(event.target);});
 $("motoboy-entry-rows")?.addEventListener("click",event=>{if(event.target.closest(".motoboy-row-delete")){event.target.closest("tr")?.remove();if(!$("motoboy-entry-rows").children.length)motoboyAddRow();motoboyUpdateTotal();}});
