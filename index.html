@@ -5017,7 +5017,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
           <button type="button" class="btn primary" id="motoboy-period-apply">Aplicar filtro</button>
           <button type="button" class="btn secondary" id="motoboy-period-current">Mês atual</button>
           <button type="button" class="btn secondary" id="motoboy-period-image">Gerar imagem do período</button>
-          <button type="button" class="btn secondary" id="motoboy-all-rates-image">Imagem de todos os bairros e taxas</button>
+          <button type="button" class="btn secondary" id="motoboy-period-detailed-image">Imagem detalhada do período</button>
         </div>
         <div id="motoboy-period-summary" class="motoboy-period-summary"><div class="empty">Selecione um período para consultar.</div></div>
       </div>
@@ -7992,6 +7992,61 @@ function motoboyGeneratePeriodImage(){
   const link=document.createElement("a");link.download="fechamento-motoboys-"+start+"-a-"+end+".png";link.href=canvas.toDataURL("image/png");link.click();
   $("motoboy-save-status").textContent="Imagem de todo o período gerada.";
 }
+
+function motoboyGeneratePeriodDetailedImage(){
+  const start=$("motoboy-period-start")?.value,end=$("motoboy-period-end")?.value;
+  if(!start||!end||start>end){$("motoboy-save-status").textContent="Informe um período válido antes de gerar a imagem.";return;}
+  const records=motoboyHistory.filter(record=>record.date>=start&&record.date<=end);
+  if(!records.length){$("motoboy-save-status").textContent="Não há lançamentos salvos nesse período.";return;}
+  const groups=new Map();
+  records.forEach(record=>{
+    const key=record.motoboyId||record.motoboyName||"unknown";
+    if(!groups.has(key))groups.set(key,{name:record.motoboyName||"Motoboy não informado",days:[],total:0});
+    const lines=(Array.isArray(record.lines)?record.lines:[]).map(line=>{
+      const value=Number(line.value)||0;
+      const kind=line.kind||(value<0?"discount":/troco|outros?/i.test(line.description||"")?"other":"fee");
+      return {description:line.description||"Sem descrição",value,kind};
+    });
+    const daily=Number(record.dailyRate)||0;
+    const total=Number.isFinite(Number(record.total))?Number(record.total):daily+lines.reduce((sum,line)=>sum+line.value,0);
+    const group=groups.get(key);group.days.push({date:record.date,daily,lines,total});group.total+=total;
+  });
+  const list=[...groups.values()].sort((a,b)=>a.name.localeCompare(b.name,"pt-BR"));
+  list.forEach(group=>group.days.sort((a,b)=>a.date.localeCompare(b.date)));
+  const width=1100,scale=2,groupHeader=58,dayHeader=42,rowH=42,dayGap=18,groupGap=30,footer=105;
+  const height=190+list.reduce((sum,group)=>sum+groupHeader+group.days.reduce((daySum,day)=>daySum+dayHeader+rowH*(1+day.lines.length+1)+dayGap,0)+rowH+groupGap,0)+footer;
+  const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+  canvas.width=width*scale;canvas.height=height*scale;ctx.scale(scale,scale);
+  ctx.fillStyle="#171112";ctx.fillRect(0,0,width,height);ctx.fillStyle="#f5443b";ctx.fillRect(0,0,width,12);
+  ctx.fillStyle="#fff";ctx.font="bold 34px Arial";ctx.fillText("EXTRATO DETALHADO DO PERÍODO",48,66);
+  ctx.fillStyle="#cbbabb";ctx.font="20px Arial";ctx.fillText(motoboyFormatDate(start)+" até "+motoboyFormatDate(end),48,105);
+  ctx.font="16px Arial";ctx.fillText(list.length+" motoboy(s) • "+records.length+" lançamento(s)",48,140);
+  let y=190;
+  const drawRow=(label,value,opts={})=>{
+    ctx.fillStyle=opts.background||"#241b1d";ctx.fillRect(42,y,width-84,rowH);
+    ctx.fillStyle=opts.color||"#eee2e2";ctx.font=(opts.bold?"bold ":"")+"17px Arial";
+    ctx.fillText(label,62,y+27);ctx.textAlign="right";ctx.fillText(formatCashCurrency(value),width-62,y+27);ctx.textAlign="left";y+=rowH;
+  };
+  list.forEach(group=>{
+    ctx.fillStyle="#3a2022";ctx.fillRect(42,y,width-84,groupHeader);ctx.fillStyle="#fff";ctx.font="bold 23px Arial";ctx.fillText(group.name,62,y+37);y+=groupHeader;
+    group.days.forEach(day=>{
+      ctx.fillStyle="#302326";ctx.fillRect(42,y,width-84,dayHeader);ctx.fillStyle="#ffaaa4";ctx.font="bold 17px Arial";ctx.fillText(motoboyFormatDate(day.date),62,y+27);y+=dayHeader;
+      drawRow("Diária",day.daily,{bold:true,color:"#fff"});
+      day.lines.forEach(line=>{
+        const label=(line.kind==="discount"||line.value<0?"Desconto: ":line.kind==="other"?"Outro: ":"Taxa: ")+line.description;
+        drawRow(label,line.value,{color:line.value<0?"#ff9999":"#eee2e2"});
+      });
+      drawRow("TOTAL DO DIA",day.total,{bold:true,color:"#fff",background:"#3a2022"});
+      y+=dayGap;
+    });
+    drawRow("TOTAL DO PERÍODO — "+group.name,group.total,{bold:true,color:"#fff",background:"#492326"});
+    y+=groupGap;
+  });
+  ctx.fillStyle="#a99496";ctx.font="13px Arial";ctx.fillText("ASTRO • CONTROLE DE ENTREGAS",48,height-24);
+  const link=document.createElement("a");link.download="extrato-detalhado-motoboys-"+start+"-a-"+end+".png";link.href=canvas.toDataURL("image/png");link.click();
+  $("motoboy-save-status").textContent="Imagem detalhada do período gerada.";
+}
+
 function motoboyRenderHistory(){
   const host=$("motoboy-history");if(!host)return;
   const startDate=$("motoboy-period-start")?.value||"0000-01-01";
@@ -8029,7 +8084,7 @@ if($("motoboy-period-end"))$("motoboy-period-end").value=motoboyToday();
 $("motoboy-period-apply")?.addEventListener("click",()=>{const start=$("motoboy-period-start").value,end=$("motoboy-period-end").value;if(!start||!end){$("motoboy-save-status").textContent="Informe as duas datas para aplicar o filtro.";return;}if(start>end){$("motoboy-save-status").textContent="A data inicial não pode ser maior que a data final.";return;}motoboyRenderHistory();$("motoboy-save-status").textContent="Filtro aplicado: "+motoboyFormatDate(start)+" até "+motoboyFormatDate(end)+".";});
 $("motoboy-period-current")?.addEventListener("click",()=>{const now=new Date();$("motoboy-period-start").value=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-01";$("motoboy-period-end").value=motoboyToday();});
 $("motoboy-period-image")?.addEventListener("click",motoboyGeneratePeriodImage);
-$("motoboy-all-rates-image")?.addEventListener("click",()=>{motoboyGenerateRateImage();$("motoboy-save-status").textContent="Imagem com todos os bairros e taxas gerada.";});
+$("motoboy-period-detailed-image")?.addEventListener("click",motoboyGeneratePeriodDetailedImage);
 motoboyLoadHistory();
 motoboyLoadPeople();
 motoboyLoadRates();
