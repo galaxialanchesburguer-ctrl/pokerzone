@@ -5014,9 +5014,10 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         <div class="motoboy-period-fields">
           <label>De <input type="date" id="motoboy-period-start"></label>
           <label>Até <input type="date" id="motoboy-period-end"></label>
-          <button type="button" class="btn secondary" id="motoboy-period-current">Mês atual</button>
           <button type="button" class="btn primary" id="motoboy-period-apply">Aplicar filtro</button>
+          <button type="button" class="btn secondary" id="motoboy-period-current">Mês atual</button>
           <button type="button" class="btn secondary" id="motoboy-period-image">Gerar imagem do período</button>
+          <button type="button" class="btn secondary" id="motoboy-all-rates-image">Imagem de todos os bairros e taxas</button>
         </div>
         <div id="motoboy-period-summary" class="motoboy-period-summary"><div class="empty">Selecione um período para consultar.</div></div>
       </div>
@@ -8028,6 +8029,7 @@ if($("motoboy-period-end"))$("motoboy-period-end").value=motoboyToday();
 $("motoboy-period-apply")?.addEventListener("click",()=>{const start=$("motoboy-period-start").value,end=$("motoboy-period-end").value;if(!start||!end){$("motoboy-save-status").textContent="Informe as duas datas para aplicar o filtro.";return;}if(start>end){$("motoboy-save-status").textContent="A data inicial não pode ser maior que a data final.";return;}motoboyRenderHistory();$("motoboy-save-status").textContent="Filtro aplicado: "+motoboyFormatDate(start)+" até "+motoboyFormatDate(end)+".";});
 $("motoboy-period-current")?.addEventListener("click",()=>{const now=new Date();$("motoboy-period-start").value=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-01";$("motoboy-period-end").value=motoboyToday();});
 $("motoboy-period-image")?.addEventListener("click",motoboyGeneratePeriodImage);
+$("motoboy-all-rates-image")?.addEventListener("click",()=>{motoboyGenerateRateImage();$("motoboy-save-status").textContent="Imagem com todos os bairros e taxas gerada.";});
 motoboyLoadHistory();
 motoboyLoadPeople();
 motoboyLoadRates();
