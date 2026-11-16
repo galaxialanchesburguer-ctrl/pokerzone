@@ -8093,8 +8093,11 @@ $("motoboy-period-apply")?.addEventListener("click",()=>{const start=$("motoboy-
 $("motoboy-period-current")?.addEventListener("click",()=>{const now=new Date();$("motoboy-period-start").value=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-01";$("motoboy-period-end").value=motoboyToday();});
 $("motoboy-period-image")?.addEventListener("click",motoboyGeneratePeriodImage);
 $("motoboy-period-detailed-image")?.addEventListener("click",motoboyGeneratePeriodDetailedImage);
+if($("motoboy-driver-select"))$("motoboy-driver-select").value="";
 motoboyLoadHistory();
 motoboyLoadPeople();
+if($("motoboy-driver-select"))$("motoboy-driver-select").value="";
+motoboyRenderHistory();
 motoboyLoadRates();
 motoboySeedDefaultRates();
 motoboyRenderRateOptions();
