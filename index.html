@@ -8061,7 +8061,7 @@ function motoboyRenderHistory(){
   const endDate=$("motoboy-period-end")?.value||"9999-12-31";
   const inPeriod=motoboyHistory.filter(record=>record.date>=startDate&&record.date<=endDate);
   const selectedDriverId=$("motoboy-driver-select")?.value||"";
-  const summaryRecords=selectedDriverId?inPeriod.filter(record=>String(record.motoboyId)===String(selectedDriverId)):inPeriod;
+  const summaryRecords=selectedDriverId?inPeriod.filter(record=>String(record.motoboyId)===String(selectedDriverId)):[];
   const summaryHost=$("motoboy-period-summary");
   if(summaryHost){
     const groups=new Map();
@@ -8079,7 +8079,7 @@ function motoboyRenderHistory(){
       });
       group.total+=Number(record.total)||((Number(record.dailyRate)||0)+(record.lines||[]).reduce((sum,line)=>sum+(Number(line.value)||0),0));
     });
-    summaryHost.innerHTML=groups.size?[...groups.values()].sort((a,b)=>a.name.localeCompare(b.name,"pt-BR")).map(group=>'<article class="motoboy-period-card"><h4>'+esc(group.name)+'</h4><div class="motoboy-period-metric"><span>Diárias</span><strong>'+formatCashCurrency(group.daily)+'</strong></div><div class="motoboy-period-metric"><span>Entregas ('+group.feeCount+')</span><strong>'+formatCashCurrency(group.fees)+'</strong></div><div class="motoboy-period-metric"><span>Descontos</span><strong>− '+formatCashCurrency(group.discounts)+'</strong></div><div class="motoboy-period-metric"><span>Outros / troco</span><strong>'+formatCashCurrency(group.others)+'</strong></div><div class="motoboy-period-metric motoboy-period-balance"><span>SALDO DO PERÍODO</span><strong>'+formatCashCurrency(group.total)+'</strong></div></article>').join(""):'<div class="empty">Nenhum lançamento encontrado neste período.</div>';
+    summaryHost.innerHTML=groups.size?[...groups.values()].sort((a,b)=>a.name.localeCompare(b.name,"pt-BR")).map(group=>'<article class="motoboy-period-card"><h4>'+esc(group.name)+'</h4><div class="motoboy-period-metric"><span>Diárias</span><strong>'+formatCashCurrency(group.daily)+'</strong></div><div class="motoboy-period-metric"><span>Entregas ('+group.feeCount+')</span><strong>'+formatCashCurrency(group.fees)+'</strong></div><div class="motoboy-period-metric"><span>Descontos</span><strong>− '+formatCashCurrency(group.discounts)+'</strong></div><div class="motoboy-period-metric"><span>Outros / troco</span><strong>'+formatCashCurrency(group.others)+'</strong></div><div class="motoboy-period-metric motoboy-period-balance"><span>SALDO DO PERÍODO</span><strong>'+formatCashCurrency(group.total)+'</strong></div></article>').join(""):'<div class="empty">'+(selectedDriverId?"Nenhum lançamento encontrado neste período.":"Selecione um motoboy para visualizar o saldo do período.")+'</div>';
   }
 }
 $("motoboy-entry-date")?.setAttribute("value",motoboyToday());
