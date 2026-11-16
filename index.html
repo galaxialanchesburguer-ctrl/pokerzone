@@ -7959,8 +7959,10 @@ function motoboyGenerateDayImage(mode="detailed"){const driver=motoboyPeople.fin
 function motoboyGeneratePeriodImage(){
   const start=$("motoboy-period-start")?.value,end=$("motoboy-period-end")?.value;
   if(!start||!end||start>end){$("motoboy-save-status").textContent="Informe um período válido antes de gerar a imagem.";return;}
-  const records=motoboyHistory.filter(record=>record.date>=start&&record.date<=end);
-  if(!records.length){$("motoboy-save-status").textContent="Não há lançamentos salvos nesse período.";return;}
+  const selectedDriverId=$("motoboy-driver-select")?.value||"";
+  if(!selectedDriverId){$("motoboy-save-status").textContent="Selecione um motoboy para gerar a imagem do período.";return;}
+  const records=motoboyHistory.filter(record=>record.date>=start&&record.date<=end&&String(record.motoboyId)===String(selectedDriverId));
+  if(!records.length){$("motoboy-save-status").textContent="Não há lançamentos salvos para o motoboy selecionado nesse período.";return;}
   const groups=new Map();
   records.forEach(record=>{
     const key=record.motoboyId||record.motoboyName||"unknown";
@@ -8003,8 +8005,10 @@ function motoboyGeneratePeriodImage(){
 function motoboyGeneratePeriodDetailedImage(){
   const start=$("motoboy-period-start")?.value,end=$("motoboy-period-end")?.value;
   if(!start||!end||start>end){$("motoboy-save-status").textContent="Informe um período válido antes de gerar a imagem.";return;}
-  const records=motoboyHistory.filter(record=>record.date>=start&&record.date<=end);
-  if(!records.length){$("motoboy-save-status").textContent="Não há lançamentos salvos nesse período.";return;}
+  const selectedDriverId=$("motoboy-driver-select")?.value||"";
+  if(!selectedDriverId){$("motoboy-save-status").textContent="Selecione um motoboy para gerar a imagem do período.";return;}
+  const records=motoboyHistory.filter(record=>record.date>=start&&record.date<=end&&String(record.motoboyId)===String(selectedDriverId));
+  if(!records.length){$("motoboy-save-status").textContent="Não há lançamentos salvos para o motoboy selecionado nesse período.";return;}
   const groups=new Map();
   records.forEach(record=>{
     const key=record.motoboyId||record.motoboyName||"unknown";
