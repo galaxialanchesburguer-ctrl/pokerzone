@@ -5103,7 +5103,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 
       </aside>
     </div>
-    <div class="pricing-actions"><span id="pricing-save-status">Os dados ficam salvos neste navegador.</span><div><button type="button" class="btn secondary" id="pricing-delete" hidden>Remover produto</button><button type="button" class="btn secondary" id="pricing-clear">Limpar</button><button type="button" class="btn primary" id="pricing-save">Salvar precificação</button></div></div>
+    <div class="pricing-actions"><span id="pricing-save-status">Os dados ficam salvos na nuvem e sincronizados entre dispositivos.</span><div><button type="button" class="btn secondary" id="pricing-delete" hidden>Remover produto</button><button type="button" class="btn secondary" id="pricing-clear">Limpar</button><button type="button" class="btn primary" id="pricing-save">Salvar precificação</button></div></div>
   </div>
   </div>
 </section>
@@ -7698,7 +7698,7 @@ function pricingReadProducts(){
   }
   return [];
 }
-function pricingPersistProducts(){try{localStorage.setItem(PRICING_STORAGE_KEY,JSON.stringify(pricingProducts));}catch(error){console.warn("Falha ao salvar produtos de precificação",error);}}
+async function pricingPersistProducts(){await pricingPersistAll();}
 function pricingRenderProducts(){
   const grid=$("pricing-products-grid");if(!grid)return;
   const term=($("pricing-products-search")?.value||"").trim().toLocaleLowerCase("pt-BR");
@@ -7751,13 +7751,12 @@ function updatePricingIfoodTotals(ingredients){
 }
 let pricingPhotoData="";let pricingPhotoZoom=1;
 function renderPricingPhoto(){const preview=$("pricing-photo-preview");if(!preview)return;preview.innerHTML=pricingPhotoData?`<img src="${pricingPhotoData}" alt="Foto do produto">`:"<span>＋<br>Adicionar foto<br><small>(opcional)</small></span>";preview.style.setProperty("--pricing-photo-zoom",String(pricingPhotoZoom));const slider=$("pricing-photo-zoom");if(slider){slider.disabled=!pricingPhotoData;slider.value=String(pricingPhotoZoom);}const output=$("pricing-photo-zoom-value");if(output)output.textContent=pricingPhotoZoom.toFixed(1).replace(".",",")+"×";}
-function savePricingData(showMessage=true){
+async function savePricingData(showMessage=true){
   const data={id:pricingCurrentProductId||String(Date.now()),photo:pricingPhotoData,photoZoom:pricingPhotoZoom,product:$("pricing-product-name")?.value||"",isCombo:$("pricing-product-is-combo")?.checked??false,markup:$("pricing-markup")?.value||100,delivery:$("pricing-delivery")?.value||0,card:$("pricing-card-fee")?.value||0,app:$("pricing-app-fee")?.value||0,tax:$("pricing-tax")?.value||0,other:$("pricing-other-fee")?.value||0,ifood:{productValue:$("pricing-ifood-product-value")?.value||0,deliveryEnabled:$("pricing-ifood-delivery-enabled")?.checked??false,deliveryRate:$("pricing-ifood-delivery-rate")?.value||27,basicEnabled:$("pricing-ifood-basic-enabled")?.checked??true,basicRate:$("pricing-ifood-basic-rate")?.value||12,transactionEnabled:$("pricing-ifood-transaction-enabled")?.checked??true,transactionRate:$("pricing-ifood-transaction-rate")?.value||3.2,transferEnabled:$("pricing-ifood-transfer-enabled")?.checked??true,transferRate:$("pricing-ifood-transfer-rate")?.value||1.59,deliveryAverage:$("pricing-ifood-delivery-average")?.value||0,smartCampaign:$("pricing-ifood-smart-campaign")?.value||0,coupon:$("pricing-ifood-coupon")?.value||0},ingredients:pricingIngredients,updatedAt:Date.now()};
   pricingCurrentProductId=data.id;
   const index=pricingProducts.findIndex(item=>item.id===data.id);
   if(index>=0)pricingProducts[index]=data;else pricingProducts.unshift(data);
-  pricingPersistProducts();
-  $("pricing-delete").hidden=false;if(showMessage&&$("pricing-save-status")){const status=$("pricing-save-status");clearTimeout(pricingSaveStatusTimer);status.textContent="✓ Produto salvo com sucesso!";pricingSaveStatusTimer=setTimeout(()=>{if(status.textContent==="✓ Produto salvo com sucesso!")status.textContent="";},2500);}
+  try{await pricingPersistProducts();$("pricing-delete").hidden=false;if(showMessage&&$("pricing-save-status")){const status=$("pricing-save-status");clearTimeout(pricingSaveStatusTimer);status.textContent="✓ Produto salvo na nuvem!";pricingSaveStatusTimer=setTimeout(()=>{if(status.textContent==="✓ Produto salvo na nuvem!")status.textContent="";},2500);}}catch(error){console.error("Erro ao salvar produto na nuvem:",error);$("pricing-save-status").textContent="Não foi possível salvar na nuvem: "+(error.message||"erro desconhecido");}
 }
 function loadPricingData(data){
   data=data||{};
@@ -7769,7 +7768,7 @@ function loadPricingData(data){
   const savedProduct=pricingProducts.some(item=>item.id===data.id);$("pricing-delete").hidden=!savedProduct;$("pricing-save-status").textContent=savedProduct?"Produto carregado. As alterações ainda não foram salvas.":"Novo produto em rascunho. Clique em “Salvar precificação” para cadastrar.";
 }
 pricingProducts=pricingReadProducts();
-$("open-pricing-card")?.addEventListener("click",()=>{showAdminScreen("admin-pricing-screen","astro");pricingOpenList();});
+$("open-pricing-card")?.addEventListener("click",async()=>{showAdminScreen("admin-pricing-screen","astro");$("pricing-products-grid").innerHTML='<div class="pricing-empty">Sincronizando sua precificação...</div>';try{await pricingLoadCloudData();pricingOpenList();}catch(error){console.error("Erro ao sincronizar precificação:",error);pricingProducts=pricingReadProducts();pricingRenderProducts();alert("Não foi possível sincronizar a precificação com a nuvem. Confira se você está conectado à sua conta e tente novamente.\n\n"+(error.message||""));}});
 $("pricing-list-back-astro")?.addEventListener("click",()=>showAdminScreen("admin-astro-screen","astro"));
 $("pricing-products-search")?.addEventListener("input",pricingRenderProducts);
 let pricingDraggedProductId = null;
@@ -7788,7 +7787,7 @@ pricingProductsGrid?.addEventListener("dragover", event => {
   if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
   pricingProductsGrid.querySelectorAll(".pricing-product-card-wrap").forEach(card => card.classList.toggle("is-drag-over", card === target));
 });
-pricingProductsGrid?.addEventListener("drop", event => {
+pricingProductsGrid?.addEventListener("drop", async event => {
   const target = event.target.closest("[data-pricing-sort-id]");
   if (!pricingDraggedProductId || !target || target.dataset.pricingSortId === pricingDraggedProductId) return;
   event.preventDefault();
@@ -7797,8 +7796,7 @@ pricingProductsGrid?.addEventListener("drop", event => {
   if (from < 0 || to < 0) return;
   const moved = pricingProducts.splice(from, 1)[0];
   pricingProducts.splice(to, 0, moved);
-  pricingPersistProducts();
-  pricingRenderProducts();
+  try{await pricingPersistProducts();pricingRenderProducts();}catch(error){alert("Não foi possível sincronizar a ordem dos produtos: "+(error.message||""));}
 });
 function pricingFinishProductDrag() {
   pricingDraggedProductId = null;
@@ -7808,14 +7806,14 @@ pricingProductsGrid?.addEventListener("dragend", pricingFinishProductDrag);
 pricingProductsGrid?.addEventListener("dragleave", event => {
   if (!event.relatedTarget || !pricingProductsGrid.contains(event.relatedTarget)) pricingProductsGrid.querySelectorAll(".is-drag-over").forEach(card => card.classList.remove("is-drag-over"));
 });
-$("pricing-products-grid")?.addEventListener("click",event=>{
+$("pricing-products-grid")?.addEventListener("click",async event=>{
   if(event.target.closest("#pricing-create-product")){pricingOpenEditor(null);return;}
   const menuButton=event.target.closest("[data-pricing-menu]");
   if(menuButton){const id=menuButton.dataset.pricingMenu,panel=$("pricing-products-grid").querySelector('[data-pricing-menu-panel="'+CSS.escape(id)+'"]');$("pricing-products-grid").querySelectorAll(".pricing-product-menu").forEach(menu=>{if(menu!==panel)menu.classList.add("hidden");});panel?.classList.toggle("hidden");return;}
   const duplicate=event.target.closest("[data-pricing-duplicate]");
-  if(duplicate){const source=pricingProducts.find(item=>item.id===duplicate.dataset.pricingDuplicate);if(!source)return;const copy=JSON.parse(JSON.stringify(source));copy.id="product-"+Date.now()+"-"+Math.random().toString(36).slice(2,7);copy.product=(source.product||"Produto")+" (Cópia)";copy.updatedAt=Date.now();pricingProducts.unshift(copy);pricingPersistProducts();pricingRenderProducts();return;}
+  if(duplicate){const source=pricingProducts.find(item=>item.id===duplicate.dataset.pricingDuplicate);if(!source)return;const copy=JSON.parse(JSON.stringify(source));copy.id="product-"+Date.now()+"-"+Math.random().toString(36).slice(2,7);copy.product=(source.product||"Produto")+" (Cópia)";copy.updatedAt=Date.now();pricingProducts.unshift(copy);try{await pricingPersistProducts();pricingRenderProducts();}catch(error){alert("Não foi possível salvar a cópia na nuvem: "+(error.message||""));}return;}
   const remove=event.target.closest("[data-pricing-delete-card]");
-  if(remove){const item=pricingProducts.find(product=>product.id===remove.dataset.pricingDeleteCard);if(!item)return;if(!confirm('Excluir "'+(item.product||"este produto")+'" da lista de precificação?'))return;pricingProducts=pricingProducts.filter(product=>product.id!==item.id);pricingPersistProducts();pricingRenderProducts();return;}
+  if(remove){const item=pricingProducts.find(product=>product.id===remove.dataset.pricingDeleteCard);if(!item)return;if(!confirm('Excluir "'+(item.product||"este produto")+'" da lista de precificação?'))return;pricingProducts=pricingProducts.filter(product=>product.id!==item.id);try{await pricingPersistProducts();pricingRenderProducts();}catch(error){alert("Não foi possível excluir na nuvem: "+(error.message||""));}return;}
   const card=event.target.closest("[data-pricing-open]");if(card)pricingOpenEditor(card.dataset.pricingOpen);
 });
 document.addEventListener("click",event=>{if(!event.target.closest(".pricing-product-card-wrap"))$("pricing-products-grid")?.querySelectorAll(".pricing-product-menu").forEach(menu=>menu.classList.add("hidden"));});
@@ -7870,7 +7868,7 @@ function pricingComboFillBurger(){const select=$("pricing-combo-burger");if(!sel
 function pricingComboOpen(id){const data=pricingCombos.find(c=>String(c.id)===String(id));pricingCurrentComboId=data?.id||"combo-"+Date.now();pricingComboItems=JSON.parse(JSON.stringify(data?.items||[]));$("pricing-combos-view").classList.add("hidden");$("pricing-list-tabs").classList.add("hidden");$("pricing-combo-editor").classList.remove("hidden");$("pricing-combo-name").value=data?.name||"";$("pricing-combo-markup").value=data?.markup??100;$("pricing-combo-sale").value=data?.sale??"";pricingComboFillBurger();$("pricing-combo-burger").value=data?.burgerId||"";pricingRenderComboItems();pricingUpdateComboTotals();$("pricing-combo-status").textContent=data?"Combo carregado.":"Novo combo. Adicione os itens e salve.";}
 function pricingRenderComboItems(){const el=$("pricing-combo-items");if(!el)return;el.innerHTML=pricingComboItems.map((item,i)=>'<div class="pricing-combo-item"><div><strong>'+pricingEscape(item.name)+'</strong><small>'+(item.productId?"Produto cadastrado • custo vinculado":"Item avulso • custo manual")+'</small></div><label><small>QTDE.</small><input type="number" min="0.01" step="0.01" value="'+pricingEscape(item.qty??1)+'" data-combo-qty="'+i+'"></label><label><small>CUSTO UNIT.</small><input type="number" min="0" step="0.01" value="'+pricingEscape(item.cost??0)+'" data-combo-cost="'+i+'" '+(item.productId?"readonly":"")+'></label><button type="button" data-combo-remove="'+i+'" aria-label="Remover item">×</button></div>').join("")||'<div class="pricing-empty">Nenhum acompanhamento ou bebida adicionado.</div>';}
 function pricingUpdateComboTotals(){const burger=pricingProducts.find(p=>String(p.id)===$("pricing-combo-burger")?.value);const cost=(burger?pricingProductUnitCost(burger):0)+pricingComboItems.reduce((sum,item)=>sum+pricingNumber(item.qty)*pricingNumber(item.cost),0);const suggested=cost*(1+pricingNumber($("pricing-combo-markup")?.value)/100);const sale=pricingNumber($("pricing-combo-sale")?.value);const profit=sale-cost;const margin=sale>0?profit/sale*100:0;$("pricing-combo-cost").textContent=pricingMoney(cost);$("pricing-combo-suggested").textContent=pricingMoney(suggested);$("pricing-combo-profit").textContent=pricingMoney(profit);$("pricing-combo-margin").textContent=margin.toFixed(1).replace(".",",")+"%";}
-function pricingSaveCombo(){const burger=pricingProducts.find(p=>String(p.id)===$("pricing-combo-burger").value);if(!($("pricing-combo-name").value||"").trim()){$("pricing-combo-status").textContent="Informe o nome do combo.";return;}if(!burger){$("pricing-combo-status").textContent="Selecione um hambúrguer cadastrado.";return;}const cost=pricingProductUnitCost(burger)+pricingComboItems.reduce((sum,item)=>sum+pricingNumber(item.qty)*pricingNumber(item.cost),0);const data={id:pricingCurrentComboId,name:$("pricing-combo-name").value.trim(),burgerId:burger.id,burgerName:burger.product||"Hambúrguer",items:pricingComboItems,markup:pricingNumber($("pricing-combo-markup").value),sale:pricingNumber($("pricing-combo-sale").value),cost,updatedAt:Date.now()};const index=pricingCombos.findIndex(c=>String(c.id)===String(data.id));if(index>=0)pricingCombos[index]=data;else pricingCombos.unshift(data);try{localStorage.setItem(PRICING_COMBOS_KEY,JSON.stringify(pricingCombos));$("pricing-combo-status").textContent="✓ Combo salvo com sucesso!";}catch(error){$("pricing-combo-status").textContent="Não foi possível salvar o combo neste navegador.";}}
+async function pricingSaveCombo(){const burger=pricingProducts.find(p=>String(p.id)===$("pricing-combo-burger").value);if(!($("pricing-combo-name").value||"").trim()){$("pricing-combo-status").textContent="Informe o nome do combo.";return;}if(!burger){$("pricing-combo-status").textContent="Selecione um hambúrguer cadastrado.";return;}const cost=pricingProductUnitCost(burger)+pricingComboItems.reduce((sum,item)=>sum+pricingNumber(item.qty)*pricingNumber(item.cost),0);const data={id:pricingCurrentComboId,name:$("pricing-combo-name").value.trim(),burgerId:burger.id,burgerName:burger.product||"Hambúrguer",items:pricingComboItems,markup:pricingNumber($("pricing-combo-markup").value),sale:pricingNumber($("pricing-combo-sale").value),cost,updatedAt:Date.now()};const index=pricingCombos.findIndex(c=>String(c.id)===String(data.id));if(index>=0)pricingCombos[index]=data;else pricingCombos.unshift(data);try{await pricingPersistAll();$("pricing-combo-status").textContent="✓ Combo salvo na nuvem!";}catch(error){console.error("Erro ao salvar combo:",error);$("pricing-combo-status").textContent="Não foi possível salvar na nuvem: "+(error.message||"");}}
 try{const savedCombos=JSON.parse(localStorage.getItem(PRICING_COMBOS_KEY)||"[]");pricingCombos=Array.isArray(savedCombos)?savedCombos:[];}catch(error){pricingCombos=[];}
 function pricingSetListTab(tab){const products=tab==="products",combos=tab==="combos";$("pricing-editor-view").classList.add("hidden");$("pricing-combo-editor").classList.add("hidden");$("pricing-recipe-editor").classList.add("hidden");$("pricing-products-view").classList.toggle("hidden",!products);$("pricing-combos-view").classList.toggle("hidden",!combos);$("pricing-recipes-view").classList.toggle("hidden",tab!=="recipes");$("pricing-list-tabs").classList.remove("hidden");[["products",products],["combos",combos],["recipes",tab==="recipes"]].forEach(([k,v])=>{$("pricing-tab-"+k).classList.toggle("is-active",v);$("pricing-tab-"+k).setAttribute("aria-selected",String(v));});if(products)pricingRenderProducts();else if(combos)pricingRenderCombos();else pricingRenderRecipes();}
 $("pricing-tab-products")?.addEventListener("click",()=>pricingSetListTab("products"));$("pricing-tab-combos")?.addEventListener("click",()=>pricingSetListTab("combos"));$("pricing-combo-editor-back")?.addEventListener("click",pricingComboOpenList);$("pricing-create-combo")?.addEventListener("click",()=>pricingComboOpen(null));$("pricing-combos-search")?.addEventListener("input",pricingRenderCombos);$("pricing-combos-grid")?.addEventListener("click",event=>{const card=event.target.closest("[data-pricing-combo-open]");if(card)pricingComboOpen(card.dataset.pricingComboOpen);});
@@ -7896,7 +7894,7 @@ $("pricing-photo-zoom")?.addEventListener("input",event=>{pricingPhotoZoom=Numbe
 $("pricing-photo-input")?.addEventListener("change",event=>{const file=event.target.files?.[0];if(!file)return;if(!file.type.startsWith("image/")){alert("Selecione um arquivo de imagem.");event.target.value="";return;}if(file.size>4*1024*1024){alert("A imagem deve ter no máximo 4 MB.");event.target.value="";return;}const reader=new FileReader();reader.onload=()=>{pricingPhotoData=String(reader.result||"");renderPricingPhoto();$("pricing-save-status").textContent="Alterações não salvas.";};reader.readAsDataURL(file);});
 $("pricing-photo-remove")?.addEventListener("click",()=>{pricingPhotoData="";pricingPhotoZoom=1;$("pricing-photo-input").value="";renderPricingPhoto();$("pricing-save-status").textContent="Alterações não salvas.";});
 $("pricing-save")?.addEventListener("click",()=>savePricingData(true));
-$("pricing-delete")?.addEventListener("click",()=>{if(!pricingCurrentProductId||!pricingProducts.some(item=>item.id===pricingCurrentProductId))return;if(!confirm("Tem certeza que deseja remover este produto? Esta ação não pode ser desfeita."))return;pricingProducts=pricingProducts.filter(item=>item.id!==pricingCurrentProductId);pricingPersistProducts();pricingCurrentProductId=null;pricingIngredients=[];pricingPhotoData="";pricingPhotoZoom=1;pricingOpenList();});
+$("pricing-delete")?.addEventListener("click",async()=>{if(!pricingCurrentProductId||!pricingProducts.some(item=>item.id===pricingCurrentProductId))return;if(!confirm("Tem certeza que deseja remover este produto? Esta ação não pode ser desfeita."))return;pricingProducts=pricingProducts.filter(item=>item.id!==pricingCurrentProductId);try{await pricingPersistProducts();pricingCurrentProductId=null;pricingIngredients=[];pricingPhotoData="";pricingPhotoZoom=1;pricingOpenList();}catch(error){alert("Não foi possível excluir o produto na nuvem: "+(error.message||""));}});
 $("pricing-clear")?.addEventListener("click",()=>{if(!confirm("Deseja limpar toda a precificação atual?"))return;pricingIngredients=[];$("pricing-product-name").value="";$("pricing-markup").value=100;$("pricing-delivery").value=0;$("pricing-card-fee").value=0;$("pricing-app-fee").value=0;$("pricing-tax").value=0;$("pricing-other-fee").value=0;renderPricingIngredients();updatePricingTotals();$("pricing-save-status").textContent="Campos limpos. Clique em “Salvar precificação” para gravar.";});
 
 $("open-cash-counter-card")?.addEventListener("click", () => {
@@ -13680,6 +13678,68 @@ init();
 
 const PRICING_RECIPES_KEY="pokerzone_astro_recipes_v1";let pricingRecipes=[];let pricingRecipeLines=[];let pricingCurrentRecipeId=null;
 try{const x=JSON.parse(localStorage.getItem(PRICING_RECIPES_KEY)||"[]");pricingRecipes=Array.isArray(x)?x:[];}catch(e){pricingRecipes=[];}
+
+let pricingCloudReady=false;
+function pricingReadLocalArray(key){
+  try{const value=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(value)?value:[];}catch(error){return [];}
+}
+function pricingMergeCloudAndLocal(remote,local){
+  const merged=Array.isArray(remote)?remote.slice():[];
+  const ids=new Set(merged.map(item=>String(item?.id)));
+  (Array.isArray(local)?local:[]).forEach(item=>{
+    const id=String(item?.id);
+    if(!ids.has(id)){merged.push(item);ids.add(id);}
+  });
+  return merged;
+}
+function pricingWriteLocalCache(){
+  try{localStorage.setItem(PRICING_STORAGE_KEY,JSON.stringify(pricingProducts));}catch(error){console.warn("Cache local de produtos indisponível:",error);}
+  try{localStorage.setItem(PRICING_COMBOS_KEY,JSON.stringify(pricingCombos));}catch(error){console.warn("Cache local de combos indisponível:",error);}
+  try{localStorage.setItem(PRICING_RECIPES_KEY,JSON.stringify(pricingRecipes));}catch(error){console.warn("Cache local de receitas indisponível:",error);}
+}
+async function pricingPersistAll(){
+  pricingWriteLocalCache();
+  if(!pricingCloudReady)throw new Error("A precificação ainda não foi sincronizada. Feche e abra a tela novamente.");
+  const {data:userData,error:userError}=await db.auth.getUser();
+  const userId=userData?.user?.id;
+  if(userError||!userId)throw new Error("Sua sessão expirou. Entre novamente na sua conta.");
+  const {error}=await db.from("astro_pricing_data").upsert({
+    user_id:userId,
+    products:pricingProducts,
+    combos:pricingCombos,
+    recipes:pricingRecipes,
+    updated_at:new Date().toISOString()
+  },{onConflict:"user_id"});
+  if(error)throw error;
+}
+async function pricingLoadCloudData(){
+  pricingCloudReady=false;
+  const {data:userData,error:userError}=await db.auth.getUser();
+  const userId=userData?.user?.id;
+  if(userError||!userId)throw new Error("Entre na sua conta para sincronizar a precificação.");
+  const localProducts=pricingReadProducts();
+  const localCombos=pricingReadLocalArray(PRICING_COMBOS_KEY);
+  const localRecipes=pricingReadLocalArray(PRICING_RECIPES_KEY);
+  const {data:cloud,error}=await db.from("astro_pricing_data")
+    .select("products,combos,recipes")
+    .eq("user_id",userId)
+    .maybeSingle();
+  if(error)throw error;
+  const cloudProducts=Array.isArray(cloud?.products)?cloud.products:[];
+  const cloudCombos=Array.isArray(cloud?.combos)?cloud.combos:[];
+  const cloudRecipes=Array.isArray(cloud?.recipes)?cloud.recipes:[];
+  pricingProducts=pricingMergeCloudAndLocal(cloudProducts,localProducts);
+  pricingCombos=pricingMergeCloudAndLocal(cloudCombos,localCombos);
+  pricingRecipes=pricingMergeCloudAndLocal(cloudRecipes,localRecipes);
+  pricingCloudReady=true;
+  pricingWriteLocalCache();
+  const needsInitialSave=!cloud ||
+    pricingProducts.length!==cloudProducts.length ||
+    pricingCombos.length!==cloudCombos.length ||
+    pricingRecipes.length!==cloudRecipes.length;
+  if(needsInitialSave)await pricingPersistAll();
+}
+
 function pricingRecipeSources(){const m=new Map();pricingProducts.slice().sort((a,b)=>(Number(b.updatedAt)||0)-(Number(a.updatedAt)||0)).forEach(p=>(p.ingredients||[]).forEach(i=>{const k=pricingNormalizeIngredientName(i.name);if(k&&!m.has(k))m.set(k,{name:i.name,unit:i.unit||"un.",cost:pricingNumber(i.purchased)>0?pricingNumber(i.paid)/pricingNumber(i.purchased):0});}));return [...m.values()];}
 function pricingRecipeSource(n){return pricingRecipeSources().find(x=>pricingNormalizeIngredientName(x.name)===pricingNormalizeIngredientName(n));}
 function pricingRecipeCostLine(x){return pricingNumber(x.qty)*(pricingRecipeSource(x.name)?.cost||0);}
@@ -13687,7 +13747,7 @@ function pricingRecipeUpdate(){const total=pricingRecipeLines.reduce((a,x)=>a+pr
 function pricingRecipeRenderLines(){const src=pricingRecipeSources();$("pricing-recipe-lines").innerHTML=pricingRecipeLines.map((x,i)=>'<tr><td><select data-recipe-ing="'+i+'"><option value="">Selecione</option>'+src.map(y=>'<option value="'+pricingEscape(y.name)+'" '+(pricingNormalizeIngredientName(y.name)===pricingNormalizeIngredientName(x.name)?"selected":"")+'>'+pricingEscape(y.name)+'</option>').join("")+'</select></td><td><input type="number" min="0" step="0.001" data-recipe-qty="'+i+'" value="'+pricingEscape(x.qty||0)+'"></td><td>'+(pricingRecipeSource(x.name)?.unit||"—")+'</td><td>'+pricingMoney(pricingRecipeCostLine(x))+'</td><td><button class="pricing-remove-row" type="button" data-recipe-del="'+i+'">×</button></td></tr>').join("")||'<tr><td colspan="5" class="empty">Adicione os ingredientes utilizados.</td></tr>';pricingRecipeUpdate();}
 function pricingRenderRecipes(){const q=($("pricing-recipes-search").value||"").toLocaleLowerCase("pt-BR");const rows=pricingRecipes.filter(x=>(x.name||"").toLocaleLowerCase("pt-BR").includes(q));$("pricing-recipes-count").textContent=pricingRecipes.length+" receitas";$("pricing-recipes-grid").innerHTML=rows.map(x=>{const cost=(x.ingredients||[]).reduce((a,l)=>a+pricingRecipeCostLine(l),0),portionCount=pricingNumber(x.portion)>0?Math.floor(pricingNumber(x.yield)/pricingNumber(x.portion)):0,unit=portionCount>0?cost/portionCount+pricingNumber(x.package):0;return '<button type="button" class="pricing-combo-card" data-recipe-open="'+pricingEscape(x.id)+'"><strong>'+pricingEscape(x.name)+'</strong><small>'+x.yield+' g • '+x.portion+' g por pote • '+portionCount+' potinhos</small><span>Custo por unidade: '+pricingMoney(unit)+'</span></button>';}).join("")||'<div class="pricing-empty">Nenhuma receita cadastrada. Clique em “Nova receita”.</div>';}
 function pricingRecipeOpen(id){const x=pricingRecipes.find(r=>String(r.id)===String(id));pricingCurrentRecipeId=x?.id||"recipe-"+Date.now();pricingRecipeLines=JSON.parse(JSON.stringify(x?.ingredients||[]));$("pricing-list-tabs").classList.add("hidden");$("pricing-recipes-view").classList.add("hidden");$("pricing-recipe-editor").classList.remove("hidden");$("pricing-recipe-name").value=x?.name||"Mousse de morango";$("pricing-recipe-yield").value=x?.yield??800;$("pricing-recipe-portion").value=x?.portion??80;$("pricing-recipe-package").value=x?.package||0;$("pricing-recipe-markup").value=x?.markup??100;$("pricing-recipe-sale").value=x?.sale||"";$("pricing-recipe-status").textContent=x?"Receita carregada.":"Nova receita.";pricingRecipeRenderLines();}
-function pricingRecipeSave(){const name=$("pricing-recipe-name").value.trim();if(!name){$("pricing-recipe-status").textContent="Informe o nome da receita.";return;}if(!pricingNumber($("pricing-recipe-yield").value)||!pricingNumber($("pricing-recipe-portion").value)){$("pricing-recipe-status").textContent="Informe o rendimento total e o peso de cada potinho.";return;}if(!pricingRecipeLines.length||pricingRecipeLines.some(x=>!pricingRecipeSource(x.name)||pricingNumber(x.qty)<=0)){$("pricing-recipe-status").textContent="Selecione ingredientes cadastrados e informe as quantidades.";return;}const x={id:pricingCurrentRecipeId,name,ingredients:pricingRecipeLines,yield:pricingNumber($("pricing-recipe-yield").value),portion:pricingNumber($("pricing-recipe-portion").value),package:pricingNumber($("pricing-recipe-package").value),markup:pricingNumber($("pricing-recipe-markup").value),sale:pricingNumber($("pricing-recipe-sale").value)};const i=pricingRecipes.findIndex(r=>r.id===x.id);if(i>=0)pricingRecipes[i]=x;else pricingRecipes.unshift(x);localStorage.setItem(PRICING_RECIPES_KEY,JSON.stringify(pricingRecipes));$("pricing-recipe-status").textContent="✓ Receita salva com sucesso!";}
+async function pricingRecipeSave(){const name=$("pricing-recipe-name").value.trim();if(!name){$("pricing-recipe-status").textContent="Informe o nome da receita.";return;}if(!pricingNumber($("pricing-recipe-yield").value)||!pricingNumber($("pricing-recipe-portion").value)){$("pricing-recipe-status").textContent="Informe o rendimento total e o peso de cada potinho.";return;}if(!pricingRecipeLines.length||pricingRecipeLines.some(x=>!pricingRecipeSource(x.name)||pricingNumber(x.qty)<=0)){$("pricing-recipe-status").textContent="Selecione ingredientes cadastrados e informe as quantidades.";return;}const x={id:pricingCurrentRecipeId,name,ingredients:pricingRecipeLines,yield:pricingNumber($("pricing-recipe-yield").value),portion:pricingNumber($("pricing-recipe-portion").value),package:pricingNumber($("pricing-recipe-package").value),markup:pricingNumber($("pricing-recipe-markup").value),sale:pricingNumber($("pricing-recipe-sale").value)};const i=pricingRecipes.findIndex(r=>r.id===x.id);if(i>=0)pricingRecipes[i]=x;else pricingRecipes.unshift(x);try{await pricingPersistAll();$("pricing-recipe-status").textContent="✓ Receita salva na nuvem!";}catch(error){console.error("Erro ao salvar receita:",error);$("pricing-recipe-status").textContent="Não foi possível salvar na nuvem: "+(error.message||"");}}
 $("pricing-tab-recipes").addEventListener("click",()=>pricingSetListTab("recipes"));$("pricing-create-recipe").addEventListener("click",()=>pricingRecipeOpen(null));$("pricing-recipes-search").addEventListener("input",pricingRenderRecipes);$("pricing-recipes-grid").addEventListener("click",e=>{const b=e.target.closest("[data-recipe-open]");if(b)pricingRecipeOpen(b.dataset.recipeOpen);});$("pricing-recipe-back").addEventListener("click",()=>pricingSetListTab("recipes"));$("pricing-recipe-add-line").addEventListener("click",()=>{pricingRecipeLines.push({name:"",qty:0});pricingRecipeRenderLines();});$("pricing-recipe-lines").addEventListener("input",e=>{const q=e.target.closest("[data-recipe-qty]");if(q){pricingRecipeLines[+q.dataset.recipeQty].qty=q.value;pricingRecipeUpdate();}});$("pricing-recipe-lines").addEventListener("change",e=>{const q=e.target.closest("[data-recipe-ing]");if(q){pricingRecipeLines[+q.dataset.recipeIng].name=q.value;pricingRecipeRenderLines();}});$("pricing-recipe-lines").addEventListener("click",e=>{const q=e.target.closest("[data-recipe-del]");if(q){pricingRecipeLines.splice(+q.dataset.recipeDel,1);pricingRecipeRenderLines();}});["pricing-recipe-yield","pricing-recipe-portion","pricing-recipe-package","pricing-recipe-markup","pricing-recipe-sale"].forEach(id=>$(id).addEventListener("input",pricingRecipeUpdate));$("pricing-recipe-save").addEventListener("click",pricingRecipeSave);
 
 </script>
