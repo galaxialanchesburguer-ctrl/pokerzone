@@ -3973,6 +3973,39 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .address-suggestions{border:1px solid #383838;border-radius:10px;overflow:hidden;background:#101010;margin-top:8px}.address-suggestion{display:block;width:100%;padding:13px 14px;text-align:left;background:transparent;border:0;border-bottom:1px solid #292929;color:#eee;cursor:pointer;font-size:13px;line-height:1.45}.address-suggestion:last-child{border-bottom:0}.address-suggestion:hover{background:#292020}.address-suggestion small{display:block;color:#999;font-size:11px;margin-top:3px}.address-editor-note{color:#888;font-size:10px;line-height:1.5;margin-top:12px}.address-editor-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:22px}
 .club-profile-map-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}.club-profile-map-heading .club-profile-map-title{margin:0}
 @media(max-width:600px){.address-editor-panel{padding:17px}.address-editor-head h2{font-size:18px}.address-editor-actions>*{flex:1}}
+
+/* ===== CABEÇALHO DO CLUBE COM CAPA E LOGO REDONDA ===== */
+#club-details-area>.club-profile-header{display:block;padding:0 0 22px;overflow:hidden}
+.club-cover-wrap{height:220px;position:relative;overflow:hidden;background:linear-gradient(125deg,#291114,#151515 55%,#3b171b);border-bottom:1px solid #492126}
+.club-cover-wrap>img{display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.club-cover-wrap.has-cover>img{display:block}
+.club-cover-wrap.has-cover:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.45),transparent 70%);pointer-events:none}
+.club-cover-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:9px;color:#fff;text-align:center;padding:20px}
+.club-cover-placeholder strong{font-size:clamp(17px,3vw,25px);letter-spacing:2px}
+.club-cover-placeholder span{font-size:12px;color:#c5bfc0}
+.club-cover-wrap.has-cover .club-cover-placeholder{display:none}
+.club-cover-edit-btn,.club-logo-edit-btn{position:absolute;z-index:3;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#ed3038;color:#fff;border:2px solid #fff;font-size:18px;font-weight:900;cursor:pointer;box-shadow:0 4px 14px #0008}
+.club-cover-edit-btn{right:18px;top:18px}
+.club-profile-header-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 24px}
+.club-profile-brand{align-items:center;margin-top:-54px;position:relative;z-index:2}
+.club-profile-logo-frame{width:112px;height:112px;flex:0 0 112px;border-radius:50%;padding:5px;background:#151515;border:4px solid #191919;box-shadow:0 5px 22px #0009;position:relative;overflow:visible}
+#club-details-logo{border-radius:50%;object-fit:cover;background:#222}
+.club-logo-edit-btn{right:-2px;bottom:0;width:32px;height:32px;font-size:16px}
+.club-profile-heading{padding-top:42px}
+.club-profile-heading h2{font-size:clamp(20px,3vw,28px)}
+.club-profile-header-row>#close-club-details{margin-top:16px}
+.club-profile-logo-field{grid-column:1/-1}
+@media(max-width:650px){
+ .club-cover-wrap{height:160px}
+ .club-profile-header-row{padding:0 14px;align-items:flex-end}
+ .club-profile-brand{gap:12px;margin-top:-42px}
+ .club-profile-logo-frame{width:86px;height:86px;flex-basis:86px;border-width:3px}
+ .club-logo-edit-btn{width:29px;height:29px}
+ .club-profile-heading{padding-top:32px}
+ .club-profile-heading span{font-size:8px;letter-spacing:1px}
+ .club-profile-header-row>#close-club-details{padding:9px 11px;font-size:11px;margin-bottom:2px}
+}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -4527,16 +4560,24 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
  <!-- ÁREA INTERNA DO CLUBE -->
 <div id="club-details-area" class="box hidden">
   <div class="club-profile-header">
-    <div class="club-profile-brand">
-      <div class="club-profile-logo-frame">
-        <img id="club-details-logo" src="" alt="Logo do clube">
-      </div>
-      <div class="club-profile-heading">
-        <h2 id="club-details-title">CLUBE</h2>
-        <span>PERFIL DO CLUBE</span>
-      </div>
+    <div class="club-cover-wrap" id="club-cover-wrap">
+      <img id="club-cover-image" alt="Banner do clube">
+      <div class="club-cover-placeholder"><strong>SEU CLUBE, SUA IDENTIDADE</strong><span>Adicione uma imagem de capa para personalizar o perfil</span></div>
+      <button type="button" class="club-cover-edit-btn" id="club-cover-edit-btn" aria-label="Editar banner">✎</button>
     </div>
-    <button id="close-club-details" class="btn secondary">Voltar</button>
+    <div class="club-profile-header-row">
+      <div class="club-profile-brand">
+        <div class="club-profile-logo-frame">
+          <img id="club-details-logo" src="" alt="Logo do clube">
+          <button type="button" class="club-logo-edit-btn" id="club-logo-edit-btn" aria-label="Editar logo">✎</button>
+        </div>
+        <div class="club-profile-heading">
+          <h2 id="club-details-title">CLUBE</h2>
+          <span>PERFIL DO CLUBE</span>
+        </div>
+      </div>
+      <button id="close-club-details" class="btn secondary">Voltar</button>
+    </div>
   </div>
 
   <div class="panel-pad">
@@ -4559,7 +4600,9 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <label>CNPJ<input type="text" id="club-settings-cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" maxlength="18"></label>
       <label class="club-profile-full">Descrição<textarea id="club-settings-description" rows="3" placeholder="Conte um pouco sobre o estabelecimento"></textarea></label>
       <div class="club-profile-id"><small>ID do estabelecimento</small><strong id="club-settings-id">—</strong><button type="button" class="btn secondary" id="club-copy-id-btn">Copiar ID</button></div>
-      <div class="club-profile-logo-field"><label>Logo do estabelecimento<input type="file" id="club-settings-logo" accept="image/png,image/jpeg,image/webp"></label><img id="club-logo-preview" src="" alt="Pré-visualização da logo" style="display:none;width:88px;height:88px;object-fit:contain"></div>
+      <input type="file" id="club-settings-logo" accept="image/png,image/jpeg,image/webp" hidden>
+      <input type="file" id="club-settings-cover" accept="image/png,image/jpeg,image/webp" hidden>
+      <div class="club-profile-logo-field"><small>Logo e banner podem ser alterados diretamente no topo do perfil.</small><img id="club-logo-preview" src="" alt="Pré-visualização da logo" style="display:none;width:88px;height:88px;object-fit:contain"></div>
     </div>
   </div>
   <div class="club-profile-section"><div class="club-profile-section-heading"><span>02</span><div><h3>Contato do estabelecimento</h3><p>Como jogadores e visitantes podem falar com o clube.</p></div></div>
@@ -11214,7 +11257,8 @@ $("club-address-confirm")?.addEventListener("click",async()=>{
 function renderClubProfileBanners(items){
  const list=$("club-profile-banner-list"); if(!list)return;
  const banners=Array.isArray(items)?items:[];
- list.innerHTML=banners.length?banners.map((item,index)=>'<div class="club-profile-banner-item">'+(item.type==="video"?'<video src="'+esc(item.url)+'" controls muted playsinline></video>':'<img src="'+esc(item.url)+'" alt="Destaque">')+'<span>'+esc(item.name||"Destaque")+'</span><button type="button" class="btn secondary club-profile-banner-remove" data-banner-index="'+index+'">Remover</button></div>').join(""):'<span>Nenhum banner cadastrado.</span>';
+ const visible=banners.map((item,index)=>({item,index})).filter(entry=>entry.item.type!=="cover");
+ list.innerHTML=visible.length?visible.map(({item,index})=>'<div class="club-profile-banner-item">'+(item.type==="video"?'<video src="'+esc(item.url)+'" controls muted playsinline></video>':'<img src="'+esc(item.url)+'" alt="Destaque">')+'<span>'+esc(item.name||"Destaque")+'</span><button type="button" class="btn secondary club-profile-banner-remove" data-banner-index="'+index+'">Remover</button></div>').join(""):'<span>Nenhum banner cadastrado.</span>';
 }
 $("club-profile-banner-list")?.addEventListener("click",async event=>{
  const button=event.target.closest(".club-profile-banner-remove"); if(!button||!selectedClubId)return;
@@ -11239,24 +11283,20 @@ $("club-tournaments-back-btn").addEventListener("click", () => {
   setClubManagementTab("overview");
 });
 
+$("club-logo-edit-btn")?.addEventListener("click",()=>$("club-settings-logo").click());
+$("club-cover-edit-btn")?.addEventListener("click",()=>$("club-settings-cover").click());
 $("club-settings-logo").addEventListener("change", () => {
-  const file = $("club-settings-logo").files[0];
-  const preview = $("club-logo-preview");
-
-  if (!file) return;
-
-  if (!file.type.startsWith("image/")) {
-    alert("Selecione um arquivo de imagem.");
-    return;
-  }
-
-  if (file.size > 3 * 1024 * 1024) {
-    alert("A imagem deve ter no máximo 3 MB.");
-    return;
-  }
-
-  preview.src = URL.createObjectURL(file);
-  preview.style.display = "block";
+  const file=$("club-settings-logo").files[0]; if(!file)return;
+  if(!file.type.startsWith("image/")){alert("Selecione um arquivo de imagem.");$("club-settings-logo").value="";return;}
+  if(file.size>3*1024*1024){alert("A logo deve ter no máximo 3 MB.");$("club-settings-logo").value="";return;}
+  const url=URL.createObjectURL(file),preview=$("club-logo-preview"),logo=$("club-details-logo");
+  preview.src=url;preview.style.display="block";logo.src=url;logo.style.display="block";
+});
+$("club-settings-cover").addEventListener("change",()=>{
+  const file=$("club-settings-cover").files[0];if(!file)return;
+  if(!file.type.startsWith("image/")){alert("Selecione uma imagem para o banner.");$("club-settings-cover").value="";return;}
+  if(file.size>10*1024*1024){alert("O banner deve ter no máximo 10 MB.");$("club-settings-cover").value="";return;}
+  $("club-cover-image").src=URL.createObjectURL(file);$("club-cover-wrap").classList.add("has-cover");
 });
 
 
@@ -11268,20 +11308,31 @@ $("save-club-settings-btn").addEventListener("click", async () => {
   const description=$("club-settings-description").value.trim(),address=$("club-settings-address").value.trim(),postal_code=$("club-settings-postal-code").value.trim();
   const cnpj=$("club-settings-cnpj").value.trim(),contact_ddi=$("club-settings-ddi").value.trim()||"+55",contact_phone=$("club-settings-phone").value.trim();
   const instagram_handle=$("club-settings-instagram").value.trim().replace(/^@/,""),whatsapp=$("club-settings-whatsapp").value.trim();
-  const logoFile=$("club-settings-logo").files[0],bannerFiles=Array.from($("club-settings-banners").files||[]);
+  const logoFile=$("club-settings-logo").files[0],coverFile=$("club-settings-cover").files[0],bannerFiles=Array.from($("club-settings-banners").files||[]);
   if(!name){alert("Informe o nome do estabelecimento.");return;}
   let latitude=null,longitude=null;
   if(address){const q=encodeURIComponent(address+", "+city+", "+state+", Brasil");const response=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+q);if(!response.ok)throw new Error("Falha ao localizar o endereço.");const geo=await response.json(),point=geo[0];if(!point){alert("Endereço não localizado. Confira o endereço informado.");return;}latitude=parseFloat(point.lat);longitude=parseFloat(point.lon);}
   let logo_url;
   if(logoFile){const ext=logoFile.type==="image/png"?"png":logoFile.type==="image/webp"?"webp":"jpg";const path=selectedClubId+"/"+Date.now()+"."+ext;const {error}=await db.storage.from("club-logos").upload(path,logoFile,{contentType:logoFile.type,upsert:false});if(error)throw new Error("Erro ao enviar logo: "+error.message);logo_url=db.storage.from("club-logos").getPublicUrl(path).data.publicUrl;}
   let banners=Array.isArray(clubProfileBanners)?[...clubProfileBanners]:[];
+  if(coverFile){
+   const ext=coverFile.type==="image/png"?"png":coverFile.type==="image/webp"?"webp":"jpg";
+   const path=selectedClubId+"/cover/"+Date.now()+"."+ext;
+   const {error}=await db.storage.from("club-logos").upload(path,coverFile,{contentType:coverFile.type,upsert:false});
+   if(error)throw new Error("Erro ao enviar banner: "+error.message);
+   const url=db.storage.from("club-logos").getPublicUrl(path).data.publicUrl;
+   banners=banners.filter(item=>item.type!=="cover");
+   banners.push({url:url,type:"cover",name:coverFile.name});
+  }
   for(const file of bannerFiles){if(file.size>50*1024*1024)throw new Error("O arquivo "+file.name+" ultrapassa 50 MB.");const ext=(file.name.split(".").pop()||"bin").replace(/[^a-z0-9]/gi,"").toLowerCase();const path=selectedClubId+"/banners/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;const {error}=await db.storage.from("club-logos").upload(path,file,{contentType:file.type,upsert:false});if(error)throw new Error("Erro ao enviar "+file.name+": "+error.message);const url=db.storage.from("club-logos").getPublicUrl(path).data.publicUrl;banners.push({url:url,type:file.type.startsWith("video/")?"video":"image",name:file.name});}
   const updates={name:name,city:city,state:state,address:address,postal_code:postal_code,latitude:latitude,longitude:longitude,description:description,cnpj:cnpj,contact_ddi:contact_ddi,contact_phone:contact_phone,instagram_handle:instagram_handle,whatsapp:whatsapp,banners:banners};if(logo_url)updates.logo_url=logo_url;
   const {error}=await db.from("clubs").update(updates).eq("id",selectedClubId);if(error)throw error;
   clubProfileBanners=banners;renderClubProfileBanners(banners);$("club-details-title").textContent=name;$("club-details-city").textContent=city+" - "+state;$("club-details-address").textContent=address||"Endereço não informado.";$("club-details-description").textContent=description||"Nenhuma descrição cadastrada.";
   $("club-settings-map").src=latitude!==null&&longitude!==null?"https://www.google.com/maps?q="+latitude+","+longitude+"&output=embed":"";$("club-settings-address-summary").textContent=[address,city,state,postal_code].filter(Boolean).join(", ")||"Informe o endereço para visualizar o mapa.";
-  if(logo_url){$("club-details-logo").src=logo_url;$("club-details-logo").style.display="block";$("club-logo-preview").src=logo_url;}
-  $("club-settings-logo").value="";$("club-settings-banners").value="";alert("Perfil do estabelecimento salvo com sucesso!");
+  if(logo_url){$("club-details-logo").src=logo_url;$("club-details-logo").style.display="block";$("club-logo-preview").src=logo_url;$("club-logo-preview").style.display="block";}
+  const savedCover=banners.find(item=>item.type==="cover");
+  if(savedCover?.url){$("club-cover-image").src=savedCover.url;$("club-cover-wrap").classList.add("has-cover");}
+  $("club-settings-logo").value="";$("club-settings-cover").value="";$("club-settings-banners").value="";alert("Perfil do estabelecimento salvo com sucesso!");
  }catch(error){console.error("Erro ao salvar perfil do clube:",error);alert("Não foi possível salvar o perfil: "+(error.message||error));}
  finally{button.disabled=false;button.textContent="Salvar alterações";}
 });
@@ -11732,6 +11783,10 @@ if (isStaff) {
   $("club-settings-address").value = club.address || "";
   clubProfileBanners=Array.isArray(club.banners)?club.banners:[];
   renderClubProfileBanners(clubProfileBanners);
+  const savedCover=clubProfileBanners.find(item=>item.type==="cover");
+  if(savedCover?.url){$("club-cover-image").src=savedCover.url;$("club-cover-wrap").classList.add("has-cover");}
+  else{$("club-cover-image").removeAttribute("src");$("club-cover-wrap").classList.remove("has-cover");}
+  $("club-settings-cover").value="";
   $("club-settings-address-summary").textContent=[club.address,club.city,club.state,club.postal_code].filter(Boolean).join(", ")||"Informe o endereço para visualizar o mapa.";
   $("club-settings-map").src=club.latitude!=null&&club.longitude!=null?"https://www.google.com/maps?q="+club.latitude+","+club.longitude+"&output=embed":"";
   $("club-details-city").textContent =
