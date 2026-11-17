@@ -3960,7 +3960,6 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <button type="button" class="admin-sidebar-link" data-admin-nav="calendar" title="Calendário"><span class="admin-sidebar-icon">▦</span><span class="admin-sidebar-text">Calendário</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="appearance" title="Aparência"><span class="admin-sidebar-icon">◐</span><span class="admin-sidebar-text">Aparência</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="clubs" title="Meu clube"><span class="admin-sidebar-icon">♣</span><span class="admin-sidebar-text">Meu clube</span></button>
-      <button type="button" class="admin-sidebar-link" data-admin-nav="settings" title="Configurações"><span class="admin-sidebar-icon">⚙</span><span class="admin-sidebar-text">Configurações</span></button>
       <button type="button" class="admin-sidebar-link" data-admin-nav="astro" title="Astro"><span class="admin-sidebar-icon">✦</span><span class="admin-sidebar-text">Astro</span></button>
     </nav>
   </div>
@@ -7655,35 +7654,6 @@ async function handleAdminSidebarNavigation(key) {
     }
     return;
   }
-  if (key === "settings") {
-    $("tournament-tree")?.classList.add("hidden");
-    $("tournament-app")?.classList.add("hidden");
-    $("nearby-tournaments-screen")?.classList.add("hidden");
-    if (isClubManager && managedClubId && String(selectedClubId) !== String(managedClubId)) {
-      try {
-        await openClub(managedClubId);
-      } catch (error) {
-        console.error("Erro ao carregar clube para configurações:", error);
-        alert("Não foi possível carregar seu clube. " + (error?.message || "Tente novamente."));
-        return;
-      }
-    }
-    if (selectedClubId && !$("club-details-area").classList.contains("hidden")) {
-      ["club-management-area","club-tournaments-area","club-clock-area","club-blinds-area","club-haver-area"].forEach(id => $(id)?.classList.add("hidden"));
-      $("club-details-area").classList.add("club-subview-active");
-      $("club-settings-area").classList.remove("hidden");
-      $("club-settings-name").value = $("club-details-title").textContent;
-      $("club-settings-city").value = $("club-details-city").textContent.split(" - ")[0];
-      $("club-settings-state").value = $("club-details-city").textContent.split(" - ")[1] || "";
-      $("club-settings-description").value = $("club-details-description").textContent;
-      $("club-settings-address").value = $("club-details-address").textContent === "Endereço não informado." ? "" : $("club-details-address").textContent;
-      setAdminSidebarActive("settings");
-    } else {
-      await openAdminClubs();
-      alert("Abra o clube desejado e depois acesse Configurações.");
-    }
-    return;
-  }
   const sections = {
     stages: ["stages-view","stages"],
     ranking: ["tournament-ranking-view","ranking"],
@@ -11061,6 +11031,7 @@ $("club-settings-btn").addEventListener("click", () => {
   $("club-settings-city").value = $("club-details-city").textContent.split(" - ")[0];
   $("club-settings-state").value = $("club-details-city").textContent.split(" - ")[1] || "";
   $("club-settings-description").value = $("club-details-description").textContent;
+  $("club-settings-address").value = $("club-details-address").textContent === "Endereço não informado." ? "" : $("club-details-address").textContent;
 });
 
 $("club-tournaments-back-btn").addEventListener("click", () => {
