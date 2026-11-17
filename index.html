@@ -4515,13 +4515,56 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   <p id="club-details-description"></p>
   <div id="club-management-area" class="club-management-tabs-wrap">
     <div class="club-management-tabs" role="tablist" aria-label="Seções do clube">
-      <button type="button" class="club-management-tab active" id="club-overview-tab" data-club-tab="overview" role="tab" aria-selected="true">Visão geral</button>
+      <button type="button" class="club-management-tab active" id="club-overview-tab" data-club-tab="overview" role="tab" aria-selected="true">Perfil</button>
       <button type="button" class="club-management-tab" id="club-organizers-btn" data-club-tab="organizers" role="tab" aria-selected="false">Organizadores</button>
       <button type="button" class="club-management-tab" id="club-blinds-btn" data-club-tab="blinds" role="tab" aria-selected="false">♠ Estruturas de Blinds</button>
-      <button type="button" class="club-management-tab" id="club-settings-btn" data-club-tab="settings" role="tab" aria-selected="false">⚙ Configurações</button>
+      
       <button type="button" class="club-management-tab" id="club-clock-tab-btn" data-club-tab="clock" role="tab" aria-selected="false">Relógio</button>
     </div>
   </div>
+<div id="club-profile-edit-area" class="club-profile-edit-area hidden">
+  <h3>PERFIL DO CLUBE</h3>
+  <label>Logo do clube</label>
+<input
+  type="file"
+  id="club-settings-logo"
+  accept="image/png, image/jpeg, image/webp"
+>
+
+<img
+  id="club-logo-preview"
+  src=""
+  alt="Pré-visualização da logo"
+  style="display:none; width:120px; height:120px; object-fit:contain; margin:10px 0;"
+>
+
+  <label>Nome do clube</label>
+  <input type="text" id="club-settings-name">
+
+  <label>Cidade</label>
+  <input type="text" id="club-settings-city">
+
+  <label>Estado</label>
+  <input type="text" id="club-settings-state">
+
+  <label>Endereço do clube</label>
+<input
+  type="text"
+  id="club-settings-address"
+  placeholder="Rua, número e bairro"
+>
+
+  <label>Descrição</label>
+  <textarea id="club-settings-description"></textarea>
+
+  <button class="btn" id="save-club-settings-btn">
+    Salvar alterações
+  </button>
+
+  
+</div>
+
+
 </div>
 
   
@@ -4659,51 +4702,6 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       Voltar ao clube
     </button>
   </div>
-<div id="club-settings-area" class="club-tournaments-panel hidden">
-  <h3>CONFIGURAÇÕES DO CLUBE</h3>
-  <label>Logo do clube</label>
-<input
-  type="file"
-  id="club-settings-logo"
-  accept="image/png, image/jpeg, image/webp"
->
-
-<img
-  id="club-logo-preview"
-  src=""
-  alt="Pré-visualização da logo"
-  style="display:none; width:120px; height:120px; object-fit:contain; margin:10px 0;"
->
-
-  <label>Nome do clube</label>
-  <input type="text" id="club-settings-name">
-
-  <label>Cidade</label>
-  <input type="text" id="club-settings-city">
-
-  <label>Estado</label>
-  <input type="text" id="club-settings-state">
-
-  <label>Endereço do clube</label>
-<input
-  type="text"
-  id="club-settings-address"
-  placeholder="Rua, número e bairro"
->
-
-  <label>Descrição</label>
-  <textarea id="club-settings-description"></textarea>
-
-  <button class="btn" id="save-club-settings-btn">
-    Salvar alterações
-  </button>
-
-  <button class="btn secondary" id="club-settings-back-btn">
-    Voltar ao clube
-  </button>
-</div>
-
-
 <div id="club-clock-area" class="club-tournaments-panel hidden">
   <div class="box-head">
     <h3>RELÓGIO AO VIVO DO CLUBE</h3>
@@ -6130,8 +6128,7 @@ async function openBlindClockControls(tournamentId) {
   $("club-details-area").classList.add("club-subview-active");
   $("club-management-area").classList.add("hidden");
   $("club-tournaments-area").classList.add("hidden");
-  $("club-settings-area").classList.add("hidden");
-  $("club-blinds-area").classList.add("hidden");
+    $("club-blinds-area").classList.add("hidden");
   $("club-clock-area").classList.remove("hidden");
   await loadClubClockTournamentOptions();
   $("club-clock-tournament-select").value = tournamentId;
@@ -10621,7 +10618,8 @@ $("close-club-details").addEventListener("click", () => {
 });
 
 function setClubManagementTab(tab){
-  ["club-tournaments-area","club-organizers-area","club-settings-area","club-clock-area","club-blinds-area","club-haver-area"].forEach(id=>$(id)?.classList.add("hidden"));
+  ["club-tournaments-area","club-organizers-area","club-clock-area","club-blinds-area","club-haver-area"].forEach(id=>$(id)?.classList.add("hidden"));
+  $("club-profile-edit-area")?.classList.toggle("hidden",tab!=="overview");
   $("club-management-area")?.classList.remove("hidden");
   $("club-details-area")?.classList.add("club-subview-active");
   document.querySelectorAll(".club-management-tab").forEach(button=>{
@@ -11018,10 +11016,7 @@ async function saveClubBlindStructure() {
   }
 }
 
-$("club-settings-btn").addEventListener("click", () => {
-  setClubManagementTab("settings");
-  $("club-settings-area").classList.remove("hidden");
-
+$("club-overview-tab").addEventListener("click", () => {
   $("club-settings-name").value = $("club-details-title").textContent;
   $("club-settings-city").value = $("club-details-city").textContent.split(" - ")[0];
   $("club-settings-state").value = $("club-details-city").textContent.split(" - ")[1] || "";
@@ -11031,11 +11026,6 @@ $("club-settings-btn").addEventListener("click", () => {
 
 $("club-tournaments-back-btn").addEventListener("click", () => {
   $("club-tournaments-area").classList.add("hidden");
-  setClubManagementTab("overview");
-});
-
-$("club-settings-back-btn").addEventListener("click", () => {
-  $("club-settings-area").classList.add("hidden");
   setClubManagementTab("overview");
 });
 
