@@ -5517,6 +5517,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 <div id="connection-status" class="connection-status">Conectando ao Supabase...</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+let clubProfileBanners=[];
 const SUPABASE_URL="https://fwwkmpnwsyppctxgetkj.supabase.co";
 const SUPABASE_KEY="sb_publishable_SlbpXf6oi5Bw70ABeYp0Eg_nrZ9bQqm";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
@@ -11027,7 +11028,6 @@ async function saveClubBlindStructure() {
   }
 }
 
-let clubProfileBanners=[];
 function renderClubProfileBanners(items){
  const list=$("club-profile-banner-list"); if(!list)return;
  const banners=Array.isArray(items)?items:[];
