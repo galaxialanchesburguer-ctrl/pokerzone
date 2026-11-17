@@ -7522,6 +7522,27 @@ async function openAdminClubs() {
   hideStageSidebar();
   setPublicHomeChrome(false);
   if (!isStaff) return;
+
+  // Fecha qualquer outra área administrativa antes de abrir Meu clube.
+  [
+    "admin-calendar-screen",
+    "admin-astro-screen",
+    "admin-counter-screen",
+    "admin-purchases-screen",
+    "admin-pricing-screen",
+    "admin-market-map-screen",
+    "admin-employees-screen",
+    "admin-accounts-screen",
+    "admin-expenses-screen",
+    "admin-appearance-screen",
+    "tournament-app",
+    "nearby-tournaments-screen",
+    "nearby-clubs-screen",
+    "create-tournament-area",
+    "tournament-search-area",
+    "public-tournament-search",
+    "public-player-search"
+  ].forEach(id => $(id)?.classList.add("hidden"));
   if (isClubManager && managedClubId) {
     try {
       await openClub(managedClubId);
@@ -11642,6 +11663,18 @@ async function createClub() {
 async function openClub(clubId) {
   try {
   setPublicHomeChrome(false);
+  [
+    "admin-calendar-screen",
+    "admin-astro-screen",
+    "admin-counter-screen",
+    "admin-purchases-screen",
+    "admin-pricing-screen",
+    "admin-market-map-screen",
+    "admin-employees-screen",
+    "admin-accounts-screen",
+    "admin-expenses-screen",
+    "admin-appearance-screen"
+  ].forEach(id => $(id)?.classList.add("hidden"));
   $("tournament-app")?.classList.add("hidden");
   $("nearby-tournaments-screen")?.classList.add("hidden");
   $("nearby-clubs-screen")?.classList.add("hidden");
