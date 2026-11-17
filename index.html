@@ -4021,6 +4021,75 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
  .club-profile-header-row>#close-club-details{padding:9px 11px;font-size:11px;margin-bottom:2px}
 }
 
+
+/* Perfil público em formato marketplace */
+#club-details-area.club-public-view{padding:0;overflow:hidden;background:#101010;border:1px solid #282323;border-radius:18px}
+#club-details-area.club-public-view>.club-profile-header{display:block;padding:0;border:0}
+#club-details-area.club-public-view .club-cover-wrap{height:clamp(210px,32vw,330px);border:0;background:linear-gradient(115deg,#2c1116,#111 65%,#3a171d)}
+#club-details-area.club-public-view .club-cover-wrap:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.86),rgba(0,0,0,.04) 72%);pointer-events:none}
+#club-details-area.club-public-view .club-cover-placeholder{align-items:flex-start;justify-content:flex-end;text-align:left;padding:30px 5% 36px;z-index:1}
+#club-details-area.club-public-view .club-cover-placeholder strong{font-size:12px;letter-spacing:2px;color:#ffb7bb}
+#club-details-area.club-public-view .club-cover-placeholder span{font-size:13px;color:#eee}
+#club-details-area.club-public-view .club-cover-edit-btn,#club-details-area.club-public-view .club-logo-edit-btn{display:none!important}
+#club-details-area.club-public-view .club-profile-header-row{position:relative;z-index:2;margin-top:-72px;padding:0 clamp(18px,4vw,42px) 20px;align-items:flex-end}
+#club-details-area.club-public-view .club-profile-brand{margin:0;gap:18px}
+#club-details-area.club-public-view .club-profile-logo-frame{width:116px;height:116px;flex-basis:116px;border:5px solid #101010;background:#191919}
+#club-details-area.club-public-view .club-profile-heading{padding:0 0 8px}
+#club-details-area.club-public-view .club-profile-heading h2{font-size:clamp(25px,4vw,36px);font-weight:900;letter-spacing:-.6px}
+#club-details-area.club-public-view .club-profile-heading span{font-size:10px;color:#ff777e;letter-spacing:2px}
+#club-details-area.club-public-view #close-club-details{margin-bottom:10px}
+#club-details-area.club-public-view>.panel-pad{padding:0 clamp(16px,4vw,42px) 34px}
+#club-details-area.club-public-view>.panel-pad>#club-details-city,
+#club-details-area.club-public-view>.panel-pad>#club-details-address,
+#club-details-area.club-public-view>.panel-pad>#club-details-description{margin:0;padding:12px 0;border:0;color:#bbb;font-size:13px;line-height:1.55}
+#club-details-area.club-public-view>.panel-pad>#club-details-city{font-weight:800;color:#eee;padding-top:0}
+#club-details-area.club-public-view>.panel-pad>#club-details-address{color:#999;padding-top:0}
+#club-details-area.club-public-view>.panel-pad>#club-details-description{font-size:14px;color:#ccc;padding:8px 0 22px}
+#club-details-area.club-public-view #club-tournaments-area{margin:0;padding:25px 0 0;border:0;border-top:1px solid #302929;border-radius:0;background:transparent}
+.club-marketplace-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
+.club-marketplace-heading>div>span{font-size:10px;font-weight:900;letter-spacing:2px;color:#f16a72}
+.club-marketplace-heading h3{margin:5px 0 4px!important;font-size:24px!important;font-weight:900}
+.club-marketplace-heading p{margin:0;color:#999;font-size:13px}
+.club-marketplace-count{flex:0 0 auto;padding:8px 12px;border-radius:20px;background:#241719;color:#ff9da3;font-size:11px;font-weight:800}
+#club-tournaments-list{grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:18px}
+#club-tournaments-list .club-menu-card{overflow:hidden;min-width:0;background:#191919;border:1px solid #302929;border-radius:15px;transition:transform .2s,border-color .2s,box-shadow .2s}
+#club-tournaments-list .club-menu-card:hover{transform:translateY(-3px);border-color:#a83c45;box-shadow:0 12px 30px #0005}
+.club-menu-card-cover{height:175px;position:relative;background:linear-gradient(135deg,#342024,#151515);overflow:hidden}
+.club-menu-card-cover img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}
+.club-menu-card:hover .club-menu-card-cover img{transform:scale(1.04)}
+.club-menu-card-placeholder{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ed3038;background:radial-gradient(circle at center,#402126,#171717 70%)}
+.club-menu-card-placeholder span{font-size:58px;line-height:1}
+.club-menu-card-placeholder small{font-size:10px;font-weight:900;letter-spacing:3px;margin-top:8px;color:#bbb}
+.club-card-cover-tag{position:absolute;left:13px;top:13px;padding:6px 9px;border-radius:5px;background:#111d;color:#fff;font-size:9px;font-weight:900;letter-spacing:1.3px;backdrop-filter:blur(8px)}
+.club-menu-card-body{padding:17px}
+#club-tournaments-list .club-menu-card h3{margin:0 0 8px;font-size:19px;color:#fff;line-height:1.25}
+#club-tournaments-list .club-menu-card p{min-height:36px;margin:0 0 14px;color:#aaa;font-size:12px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.club-card-season{display:flex;flex-direction:column;gap:5px;padding:12px;margin:0 0 15px;border:1px solid #35282a;border-radius:9px;background:#21191a}
+.club-card-season strong{font-size:13px;color:#eee}
+.club-card-season small{font-size:11px;color:#999}
+.club-season-status{align-self:flex-start;padding:4px 7px;border-radius:4px;background:#203326;color:#8bd5a0;font-size:9px;font-weight:900;letter-spacing:.5px}
+.club-card-season-empty{background:#181818;border-color:#2b2b2b}
+.club-card-season-empty>span{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px}
+#club-tournaments-list .club-menu-card .btn{width:100%;display:flex;justify-content:center;align-items:center;gap:8px;padding:12px 14px;border-radius:8px}
+.club-marketplace-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:210px;padding:25px;border:1px dashed #3a3030;border-radius:14px;color:#aaa}
+.club-marketplace-empty>span{font-size:38px;color:#e84b55}
+.club-marketplace-empty strong{margin-top:10px;color:#eee;font-size:16px}
+.club-marketplace-empty p{margin:7px 0 0;font-size:12px;color:#999}
+#club-details-area.club-public-view #club-tournaments-back-btn{display:none}
+@media(max-width:650px){
+ #club-details-area.club-public-view .club-cover-wrap{height:205px}
+ #club-details-area.club-public-view .club-profile-header-row{margin-top:-54px;padding:0 15px 18px;align-items:flex-end}
+ #club-details-area.club-public-view .club-profile-brand{gap:10px}
+ #club-details-area.club-public-view .club-profile-logo-frame{width:82px;height:82px;flex-basis:82px}
+ #club-details-area.club-public-view .club-profile-heading h2{font-size:22px}
+ #club-details-area.club-public-view .club-profile-heading span{font-size:8px}
+ #club-details-area.club-public-view #close-club-details{font-size:11px;padding:9px 11px}
+ #club-details-area.club-public-view>.panel-pad{padding:0 15px 24px}
+ .club-marketplace-heading h3{font-size:21px!important}
+ #club-tournaments-list{grid-template-columns:1fr}
+ .club-menu-card-cover{height:185px}
+}
+
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -4768,7 +4837,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   </div>
 
   <div id="club-tournaments-area" class="club-tournaments-panel hidden">
-    <h3>TORNEIOS DO CLUBE</h3>
+    <div class="club-marketplace-heading"><div><span>AGENDA DO CLUBE</span><h3>Próximos torneios</h3><p>Escolha um torneio e confira os detalhes para participar.</p></div><span class="club-marketplace-count" id="club-tournament-count">—</span></div>
 
     <button class="btn hidden" id="club-create-tournament-btn">
       Criar torneio
@@ -11781,6 +11850,8 @@ async function openClub(clubId) {
     return;
   }
   selectedClubId = club.id;
+  $("club-details-area").classList.toggle("club-public-view", !isStaff);
+  $("club-details-area").classList.toggle("club-admin-view", isStaff);
   $("club-create-tournament-btn").classList.toggle("hidden", !isStaff);
 
 $("manage-clubs-area").classList.add("hidden");
@@ -12730,45 +12801,48 @@ $("close-manage-clubs").addEventListener("click",()=>$("club-haver-area").classL
 
 async function loadClubTournaments() {
   const list = $("club-tournaments-list");
-
   list.textContent = "Carregando torneios...";
-
-  const { data: tournaments, error } = await db
-    .from("tournaments")
-    .select("id, name, description, club_id, cover_url")
-    .eq("club_id", selectedClubId)
-    .order("name");
-
-  if (error) {
-    list.textContent = "Erro ao carregar torneios: " + error.message;
-    return;
-  }
-
+  const count = $("club-tournament-count");
+  const { data: tournaments, error } = await db.from("tournaments")
+    .select("id, name, description, club_id, cover_url, is_public")
+    .eq("club_id", selectedClubId).eq("is_public", true).order("name");
+  if (error) { list.textContent = "Erro ao carregar torneios: " + error.message; return; }
   if (!tournaments || tournaments.length === 0) {
-    list.textContent = "Nenhum torneio cadastrado neste clube.";
+    if(count)count.textContent="0 torneios";
+    list.innerHTML='<div class="club-marketplace-empty"><span>♠</span><strong>Nenhum torneio anunciado</strong><p>Este clube ainda não publicou torneios para visitantes.</p></div>';
     return;
   }
-
-  list.innerHTML = tournaments.map(t => `
-    <article class="club-menu-card">
-      <div class="club-menu-card-cover">${t.cover_url ? `<img src="${escapeHtml(t.cover_url)}" alt="Capa de ${escapeHtml(t.name)}" loading="lazy">` : `<div class="club-menu-card-placeholder"><span>♠</span><small>POKERZONE</small></div>`}</div>
-      <div class="club-menu-card-body"><span class="club-menu-card-kicker">TORNEIO</span><h3>${escapeHtml(t.name)}</h3><p>${escapeHtml(t.description || "Confira as informações deste torneio.")}</p><button class="btn open-club-tournament-btn" data-id="${t.id}">Ver torneio</button></div>
-    </article>
-  `).join("");
-
-  list.querySelectorAll(".open-club-tournament-btn").forEach(button => {
-    button.addEventListener("click", async () => {
-      const { data, error } = await db
-        .from("tournaments")
-        .select("id, name, description, club_id, cover_url")
-        .eq("id", button.dataset.id)
-        .single();
-
-      if (error) {
-        alert("Erro ao abrir torneio: " + error.message);
-        return;
-      }
-
+  const ids=tournaments.map(t=>t.id);
+  const {data:seasons,error:seasonError}=await db.from("seasons")
+    .select("id,name,start_date,end_date,status,tournament_id")
+    .in("tournament_id",ids).order("start_date",{ascending:true});
+  if(seasonError)console.warn("Não foi possível carregar as temporadas públicas:",seasonError);
+  const seasonsByTournament={};
+  (seasons||[]).forEach(s=>(seasonsByTournament[s.tournament_id]||(seasonsByTournament[s.tournament_id]=[])).push(s));
+  const formatDate=value=>value?new Date(value+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}):"";
+  const today=new Date();today.setHours(0,0,0,0);
+  const statusLabel=s=>{
+    if(s.status==="active"||s.status==="in_progress")return "Em andamento";
+    if(s.status==="completed"||s.status==="finished")return "Encerrada";
+    if(s.start_date&&new Date(s.start_date+"T12:00:00")>today)return "Em breve";
+    return s.status==="published"?"Inscrições abertas":"Programada";
+  };
+  if(count)count.textContent=tournaments.length+" "+(tournaments.length===1?"torneio":"torneios");
+  list.innerHTML=tournaments.map(t=>{
+    const seasonList=seasonsByTournament[t.id]||[];
+    const active=seasonList.find(s=>s.status==="active"||s.status==="in_progress")||seasonList.find(s=>s.status!=="completed"&&s.status!=="finished")||seasonList[0];
+    const seasonHtml=active?`<div class="club-card-season"><span class="club-season-status">${escapeHtml(statusLabel(active))}</span><strong>${escapeHtml(active.name||"Temporada")}</strong><small>${formatDate(active.start_date)}${active.start_date&&active.end_date?" — ":""}${formatDate(active.end_date)}</small></div>`:'<div class="club-card-season club-card-season-empty"><span>Temporada</span><strong>Consulte os detalhes</strong></div>';
+    return `<article class="club-menu-card">
+      <div class="club-menu-card-cover">${t.cover_url?`<img src="${escapeHtml(t.cover_url)}" alt="Capa de ${escapeHtml(t.name)}" loading="lazy">`:`<div class="club-menu-card-placeholder"><span>♠</span><small>POKERZONE</small></div>`}<span class="club-card-cover-tag">TORNEIO</span></div>
+      <div class="club-menu-card-body"><h3>${escapeHtml(t.name)}</h3><p>${escapeHtml(t.description||"Confira as informações e participe deste torneio.")}</p>${seasonHtml}<button class="btn open-club-tournament-btn" data-id="${t.id}">Ver torneio <span aria-hidden="true">→</span></button></div>
+    </article>`;
+  }).join("");
+  list.querySelectorAll(".open-club-tournament-btn").forEach(button=>{
+    button.addEventListener("click",async()=>{
+      button.disabled=true;button.textContent="Abrindo...";
+      const {data,error}=await db.from("tournaments").select("id,name,description,club_id,cover_url")
+        .eq("id",button.dataset.id).single();
+      if(error){alert("Erro ao abrir torneio: "+error.message);button.disabled=false;button.textContent="Ver torneio →";return;}
       await openTournament(data);
     });
   });
