@@ -5565,28 +5565,6 @@ let managedClubId=null, isClubManager=false;
 let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}, tournamentEntryCustomers=[], activeTournamentStage=null, selectedTournamentEntryPlayerId="";
 const $=id=>document.getElementById(id);
 
-/* Abre a janela de endereço por delegação global, mesmo se módulos posteriores falharem. */
-document.addEventListener("click",event=>{
- const trigger=event.target.closest("#club-edit-address-btn");
- if(!trigger)return;
- event.preventDefault();
- const modal=document.getElementById("club-address-editor-modal");
- if(!modal){console.error("Janela de atualização de endereço não encontrada.");return;}
- const search=document.getElementById("club-address-search-input");
- const number=document.getElementById("club-address-number-input");
- const suggestions=document.getElementById("club-address-suggestions");
- const status=document.getElementById("club-address-search-status");
- const confirm=document.getElementById("club-address-confirm");
- if(search)search.value="";
- if(number)number.value="";
- if(suggestions){suggestions.innerHTML="";suggestions.classList.add("hidden");}
- if(status)status.textContent="Comece digitando o nome da rua ou o CEP.";
- if(confirm)confirm.disabled=true;
- modal.classList.remove("hidden");
- if(search)setTimeout(()=>search.focus(),80);
-},true);
-
-
 // Registra o login antes dos demais módulos para evitar que falhas posteriores bloqueiem o acesso.
 const loginButton = $("login-btn");
 if (loginButton) loginButton.addEventListener("click", handleSystemLogin);
@@ -13897,6 +13875,31 @@ function pricingRecipeOpen(id){const x=pricingRecipes.find(r=>String(r.id)===Str
 async function pricingRecipeSave(){const name=$("pricing-recipe-name").value.trim();if(!name){$("pricing-recipe-status").textContent="Informe o nome da receita.";return;}if(!pricingNumber($("pricing-recipe-yield").value)||!pricingNumber($("pricing-recipe-portion").value)){$("pricing-recipe-status").textContent="Informe o rendimento total e o peso de cada potinho.";return;}if(!pricingRecipeLines.length||pricingRecipeLines.some(x=>!pricingRecipeSource(x.name)||pricingNumber(x.qty)<=0)){$("pricing-recipe-status").textContent="Selecione ingredientes cadastrados e informe as quantidades.";return;}const x={id:pricingCurrentRecipeId,name,ingredients:pricingRecipeLines,yield:pricingNumber($("pricing-recipe-yield").value),portion:pricingNumber($("pricing-recipe-portion").value),package:pricingNumber($("pricing-recipe-package").value),markup:pricingNumber($("pricing-recipe-markup").value),sale:pricingNumber($("pricing-recipe-sale").value)};const i=pricingRecipes.findIndex(r=>r.id===x.id);if(i>=0)pricingRecipes[i]=x;else pricingRecipes.unshift(x);try{await pricingPersistAll();$("pricing-recipe-status").textContent="✓ Receita salva na nuvem!";}catch(error){console.error("Erro ao salvar receita:",error);$("pricing-recipe-status").textContent="Não foi possível salvar na nuvem: "+(error.message||"");}}
 $("pricing-tab-recipes").addEventListener("click",()=>pricingSetListTab("recipes"));$("pricing-create-recipe").addEventListener("click",()=>pricingRecipeOpen(null));$("pricing-recipes-search").addEventListener("input",pricingRenderRecipes);$("pricing-recipes-grid").addEventListener("click",e=>{const b=e.target.closest("[data-recipe-open]");if(b)pricingRecipeOpen(b.dataset.recipeOpen);});$("pricing-recipe-back").addEventListener("click",()=>pricingSetListTab("recipes"));$("pricing-recipe-add-line").addEventListener("click",()=>{pricingRecipeLines.push({name:"",qty:0});pricingRecipeRenderLines();});$("pricing-recipe-lines").addEventListener("input",e=>{const q=e.target.closest("[data-recipe-qty]");if(q){pricingRecipeLines[+q.dataset.recipeQty].qty=q.value;pricingRecipeUpdate();}});$("pricing-recipe-lines").addEventListener("change",e=>{const q=e.target.closest("[data-recipe-ing]");if(q){pricingRecipeLines[+q.dataset.recipeIng].name=q.value;pricingRecipeRenderLines();}});$("pricing-recipe-lines").addEventListener("click",e=>{const q=e.target.closest("[data-recipe-del]");if(q){pricingRecipeLines.splice(+q.dataset.recipeDel,1);pricingRecipeRenderLines();}});["pricing-recipe-yield","pricing-recipe-portion","pricing-recipe-package","pricing-recipe-markup","pricing-recipe-sale"].forEach(id=>$(id).addEventListener("input",pricingRecipeUpdate));$("pricing-recipe-save").addEventListener("click",pricingRecipeSave);
 
+</script>
+<script>
+/* Controle independente do editor de endereço: não depende do Supabase nem do script principal. */
+(function(){
+ document.addEventListener("click",function(event){
+  const target=event.target;
+  const trigger=target&&target.closest?target.closest("#club-edit-address-btn"):null;
+  if(!trigger)return;
+  event.preventDefault();
+  const modal=document.getElementById("club-address-editor-modal");
+  const search=document.getElementById("club-address-search-input");
+  const number=document.getElementById("club-address-number-input");
+  const suggestions=document.getElementById("club-address-suggestions");
+  const status=document.getElementById("club-address-search-status");
+  const confirm=document.getElementById("club-address-confirm");
+  if(!modal){console.error("Janela de atualização de endereço não encontrada.");return;}
+  if(search)search.value="";
+  if(number)number.value="";
+  if(suggestions){suggestions.innerHTML="";suggestions.classList.add("hidden");}
+  if(status)status.textContent="Comece digitando o nome da rua ou o CEP.";
+  if(confirm)confirm.disabled=true;
+  modal.classList.remove("hidden");
+  if(search)window.setTimeout(function(){search.focus();},80);
+ },true);
+})();
 </script>
 </body>
 </html>
