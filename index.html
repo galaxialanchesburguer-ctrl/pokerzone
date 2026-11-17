@@ -7475,13 +7475,18 @@ function showAdminHome() {
   });
   setAdminSidebarActive("home");
 }
-function openAdminClubs() {
+async function openAdminClubs() {
   hideStageSidebar();
   setPublicHomeChrome(false);
   if (!isStaff) return;
   if (isClubManager && managedClubId) {
-    openClub(managedClubId);
-    setAdminSidebarActive("clubs");
+    try {
+      await openClub(managedClubId);
+      setAdminSidebarActive("clubs");
+    } catch (error) {
+      console.error("Erro ao abrir Meu clube:", error);
+      alert("Não foi possível abrir seu clube. " + (error?.message || "Tente novamente."));
+    }
     return;
   }
   $("tournament-app").classList.add("hidden");
@@ -7626,7 +7631,7 @@ async function handleAdminSidebarNavigation(key) {
   }
   if (key === "clubs") {
     $("tournament-tree")?.classList.add("hidden");
-    openAdminClubs();
+    await openAdminClubs();
     return;
   }
   if (key === "clients") {
@@ -7656,6 +7661,15 @@ async function handleAdminSidebarNavigation(key) {
     $("tournament-tree")?.classList.add("hidden");
     $("tournament-app")?.classList.add("hidden");
     $("nearby-tournaments-screen")?.classList.add("hidden");
+    if (isClubManager && managedClubId && String(selectedClubId) !== String(managedClubId)) {
+      try {
+        await openClub(managedClubId);
+      } catch (error) {
+        console.error("Erro ao carregar clube para configurações:", error);
+        alert("Não foi possível carregar seu clube. " + (error?.message || "Tente novamente."));
+        return;
+      }
+    }
     if (selectedClubId && !$("club-details-area").classList.contains("hidden")) {
       ["club-management-area","club-tournaments-area","club-clock-area","club-blinds-area","club-haver-area"].forEach(id => $(id)?.classList.add("hidden"));
       $("club-details-area").classList.add("club-subview-active");
@@ -7664,9 +7678,10 @@ async function handleAdminSidebarNavigation(key) {
       $("club-settings-city").value = $("club-details-city").textContent.split(" - ")[0];
       $("club-settings-state").value = $("club-details-city").textContent.split(" - ")[1] || "";
       $("club-settings-description").value = $("club-details-description").textContent;
+      $("club-settings-address").value = $("club-details-address").textContent === "Endereço não informado." ? "" : $("club-details-address").textContent;
       setAdminSidebarActive("settings");
     } else {
-      openAdminClubs();
+      await openAdminClubs();
       alert("Abra o clube desejado e depois acesse Configurações.");
     }
     return;
@@ -7681,7 +7696,14 @@ async function handleAdminSidebarNavigation(key) {
   if (sections[key]) openAdminTournamentSection(...sections[key]);
 }
 document.querySelectorAll("[data-admin-nav]").forEach(button => {
-  button.addEventListener("click", () => handleAdminSidebarNavigation(button.dataset.adminNav));
+  button.addEventListener("click", async () => {
+    try {
+      await handleAdminSidebarNavigation(button.dataset.adminNav);
+    } catch (error) {
+      console.error("Erro na navegação do painel:", error);
+      alert("Não foi possível abrir esta seção. " + (error?.message || "Tente novamente."));
+    }
+  });
 });
 
 const PRICING_STORAGE_KEY="pokerzone_astro_pricing_v1";
