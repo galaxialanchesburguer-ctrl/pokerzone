@@ -10452,7 +10452,7 @@ function renderTournamentDetails(details) {
       '<div class="info-edit-grid">' +
       field("edit-tournament-name", "Nome do torneio", tournament.name || "", "text") +
       `<div class="info-form-field info-form-field-wide"><label for="edit-tournament-description">Descrição do torneio</label><textarea id="edit-tournament-description" rows="3">${esc(tournament.description || "")}</textarea></div>` +
-      `<div class="info-form-field info-form-field-wide"><label for="edit-tournament-cover">Foto de capa do torneio</label>${tournament.cover_url ? `<img src="${esc(tournament.cover_url)}" alt="Capa atual do torneio" style="display:block;width:100%;max-width:360px;max-height:180px;object-fit:cover;border-radius:10px;margin:8px 0 12px">` : `<p style="color:#999;margin:4px 0 10px">Nenhuma capa cadastrada.</p>`}<input id="edit-tournament-cover" type="file" accept="image/jpeg,image/png,image/webp"><small style="display:block;color:#999">Envie uma nova imagem para substituir a atual. JPG, PNG ou WebP, até 8 MB.</small></div>` +
+      `<div class="info-form-field info-form-field-wide"><label for="edit-tournament-cover">Foto de capa do torneio</label>${tournament.cover_url ? `<img src="${esc(tournament.cover_url)}" alt="Capa atual do torneio" style="display:block;width:100%;max-width:360px;max-height:180px;object-fit:cover;border-radius:10px;margin:8px 0 12px"><label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input id="edit-tournament-remove-cover" type="checkbox" style="width:auto"> Remover capa atual</label>` : `<p style="color:#999;margin:4px 0 10px">Nenhuma capa cadastrada.</p>`}<input id="edit-tournament-cover" type="file" accept="image/jpeg,image/png,image/webp"><small style="display:block;color:#999">Envie uma nova imagem para substituir a atual. JPG, PNG ou WebP, até 8 MB.</small></div>` +
       field("edit-tournament-buy-in", "Buy-in (R$)", details.buy_in) +
       field("edit-tournament-fee", "Taxa do clube (R$ ou %)", details.tournament_fee) +
       '<div class="info-form-field"><label for="edit-tournament-fee-type">Tipo da taxa do clube</label><select id="edit-tournament-fee-type"><option value="fixed">Valor fixo por Buy-in</option><option value="percent">Porcentagem do Buy-in</option></select></div>' +
@@ -10596,6 +10596,7 @@ function renderTournamentDetails(details) {
 }
 
 async function saveTournamentInfo() {
+  if (!isStaff) { alert("Somente administradores e responsáveis pelo clube podem alterar a capa e as informações do torneio."); return; }
   const value = id => $(id).value.trim();
 
   const optionalNumber = id => {
@@ -10629,11 +10630,13 @@ async function saveTournamentInfo() {
   }
 
   const coverFile = $("edit-tournament-cover")?.files?.[0] || null;
+  const removeCover = $("edit-tournament-remove-cover")?.checked || false;
   if (coverFile && (!["image/jpeg","image/png","image/webp"].includes(coverFile.type) || coverFile.size > 8*1024*1024)) { alert("Escolha uma imagem JPG, PNG ou WebP de até 8 MB."); return; }
   const updatedTournament = {
     name: value("edit-tournament-name"),
     description: value("edit-tournament-description") || null
   };
+  if (removeCover && !coverFile) updatedTournament.cover_url = null;
 
   if (!updatedTournament.name) {
     alert("Informe o nome do torneio.");
