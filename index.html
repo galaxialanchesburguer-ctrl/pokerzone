@@ -3964,6 +3964,15 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 .expense-row-actions{white-space:nowrap}.expense-edit-button{border:0;background:transparent;color:#667085;font-size:18px;cursor:pointer;padding:5px 7px}.expense-edit-button:hover{color:#2871bc}.motoboy-driver-controls{flex-wrap:wrap}.motoboy-rate-list-panel{width:min(900px,96vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column}.motoboy-rate-list-subtitle{margin:0 0 12px;color:#a99496;font-size:12px}.motoboy-rate-list-table-wrap{overflow:auto;border:1px solid #493638;border-radius:10px;max-height:58vh}.motoboy-rate-list-table{width:100%;border-collapse:collapse;font-size:12px}.motoboy-rate-list-table th{position:sticky;top:0;background:#302326;color:#f2e5e5;text-align:left;padding:11px 13px;font-weight:800}.motoboy-rate-list-table td{padding:9px 13px;border-top:1px solid #382a2c;color:#d9c8c9}.motoboy-rate-list-table tbody tr:nth-child(even){background:#241b1d}.motoboy-rate-list-table td:last-child{text-align:right;color:#ff938c;font-weight:800;white-space:nowrap}.motoboy-rate-list-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:13px;color:#a99496;font-size:11px}.motoboy-rate-list-footer>div{display:flex;gap:8px}#motoboy-rate-image-status{min-height:16px;color:#a99496;font-size:11px}@media(max-width:600px){.motoboy-rate-list-panel{padding:14px}.motoboy-rate-list-table{min-width:480px}.motoboy-rate-list-footer{align-items:flex-start;flex-direction:column}.motoboy-driver-controls>*{flex:1 1 100%}}
 .motoboy-day-total span small{display:block;margin-top:5px;color:#ffaaa5;font-size:11px;letter-spacing:0}.motoboy-table tr.motoboy-other-row .motoboy-description,.motoboy-table tr.motoboy-other-row .motoboy-value{border-color:#6a5b35;color:#f3d58a}
 
+
+/* Atualização de endereço com busca gratuita OpenStreetMap/Photon */
+.address-editor-modal{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:18px}
+.address-editor-modal.hidden{display:none!important}.address-editor-panel{width:min(100%,620px);max-height:90vh;overflow:auto;background:#171717;border:1px solid #493033;border-radius:16px;box-shadow:0 25px 80px #000;padding:22px}
+.address-editor-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:22px}.address-editor-head h2{font-size:21px;margin:0 0 6px}.address-editor-head p{color:#aaa;font-size:12px;line-height:1.5}
+.address-editor-field{display:grid;gap:8px;color:#ccc;font-size:12px;font-weight:bold;margin:14px 0}.address-editor-field input{width:100%;padding:14px;font-size:14px}
+.address-suggestions{border:1px solid #383838;border-radius:10px;overflow:hidden;background:#101010;margin-top:8px}.address-suggestion{display:block;width:100%;padding:13px 14px;text-align:left;background:transparent;border:0;border-bottom:1px solid #292929;color:#eee;cursor:pointer;font-size:13px;line-height:1.45}.address-suggestion:last-child{border-bottom:0}.address-suggestion:hover{background:#292020}.address-suggestion small{display:block;color:#999;font-size:11px;margin-top:3px}.address-editor-note{color:#888;font-size:10px;line-height:1.5;margin-top:12px}.address-editor-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:22px}
+.club-profile-map-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}.club-profile-map-heading .club-profile-map-title{margin:0}
+@media(max-width:600px){.address-editor-panel{padding:17px}.address-editor-head h2{font-size:18px}.address-editor-actions>*{flex:1}}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -4571,7 +4580,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
       <label>CEP<input type="text" id="club-settings-postal-code" inputmode="numeric" placeholder="00000-000" maxlength="9"></label>
       <label>Cidade<input type="text" id="club-settings-city" placeholder="Cidade"></label><label>Estado<input type="text" id="club-settings-state" placeholder="UF" maxlength="2"></label>
     </div>
-    <div class="club-profile-map-wrap"><div class="club-profile-map-title">Localização no mapa</div><iframe id="club-settings-map" title="Mapa do estabelecimento" loading="lazy"></iframe><p id="club-settings-address-summary">Informe o endereço para visualizar o mapa.</p></div>
+    <div class="club-profile-map-wrap"><div class="club-profile-map-heading"><div class="club-profile-map-title">Localização no mapa</div><button type="button" class="btn secondary" id="club-edit-address-btn">Editar endereço</button></div><iframe id="club-settings-map" title="Mapa do estabelecimento" loading="lazy"></iframe><p id="club-settings-address-summary">Informe o endereço para visualizar o mapa.</p></div>
   </div>
   <div class="club-profile-save-row"><button class="btn" id="save-club-settings-btn">Salvar alterações</button></div>
 </div>
@@ -5530,6 +5539,18 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   </div>
 </div>
 </main>
+
+<div id="club-address-editor-modal" class="address-editor-modal hidden" role="dialog" aria-modal="true" aria-labelledby="club-address-editor-title">
+ <div class="address-editor-panel">
+  <div class="address-editor-head"><div><h2 id="club-address-editor-title">Atualizar endereço</h2><p>Busque o endereço e selecione uma das sugestões para atualizar a localização do clube.</p></div><button type="button" class="btn secondary" id="club-address-close">✕</button></div>
+  <label class="address-editor-field">Buscar endereço e número<input id="club-address-search-input" type="search" autocomplete="off" placeholder="Digite rua, número, bairro ou CEP"></label>
+  <div id="club-address-search-status" class="address-editor-note">Comece digitando o nome da rua ou o CEP.</div>
+  <div id="club-address-suggestions" class="address-suggestions hidden"></div>
+  <label class="address-editor-field">Número / complemento<input id="club-address-number-input" type="text" placeholder="Número do estabelecimento"></label>
+  <div class="address-editor-note">Busca gratuita com dados do OpenStreetMap. As sugestões podem variar conforme a disponibilidade dos dados da região.</div>
+  <div class="address-editor-actions"><button type="button" class="btn secondary" id="club-address-cancel">Cancelar</button><button type="button" class="btn" id="club-address-confirm" disabled>Usar este endereço</button></div>
+ </div>
+</div>
 <footer>POKERZONE © 2026 • TODOS OS DIREITOS RESERVADOS</footer>
 <div id="connection-status" class="connection-status">Conectando ao Supabase...</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11050,6 +11071,103 @@ async function saveClubBlindStructure() {
     $("blind-save-btn").disabled = false;
   }
 }
+
+
+// Busca de endereços gratuita: Photon (OpenStreetMap), sem chave de API.
+let clubAddressSelection=null;
+let clubAddressSearchTimer=null;
+let clubAddressSearchSequence=0;
+const clubAddressStateUF={"Acre":"AC","Alagoas":"AL","Amapá":"AP","Amazonas":"AM","Bahia":"BA","Ceará":"CE","Distrito Federal":"DF","Espírito Santo":"ES","Goiás":"GO","Maranhão":"MA","Mato Grosso":"MT","Mato Grosso do Sul":"MS","Minas Gerais":"MG","Pará":"PA","Paraíba":"PB","Paraná":"PR","Pernambuco":"PE","Piauí":"PI","Rio de Janeiro":"RJ","Rio Grande do Norte":"RN","Rio Grande do Sul":"RS","Rondônia":"RO","Roraima":"RR","Santa Catarina":"SC","São Paulo":"SP","Sergipe":"SE","Tocantins":"TO"};
+function clubAddressOpenEditor(){
+ const modal=$("club-address-editor-modal");
+ if(!modal)return;
+ clubAddressSelection=null;
+ $("club-address-search-input").value="";
+ $("club-address-number-input").value="";
+ $("club-address-suggestions").innerHTML="";
+ $("club-address-suggestions").classList.add("hidden");
+ $("club-address-search-status").textContent="Comece digitando o nome da rua ou o CEP.";
+ $("club-address-confirm").disabled=true;
+ modal.classList.remove("hidden");
+ setTimeout(()=>$("club-address-search-input").focus(),80);
+}
+function clubAddressCloseEditor(){$("club-address-editor-modal")?.classList.add("hidden");}
+function clubAddressFeatureLabel(properties){
+ const street=properties.name||properties.street||properties.locality||"Endereço";
+ const district=properties.district||properties.suburb||properties.neighbourhood||"";
+ const city=properties.city||properties.town||properties.village||properties.municipality||"";
+ const state=properties.state||"";
+ return {street,district,city,state,postcode:properties.postcode||"",houseNumber:properties.housenumber||"",label:[street,district,city,state].filter(Boolean).join(" / ")};
+}
+async function clubAddressSearch(query,sequence){
+ try{
+  const url="https://photon.komoot.io/api/?q="+encodeURIComponent(query)+"&limit=7&lang=pt";
+  const response=await fetch(url,{headers:{Accept:"application/json"}});
+  if(!response.ok)throw new Error("Busca temporariamente indisponível.");
+  const data=await response.json();
+  if(sequence!==clubAddressSearchSequence)return;
+  const features=(data.features||[]).filter(f=>f.geometry?.coordinates&&f.properties?.countrycode==="BR");
+  const list=$("club-address-suggestions");
+  if(!features.length){list.classList.add("hidden");$("club-address-search-status").textContent="Nenhum endereço encontrado. Tente informar rua, cidade ou CEP.";return;}
+  list.innerHTML=features.map((feature,index)=>{
+   const p=feature.properties||{},v=clubAddressFeatureLabel(p);
+   return '<button type="button" class="address-suggestion" data-address-result="'+index+'">'+esc(v.label)+'<small>'+(v.postcode?"CEP "+esc(v.postcode)+" · ":"")+ "Brasil"+'</small></button>';
+  }).join("");
+  list._addressFeatures=features;
+  list.classList.remove("hidden");
+  $("club-address-search-status").textContent="Selecione o endereço correto na lista.";
+ }catch(error){
+  if(sequence!==clubAddressSearchSequence)return;
+  $("club-address-search-status").textContent="Não foi possível buscar agora. Tente novamente em instantes.";
+  console.warn("Busca de endereço:",error);
+ }
+}
+$("club-edit-address-btn")?.addEventListener("click",clubAddressOpenEditor);
+$("club-address-close")?.addEventListener("click",clubAddressCloseEditor);
+$("club-address-cancel")?.addEventListener("click",clubAddressCloseEditor);
+$("club-address-editor-modal")?.addEventListener("click",event=>{if(event.target.id==="club-address-editor-modal")clubAddressCloseEditor();});
+$("club-address-search-input")?.addEventListener("input",()=>{
+ const query=$("club-address-search-input").value.trim();
+ clubAddressSelection=null;$("club-address-confirm").disabled=true;
+ $("club-address-suggestions").classList.add("hidden");
+ clearTimeout(clubAddressSearchTimer);
+ if(query.length<3){$("club-address-search-status").textContent="Digite pelo menos 3 caracteres.";return;}
+ $("club-address-search-status").textContent="Buscando endereços...";
+ const sequence=++clubAddressSearchSequence;
+ clubAddressSearchTimer=setTimeout(()=>clubAddressSearch(query,sequence),650);
+});
+$("club-address-suggestions")?.addEventListener("click",event=>{
+ const button=event.target.closest("[data-address-result]");if(!button)return;
+ const feature=$("club-address-suggestions")._addressFeatures?.[Number(button.dataset.addressResult)];if(!feature)return;
+ const p=feature.properties||{},v=clubAddressFeatureLabel(p),coords=feature.geometry.coordinates;
+ clubAddressSelection={address:[v.street,v.district].filter(Boolean).join(", "),city:v.city,state:clubAddressStateUF[v.state]||v.state,postal_code:v.postcode,latitude:Number(coords[1]),longitude:Number(coords[0])};
+ $("club-address-search-input").value=v.label;
+ $("club-address-number-input").value=v.houseNumber;
+ $("club-address-suggestions").classList.add("hidden");
+ $("club-address-search-status").textContent="Endereço selecionado. Confira o número antes de confirmar.";
+ $("club-address-confirm").disabled=false;
+});
+$("club-address-confirm")?.addEventListener("click",async()=>{
+ if(!clubAddressSelection||!selectedClubId)return;
+ const button=$("club-address-confirm");button.disabled=true;button.textContent="Salvando...";
+ try{
+  const selected=clubAddressSelection,number=$("club-address-number-input").value.trim();
+  const address=[selected.address,number].filter(Boolean).join(", ");
+  const updates={address,city:selected.city,state:selected.state,postal_code:selected.postal_code,latitude:selected.latitude,longitude:selected.longitude};
+  const {error}=await db.from("clubs").update(updates).eq("id",selectedClubId);
+  if(error)throw error;
+  $("club-settings-address").value=address;
+  $("club-settings-city").value=selected.city||"";
+  $("club-settings-state").value=selected.state||"";
+  $("club-settings-postal-code").value=selected.postal_code||"";
+  $("club-details-city").textContent=[selected.city,selected.state].filter(Boolean).join(" - ");
+  $("club-details-address").textContent=address||"Endereço não informado.";
+  $("club-settings-map").src="https://www.google.com/maps?q="+selected.latitude+","+selected.longitude+"&output=embed";
+  $("club-settings-address-summary").textContent=[address,selected.city,selected.state,selected.postal_code].filter(Boolean).join(", ");
+  clubAddressCloseEditor();
+ }catch(error){console.error("Erro ao atualizar endereço:",error);alert("Não foi possível atualizar o endereço: "+(error.message||error));}
+ finally{button.textContent="Usar este endereço";button.disabled=!clubAddressSelection;}
+});
 
 function renderClubProfileBanners(items){
  const list=$("club-profile-banner-list"); if(!list)return;
