@@ -5267,9 +5267,12 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
    <p class="nearby-description">Encontre clubes de poker próximos da sua localização.</p>
    <button id="nearby-clubs-location-btn" class="btn nearby-location-button">📍 Usar minha localização</button>
    <p id="nearby-clubs-location-status">Sua localização ainda não foi identificada.</p>
-   <div id="nearby-clubs-list"><div class="empty">Os clubes próximos aparecerão aqui.</div></div>
-   <h3>MAPA DOS CLUBES</h3>
-   <div id="nearby-clubs-map" style="width:100%;height:350px;border-radius:12px;"></div>
+   <div id="nearby-clubs-browser">
+    <div id="nearby-clubs-list"><div class="empty">Os clubes próximos aparecerão aqui.</div></div>
+    <h3 id="nearby-clubs-map-title">MAPA DOS CLUBES</h3>
+    <div id="nearby-clubs-map" style="width:100%;height:350px;border-radius:12px;"></div>
+   </div>
+   <div id="nearby-club-detail" class="hidden"></div>
   </div>
  </div>
 </section>
@@ -13574,9 +13577,65 @@ async function loadNearbyPublicClubs(){
  nearbyClubsMarkers.forEach(marker=>nearbyClubsMap?.removeLayer(marker));nearbyClubsMarkers=[];
  results.forEach(club=>{const marker=L.marker([Number(club.latitude),Number(club.longitude)]).addTo(nearbyClubsMap).bindPopup('<strong>'+esc(club.name)+'</strong><br>'+esc((club.city||'')+(club.state?' - '+club.state:'')));nearbyClubsMarkers.push(marker);});
  if(!results.length){list.innerHTML='<div class="empty">Nenhum clube público com localização cadastrada foi encontrado.</div>';return;}
- list.innerHTML=results.map(club=>`<div class="nearby-tournament-card"><h3>${esc(club.name)}</h3><p><strong>Cidade:</strong><span>${esc((club.city||'Não informada')+(club.state?' - '+club.state:''))}</span></p><p><strong>Endereço:</strong><span>${esc(club.address||'Não informado')}</span></p><p><strong>Distância:</strong><span>${club.distance.toFixed(1)} km</span></p><button class="btn secondary nearby-club-show-map" data-lat="${club.latitude}" data-lng="${club.longitude}">Ver no mapa</button><button class="btn nearby-club-open" data-club-id="${esc(club.id)}">Abrir clube</button></div>`).join('');
+ list.innerHTML=results.map(club=>`<article class="nearby-tournament-card" style="display:flex;gap:14px;align-items:center;padding:16px;margin:12px 0;border:1px solid var(--border);border-radius:16px;background:var(--card);">
+  ${club.logo_url?`<img src="${esc(club.logo_url)}" alt="" style="width:76px;height:76px;object-fit:cover;border-radius:14px;flex-shrink:0">`:'<div style="width:76px;height:76px;border-radius:14px;background:var(--surface);display:grid;place-items:center;font-size:28px;flex-shrink:0">♠</div>'}
+  <div style="min-width:0;flex:1"><h3 style="margin:0 0 5px">${esc(club.name)}</h3><p style="margin:3px 0">${esc((club.city||'Cidade não informada')+(club.state?' - '+club.state:''))}</p><small>${club.distance.toFixed(1)} km de distância</small><div style="margin-top:10px"><button class="btn nearby-club-open" data-club-id="${esc(club.id)}">Ver clube e torneios →</button></div></div>
+ </article>`).join('');
  list.querySelectorAll(".nearby-club-show-map").forEach(button=>button.addEventListener("click",()=>{const lat=Number(button.dataset.lat),lng=Number(button.dataset.lng);nearbyClubsMap.invalidateSize();nearbyClubsMap.setView([lat,lng],16,{animate:true});const marker=nearbyClubsMarkers.find(m=>{const p=m.getLatLng();return Math.abs(p.lat-lat)<.000001&&Math.abs(p.lng-lng)<.000001;});if(marker)marker.openPopup();$("nearby-clubs-map").scrollIntoView({behavior:"smooth",block:"center"});}));
- list.querySelectorAll(".nearby-club-open").forEach(button=>button.addEventListener("click",async()=>{const club=results.find(item=>String(item.id)===button.dataset.clubId);if(club)saveRecentClub(club);$("nearby-clubs-screen").classList.add("hidden");await openClub(button.dataset.clubId);}));
+ list.querySelectorAll(".nearby-club-open").forEach(button=>button.addEventListener("click",async()=>{const club=results.find(item=>String(item.id)===button.dataset.clubId);if(club)saveRecentClub(club);await showNearbyClubDetails(button.dataset.clubId); }));
+}
+async function showNearbyClubDetails(clubId){
+ const browser=$("nearby-clubs-browser"),detail=$("nearby-club-detail");
+ detail.classList.remove("hidden");
+ browser.classList.add("hidden");
+ $("nearby-clubs-location-btn").classList.add("hidden");
+ $("nearby-clubs-location-status").classList.add("hidden");
+ detail.innerHTML='<div class="empty">Carregando perfil do clube e torneios...</div>';
+ try{
+  const {data:club,error:clubError}=await db.from("clubs")
+   .select("id,name,city,state,address,description,logo_url,contact_phone,whatsapp,instagram_handle,latitude,longitude")
+   .eq("id",clubId).single();
+  if(clubError)throw clubError;
+  const {data:tournaments,error:tournamentError}=await db.from("tournaments")
+   .select("id,name,description,club_id").eq("club_id",clubId).order("name");
+  if(tournamentError)throw tournamentError;
+  const tournamentRows=tournaments||[];
+  let seasons=[];
+  if(tournamentRows.length){
+   const {data:seasonRows,error:seasonError}=await db.from("seasons")
+    .select("id,tournament_id,name,start_date,end_date,status")
+    .in("tournament_id",tournamentRows.map(t=>t.id));
+   if(seasonError)throw seasonError;
+   seasons=seasonRows||[];
+  }
+  const today=new Date();today.setHours(0,0,0,0);
+  const dateLabel=value=>{if(!value)return "Data a definir";const d=new Date(value+"T00:00:00");return Number.isNaN(d.getTime())?"Data a definir":d.toLocaleDateString("pt-BR");};
+  const tournamentHtml=tournamentRows.map(t=>{
+   const related=seasons.filter(s=>s.tournament_id===t.id);
+   const upcoming=related.filter(s=>s.status==="active"||!s.end_date||new Date(s.end_date+"T23:59:59")>=today).sort((a,b)=>(a.start_date||"").localeCompare(b.start_date||""));
+   return '<article style="padding:15px;margin:12px 0;border:1px solid var(--border);border-radius:14px;background:var(--card)"><h3 style="margin:0 0 6px">'+esc(t.name)+'</h3><p>'+esc(t.description||"")+'</p>'+
+    (upcoming.length?upcoming.map(s=>'<div style="padding:9px 0;border-top:1px solid var(--border)"><strong>'+esc(s.name||"Temporada")+'</strong><div><small>'+dateLabel(s.start_date)+' — '+dateLabel(s.end_date)+' · '+(s.status==="active"?"Em andamento":"Próxima")+'</small></div></div>').join(""):'<small>Sem temporada futura ou ativa cadastrada.</small>')+
+    '<button class="btn nearby-public-open-tournament" data-tournament-id="'+esc(t.id)+'" style="margin-top:10px">Ver torneio</button></article>';
+  }).join("")||'<div class="empty">Este clube ainda não cadastrou torneios.</div>';
+  const phone=club.whatsapp||club.contact_phone||"";
+  const phoneDigits=String(phone).replace(/\\D/g,"");
+  const contact=phone?'<a href="https://wa.me/'+(phoneDigits.startsWith("55")?phoneDigits:"55"+phoneDigits)+'" target="_blank" rel="noopener" class="btn">WhatsApp / Contato</a>':'';
+  const instagram=club.instagram_handle?'<a href="https://instagram.com/'+encodeURIComponent(String(club.instagram_handle).replace(/^@/,""))+'" target="_blank" rel="noopener" class="btn secondary">Instagram</a>':'';
+  detail.innerHTML='<button id="nearby-club-detail-back" class="btn secondary" style="margin-bottom:14px">← Voltar aos clubes</button>'+
+   '<section style="padding:18px;border:1px solid var(--border);border-radius:18px;background:var(--card)">'+
+   (club.logo_url?'<img src="'+esc(club.logo_url)+'" alt="Logo '+esc(club.name)+'" style="width:104px;height:104px;object-fit:cover;border-radius:18px;margin-bottom:12px">':'')+
+   '<h2 style="margin:0 0 6px">'+esc(club.name)+'</h2><p>'+esc([club.city,club.state].filter(Boolean).join(" - ")||"Localização não informada")+'</p>'+
+   '<p>'+esc(club.description||"Este clube ainda não adicionou uma descrição.")+'</p>'+
+   '<p><strong>Endereço:</strong> '+esc(club.address||"Não informado")+'</p>'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap">'+contact+instagram+'</div></section>'+
+   '<h3 style="margin-top:22px">Torneios deste clube</h3><p>Confira os torneios, temporadas ativas e próximas datas.</p>'+tournamentHtml;
+  $("nearby-club-detail-back").addEventListener("click",()=>{detail.classList.add("hidden");browser.classList.remove("hidden");$("nearby-clubs-location-btn").classList.remove("hidden");$("nearby-clubs-location-status").classList.remove("hidden");});
+  detail.querySelectorAll(".nearby-public-open-tournament").forEach(button=>button.addEventListener("click",async()=>{
+   const {data,error}=await db.from("tournaments").select("id,name,description,club_id").eq("id",button.dataset.tournamentId).single();
+   if(error||!data){alert("Não foi possível abrir este torneio.");return;}
+   await openTournament(data);
+  }));
+ }catch(error){console.error("Erro ao abrir perfil público do clube:",error);detail.innerHTML='<button id="nearby-club-detail-back" class="btn secondary">← Voltar aos clubes</button><div class="notice">Não foi possível carregar o perfil: '+esc(error.message||"erro desconhecido")+'</div>'; $("nearby-club-detail-back").addEventListener("click",()=>{detail.classList.add("hidden");browser.classList.remove("hidden");$("nearby-clubs-location-btn").classList.remove("hidden");$("nearby-clubs-location-status").classList.remove("hidden");});}
 }
 function requestNearbyClubsLocation(){
  const status=$("nearby-clubs-location-status");
