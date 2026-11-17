@@ -1193,6 +1193,12 @@ input:focus,select:focus {
   width: 100%;
 }
 
+.club-management-tabs-wrap{margin:22px 0 8px;border-bottom:1px solid var(--border,#ddd)}
+.club-management-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding:0 2px 10px}
+.club-management-tab{flex:0 0 auto;border:1px solid var(--border,#ddd);background:transparent;color:inherit;border-radius:10px;padding:11px 16px;font:inherit;font-weight:650;cursor:pointer;white-space:nowrap;transition:background .18s,border-color .18s}
+.club-management-tab:hover{background:rgba(128,128,128,.10)}
+.club-management-tab.active{background:var(--accent,#e84b3c);border-color:var(--accent,#e84b3c);color:#fff}
+@media(max-width:640px){.club-management-tabs{gap:6px}.club-management-tab{padding:10px 12px;font-size:13px}}
 #club-tournaments-back-btn {
   margin-top: 22px;
 }
@@ -4516,27 +4522,14 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   </div>
 
 
-  <div id="club-management-area">
-    <h3>GERENCIAMENTO DO CLUBE</h3>
-
-    <div class="home-actions">
-      <button class="btn" id="club-tournaments-btn">
-        Torneios
-      </button>
-
-      <button class="btn secondary" id="club-organizers-btn">
-        Organizadores
-      </button>
-
-
-      <button class="btn secondary" id="club-haver-btn">📒 Contas dos Jogadores</button>
-
-      <button class="btn secondary" id="club-settings-btn">
-        Configurações
-      </button>
-      <button class="btn secondary" id="club-blinds-btn">
-        ♠ Estruturas de Blinds
-      </button>
+  <div id="club-management-area" class="club-management-tabs-wrap">
+    <div class="club-management-tabs" role="tablist" aria-label="Seções do clube">
+      <button type="button" class="club-management-tab active" id="club-overview-tab" data-club-tab="overview" role="tab" aria-selected="true">Visão geral</button>
+      <button type="button" class="club-management-tab" id="club-tournaments-btn" data-club-tab="tournaments" role="tab" aria-selected="false">Torneios</button>
+      <button type="button" class="club-management-tab" id="club-organizers-btn" data-club-tab="organizers" role="tab" aria-selected="false">Organizadores</button>
+      <button type="button" class="club-management-tab" id="club-haver-btn" data-club-tab="haver" role="tab" aria-selected="false">📒 Contas dos Jogadores</button>
+      <button type="button" class="club-management-tab" id="club-blinds-btn" data-club-tab="blinds" role="tab" aria-selected="false">♠ Estruturas de Blinds</button>
+      <button type="button" class="club-management-tab" id="club-settings-btn" data-club-tab="settings" role="tab" aria-selected="false">⚙ Configurações</button>
     </div>
   </div>
 </div>
@@ -4654,6 +4647,11 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
         </div>
       </div>
     </div>
+  </div>
+
+  <div id="club-organizers-area" class="club-tournaments-panel hidden">
+    <div class="box-head"><h3>ORGANIZADORES</h3></div>
+    <div class="panel-pad"><div class="empty">A área de organizadores será estruturada aqui. As permissões atuais do clube continuam funcionando normalmente.</div></div>
   </div>
 
   <div id="club-tournaments-area" class="club-tournaments-panel hidden">
@@ -10658,9 +10656,24 @@ $("close-club-details").addEventListener("click", () => {
   selectedClubId = null;
 });
 
+function setClubManagementTab(tab){
+  ["club-tournaments-area","club-organizers-area","club-settings-area","club-clock-area","club-blinds-area","club-haver-area"].forEach(id=>$(id)?.classList.add("hidden"));
+  $("club-management-area")?.classList.remove("hidden");
+  $("club-details-area")?.classList.add("club-subview-active");
+  document.querySelectorAll(".club-management-tab").forEach(button=>{
+    const active=button.dataset.clubTab===tab;
+    button.classList.toggle("active",active);
+    button.setAttribute("aria-selected",String(active));
+  });
+  if(tab==="overview") $("club-details-area")?.classList.remove("club-subview-active");
+  else $("club-management-area")?.classList.add("hidden");
+}
+document.querySelectorAll(".club-management-tab").forEach(button=>button.addEventListener("click",()=>{
+  const tab=button.dataset.clubTab;
+  setClubManagementTab(tab);
+}));
 $("club-tournaments-btn").addEventListener("click", async () => {
-  $("club-details-area").classList.add("club-subview-active");
-  $("club-management-area").classList.add("hidden");
+  setClubManagementTab("tournaments");
   $("club-tournaments-area").classList.remove("hidden");
   await loadClubTournaments();
 });
@@ -10670,8 +10683,7 @@ $("club-blinds-btn").addEventListener("click", async () => {
     alert("Acesso restrito à equipe do clube.");
     return;
   }
-  $("club-details-area").classList.add("club-subview-active");
-  $("club-management-area").classList.add("hidden");
+  setClubManagementTab("blinds");
   $("club-blinds-area").classList.remove("hidden");
   await Promise.all([loadClubBlindStructures(), loadBlindStructureClockOptions()]);
   renderBlindPresets();
@@ -10680,8 +10692,7 @@ $("club-blinds-btn").addEventListener("click", async () => {
 
 $("club-blinds-back-btn").addEventListener("click", () => {
   $("club-blinds-area").classList.add("hidden");
-  $("club-details-area").classList.remove("club-subview-active");
-  $("club-management-area").classList.remove("hidden");
+  setClubManagementTab("overview");
 });
 
 $("blind-add-level-btn").addEventListener("click", () => {
@@ -11042,8 +11053,7 @@ async function saveClubBlindStructure() {
 }
 
 $("club-settings-btn").addEventListener("click", () => {
-  $("club-details-area").classList.add("club-subview-active");
-  ["club-management-area","club-tournaments-area","club-clock-area","club-blinds-area","club-haver-area"].forEach(id => $(id)?.classList.add("hidden"));
+  setClubManagementTab("settings");
   $("club-settings-area").classList.remove("hidden");
 
   $("club-settings-name").value = $("club-details-title").textContent;
@@ -11054,14 +11064,12 @@ $("club-settings-btn").addEventListener("click", () => {
 
 $("club-tournaments-back-btn").addEventListener("click", () => {
   $("club-tournaments-area").classList.add("hidden");
-  $("club-details-area").classList.remove("club-subview-active");
-  $("club-management-area").classList.remove("hidden");
+  setClubManagementTab("overview");
 });
 
 $("club-settings-back-btn").addEventListener("click", () => {
   $("club-settings-area").classList.add("hidden");
-  $("club-details-area").classList.remove("club-subview-active");
-  $("club-management-area").classList.remove("hidden");
+  setClubManagementTab("overview");
 });
 
 $("club-settings-logo").addEventListener("change", () => {
@@ -12333,12 +12341,7 @@ async function saveClubHaverEntry() {
 }
 $("club-haver-btn").addEventListener("click",async()=>{
   if (!isStaff || !selectedClubId) { alert("Acesso restrito à equipe do clube."); return; }
-  $("club-details-area").classList.add("club-subview-active");
-  $("club-management-area").classList.add("hidden");
-  $("club-tournaments-area").classList.add("hidden");
-  $("club-settings-area").classList.add("hidden");
-  $("club-clock-area").classList.add("hidden");
-  $("club-blinds-area").classList.add("hidden");
+  setClubManagementTab("haver");
   $("club-haver-area").classList.remove("hidden");
   $("club-haver-overview").classList.remove("hidden");
   $("club-haver-player-detail").classList.add("hidden");
@@ -12347,8 +12350,7 @@ $("club-haver-btn").addEventListener("click",async()=>{
 });
 $("club-haver-back").addEventListener("click",()=>{
   $("club-haver-area").classList.add("hidden");
-  $("club-details-area").classList.remove("club-subview-active");
-  $("club-management-area").classList.remove("hidden");
+  setClubManagementTab("overview");
 });
 $("club-haver-delete-player").addEventListener("click",openClubHaverDeleteModal);
 $("club-haver-edit-profile").addEventListener("click",openClubHaverProfileEdit);
