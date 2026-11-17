@@ -11288,8 +11288,8 @@ $("club-settings-logo").addEventListener("change", () => {
   const file=$("club-settings-logo").files[0]; if(!file)return;
   if(!file.type.startsWith("image/")){alert("Selecione um arquivo de imagem.");$("club-settings-logo").value="";return;}
   if(file.size>3*1024*1024){alert("A logo deve ter no máximo 3 MB.");$("club-settings-logo").value="";return;}
-  const url=URL.createObjectURL(file),preview=$("club-logo-preview"),logo=$("club-details-logo");
-  preview.src=url;preview.style.display="block";logo.src=url;logo.style.display="block";
+  const url=URL.createObjectURL(file),logo=$("club-details-logo");
+  if(logo){logo.src=url;logo.style.display="block";}
 });
 $("club-settings-cover").addEventListener("change",()=>{
   const file=$("club-settings-cover").files[0];if(!file)return;
@@ -11328,7 +11328,7 @@ $("save-club-settings-btn").addEventListener("click", async () => {
   const {error}=await db.from("clubs").update(updates).eq("id",selectedClubId);if(error)throw error;
   clubProfileBanners=banners;renderClubProfileBanners(banners);$("club-details-title").textContent=name;$("club-details-city").textContent=city+" - "+state;$("club-details-address").textContent=address||"Endereço não informado.";$("club-details-description").textContent=description||"Nenhuma descrição cadastrada.";
   $("club-settings-map").src=latitude!==null&&longitude!==null?"https://www.google.com/maps?q="+latitude+","+longitude+"&output=embed":"";$("club-settings-address-summary").textContent=[address,city,state,postal_code].filter(Boolean).join(", ")||"Informe o endereço para visualizar o mapa.";
-  if(logo_url){$("club-details-logo").src=logo_url;$("club-details-logo").style.display="block";$("club-logo-preview").src=logo_url;$("club-logo-preview").style.display="block";}
+  if(logo_url){const logo=$("club-details-logo");if(logo){logo.src=logo_url;logo.style.display="block";}}
   const savedCover=banners.find(item=>item.type==="cover");
   if(savedCover?.url){$("club-cover-image").src=savedCover.url;$("club-cover-wrap").classList.add("has-cover");}
   $("club-settings-logo").value="";$("club-settings-cover").value="";$("club-settings-banners").value="";alert("Perfil do estabelecimento salvo com sucesso!");
@@ -11803,16 +11803,6 @@ if (club.logo_url) {
 } else {
   clubLogo.removeAttribute("src");
   clubLogo.style.display = "none";
-}
-
-    const preview = $("club-logo-preview");
-
-if (club.logo_url) {
-  preview.src = club.logo_url;
-  preview.style.display = "block";
-} else {
-  preview.src = "";
-  preview.style.display = "none";
 }
 
 $("club-settings-logo").value = "";
