@@ -11123,24 +11123,47 @@ function clubAddressFeatureLabel(properties){
 }
 async function clubAddressSearch(query,sequence){
  try{
-  const url="https://photon.komoot.io/api/?q="+encodeURIComponent(query)+"&limit=7&lang=pt";
-  const response=await fetch(url,{headers:{Accept:"application/json"}});
-  if(!response.ok)throw new Error("Busca temporariamente indisponível.");
-  const data=await response.json();
+  const request=async q=>{
+   const url="https://photon.komoot.io/api/?q="+encodeURIComponent(q)+"&limit=12&lang=pt";
+   const response=await fetch(url,{headers:{Accept:"application/json"}});
+   if(!response.ok)throw new Error("Busca temporariamente indisponível (HTTP "+response.status+").");
+   const data=await response.json();
+   return (data.features||[]).filter(f=>f.geometry?.coordinates);
+  };
+  let features=await request(query);
   if(sequence!==clubAddressSearchSequence)return;
-  const features=(data.features||[]).filter(f=>f.geometry?.coordinates&&String(f.properties?.countrycode||"").toUpperCase()==="BR");
+  // Alguns resultados do Photon vêm sem countrycode; não descarte esses endereços.
+  let brazilFeatures=features.filter(f=>{
+   const country=String(f.properties?.countrycode||"").trim().toUpperCase();
+   return !country||country==="BR";
+  });
+  // Se a busca curta não retornar resultados brasileiros, tente reforçar o país.
+  if(!brazilFeatures.length){
+   features=await request(query+" Brasil");
+   if(sequence!==clubAddressSearchSequence)return;
+   brazilFeatures=features.filter(f=>{
+    const country=String(f.properties?.countrycode||"").trim().toUpperCase();
+    return !country||country==="BR";
+   });
+  }
   const list=$("club-address-suggestions");
-  if(!features.length){list.classList.add("hidden");$("club-address-search-status").textContent="Nenhum endereço encontrado. Tente informar rua, cidade ou CEP.";return;}
-  list.innerHTML=features.map((feature,index)=>{
+  if(!brazilFeatures.length){
+   list.innerHTML="";
+   list.classList.add("hidden");
+   $("club-address-search-status").textContent="Nenhum endereço encontrado. Tente buscar por rua + cidade ou CEP.";
+   return;
+  }
+  list.innerHTML=brazilFeatures.map((feature,index)=>{
    const p=feature.properties||{},v=clubAddressFeatureLabel(p);
-   return '<button type="button" class="address-suggestion" data-address-result="'+index+'">'+esc(v.label)+'<small>'+(v.postcode?"CEP "+esc(v.postcode)+" · ":"")+ "Brasil"+'</small></button>';
+   const details=[v.district,v.city,v.state,v.postcode].filter(Boolean).join(" · ");
+   return '<button type="button" class="address-suggestion" data-address-result="'+index+'">'+esc(v.label)+'<small>'+esc(details||"Brasil")+'</small></button>';
   }).join("");
-  list._addressFeatures=features;
+  list._addressFeatures=brazilFeatures;
   list.classList.remove("hidden");
   $("club-address-search-status").textContent="Selecione o endereço correto na lista.";
  }catch(error){
   if(sequence!==clubAddressSearchSequence)return;
-  $("club-address-search-status").textContent="Não foi possível buscar agora. Tente novamente em instantes.";
+  $("club-address-search-status").textContent="Falha na busca de endereços. Verifique sua conexão e tente novamente.";
   console.warn("Busca de endereço:",error);
  }
 }
