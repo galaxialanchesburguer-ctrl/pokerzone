@@ -1797,6 +1797,26 @@ input:focus,select:focus {
 .club-profile-brand{display:flex;align-items:center;gap:17px;min-width:0}
 .club-profile-logo-frame{width:104px;height:104px;flex:0 0 104px;display:grid;place-items:center;overflow:hidden;border-radius:18px;background:linear-gradient(145deg,#242424,#111);border:1px solid #3b3b3b;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:10px}
 #club-details-logo{display:none;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center;transform:none!important;filter:none;flex:none}
+.club-profile-edit-area{max-width:1040px;margin:0 auto;padding:22px 4px 30px}
+.club-profile-section{background:#171717;border:1px solid #303030;border-radius:15px;padding:22px;margin:0 0 18px}
+.club-profile-section-heading{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.club-profile-section-heading>span{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:rgba(237,48,56,.14);color:#ff747b;font-weight:900}
+.club-profile-section-heading h3{margin:0;text-transform:none;font-size:17px;letter-spacing:0}
+.club-profile-section-heading p{margin:5px 0 0;color:#999;font-size:12px}
+.club-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.club-profile-grid>label{display:flex;flex-direction:column;gap:8px;color:#ccc;font-size:12px;font-weight:700;min-width:0}
+.club-profile-grid input,.club-profile-grid textarea,.club-profile-prefix input{width:100%;box-sizing:border-box}
+.club-profile-full{grid-column:1/-1}
+.club-profile-id{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;border:1px solid #333;border-radius:10px;background:#111}
+.club-profile-id small{width:100%;color:#999}.club-profile-id strong{font:12px monospace;overflow-wrap:anywhere;flex:1}
+.club-profile-logo-field{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.club-profile-logo-field label{display:flex;flex-direction:column;gap:8px;color:#ccc;font-size:12px}
+.club-profile-prefix{display:flex;align-items:center;gap:8px}.club-profile-prefix>span{padding:12px;background:#252525;border:1px solid #444;border-radius:8px;color:#aaa}
+.club-profile-upload{display:flex;flex-direction:column;gap:8px;padding:18px;border:1px dashed #555;border-radius:12px;color:#ddd;font-size:13px}
+.club-profile-upload small{color:#999}.club-profile-banner-list{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;color:#999;font-size:12px}
+.club-profile-banner-item{width:150px;background:#101010;border:1px solid #333;border-radius:10px;overflow:hidden}.club-profile-banner-item img,.club-profile-banner-item video{width:100%;height:92px;object-fit:cover;display:block}.club-profile-banner-item span{display:block;padding:7px;overflow-wrap:anywhere}
+.club-profile-map-wrap{margin-top:18px;padding:12px;border:1px solid #333;border-radius:12px;background:#111}.club-profile-map-title{font-weight:800;font-size:12px;margin-bottom:10px}.club-profile-map-wrap iframe{width:100%;height:230px;border:0;border-radius:8px;background:#222}.club-profile-map-wrap p{font-size:12px;color:#aaa;margin:10px 0 0}
+.club-profile-save-row{display:flex;justify-content:flex-end;padding:4px 0 20px}
+@media(max-width:650px){.club-profile-grid{grid-template-columns:1fr}.club-profile-full{grid-column:auto}.club-profile-section{padding:16px}.club-profile-id{align-items:flex-start}}
 .club-profile-heading{min-width:0}
 .club-profile-heading h2{margin:0;overflow-wrap:anywhere}
 .club-profile-heading span{display:block;margin-top:6px;color:#999;font-size:10px;font-weight:800;letter-spacing:2px}
@@ -4523,45 +4543,36 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     </div>
   </div>
 <div id="club-profile-edit-area" class="club-profile-edit-area hidden">
-  <h3>PERFIL DO CLUBE</h3>
-  <label>Logo do clube</label>
-<input
-  type="file"
-  id="club-settings-logo"
-  accept="image/png, image/jpeg, image/webp"
->
-
-<img
-  id="club-logo-preview"
-  src=""
-  alt="Pré-visualização da logo"
-  style="display:none; width:120px; height:120px; object-fit:contain; margin:10px 0;"
->
-
-  <label>Nome do clube</label>
-  <input type="text" id="club-settings-name">
-
-  <label>Cidade</label>
-  <input type="text" id="club-settings-city">
-
-  <label>Estado</label>
-  <input type="text" id="club-settings-state">
-
-  <label>Endereço do clube</label>
-<input
-  type="text"
-  id="club-settings-address"
-  placeholder="Rua, número e bairro"
->
-
-  <label>Descrição</label>
-  <textarea id="club-settings-description"></textarea>
-
-  <button class="btn" id="save-club-settings-btn">
-    Salvar alterações
-  </button>
-
-  
+  <div class="club-profile-section"><div class="club-profile-section-heading"><span>01</span><div><h3>Dados do estabelecimento</h3><p>Informações principais e identificação do clube.</p></div></div>
+    <div class="club-profile-grid">
+      <label>Nome do estabelecimento<input type="text" id="club-settings-name" placeholder="Nome do clube"></label>
+      <label>CNPJ<input type="text" id="club-settings-cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" maxlength="18"></label>
+      <label class="club-profile-full">Descrição<textarea id="club-settings-description" rows="3" placeholder="Conte um pouco sobre o estabelecimento"></textarea></label>
+      <div class="club-profile-id"><small>ID do estabelecimento</small><strong id="club-settings-id">—</strong><button type="button" class="btn secondary" id="club-copy-id-btn">Copiar ID</button></div>
+      <div class="club-profile-logo-field"><label>Logo do estabelecimento<input type="file" id="club-settings-logo" accept="image/png,image/jpeg,image/webp"></label><img id="club-logo-preview" src="" alt="Pré-visualização da logo" style="display:none;width:88px;height:88px;object-fit:contain"></div>
+    </div>
+  </div>
+  <div class="club-profile-section"><div class="club-profile-section-heading"><span>02</span><div><h3>Contato do estabelecimento</h3><p>Como jogadores e visitantes podem falar com o clube.</p></div></div>
+    <div class="club-profile-grid">
+      <label>DDI aceitos<input type="text" id="club-settings-ddi" placeholder="+55"></label>
+      <label>Telefone de contato<input type="tel" id="club-settings-phone" placeholder="(00) 00000-0000"></label>
+      <label>Meu @ no Instagram<div class="club-profile-prefix"><span>@</span><input type="text" id="club-settings-instagram" placeholder="seuinstagram"></div></label>
+      <label>WhatsApp<div class="club-profile-prefix"><span>+55</span><input type="tel" id="club-settings-whatsapp" placeholder="(00) 00000-0000"></div></label>
+    </div>
+  </div>
+  <div class="club-profile-section"><div class="club-profile-section-heading"><span>03</span><div><h3>Banners e Destaques</h3><p>Configure imagens e vídeos para aparecerem no topo do perfil do clube.</p></div></div>
+    <label class="club-profile-upload">Adicionar imagens ou vídeos<input type="file" id="club-settings-banners" accept="image/*,video/mp4,video/webm,video/quicktime" multiple><small>Imagens e vídeos para os destaques do clube.</small></label>
+    <div id="club-profile-banner-list" class="club-profile-banner-list"><span>Nenhum banner cadastrado.</span></div>
+  </div>
+  <div class="club-profile-section"><div class="club-profile-section-heading"><span>04</span><div><h3>Dados para entrega</h3><p>Endereço usado para localizar o estabelecimento.</p></div></div>
+    <div class="club-profile-grid">
+      <label class="club-profile-full">Endereço do estabelecimento<input type="text" id="club-settings-address" placeholder="Rua, número e bairro"></label>
+      <label>CEP<input type="text" id="club-settings-postal-code" inputmode="numeric" placeholder="00000-000" maxlength="9"></label>
+      <label>Cidade<input type="text" id="club-settings-city" placeholder="Cidade"></label><label>Estado<input type="text" id="club-settings-state" placeholder="UF" maxlength="2"></label>
+    </div>
+    <div class="club-profile-map-wrap"><div class="club-profile-map-title">Localização no mapa</div><iframe id="club-settings-map" title="Mapa do estabelecimento" loading="lazy"></iframe><p id="club-settings-address-summary">Informe o endereço para visualizar o mapa.</p></div>
+  </div>
+  <div class="club-profile-save-row"><button class="btn" id="save-club-settings-btn">Salvar alterações</button></div>
 </div>
 
 
