@@ -10588,7 +10588,7 @@ $("close-manage-clubs").addEventListener("click", () => {
   $("manage-clubs-area").classList.add("hidden");
   $("club-details-area").classList.add("hidden");
   $("club-tournaments-area").classList.add("hidden");
-  $("club-settings-area").classList.add("hidden");
+  $("club-profile-edit-area")?.classList.remove("hidden");
   $("club-clock-area").classList.add("hidden");
   $("club-blinds-area").classList.add("hidden");
   $("create-tournament-area").classList.add("hidden");
@@ -11027,6 +11027,22 @@ async function saveClubBlindStructure() {
   }
 }
 
+let clubProfileBanners=[];
+function renderClubProfileBanners(items){
+ const list=$("club-profile-banner-list"); if(!list)return;
+ const banners=Array.isArray(items)?items:[];
+ list.innerHTML=banners.length?banners.map((item,index)=>'<div class="club-profile-banner-item">'+(item.type==="video"?'<video src="'+esc(item.url)+'" controls muted playsinline></video>':'<img src="'+esc(item.url)+'" alt="Destaque">')+'<span>'+esc(item.name||"Destaque")+'</span><button type="button" class="btn secondary club-profile-banner-remove" data-banner-index="'+index+'">Remover</button></div>').join(""):'<span>Nenhum banner cadastrado.</span>';
+}
+$("club-profile-banner-list")?.addEventListener("click",async event=>{
+ const button=event.target.closest(".club-profile-banner-remove"); if(!button||!selectedClubId)return;
+ const index=Number(button.dataset.bannerIndex),items=[...clubProfileBanners]; if(!items[index])return;
+ items.splice(index,1); const {error}=await db.from("clubs").update({banners:items}).eq("id",selectedClubId);
+ if(error){alert("Não foi possível remover: "+error.message);return;} clubProfileBanners=items;renderClubProfileBanners(items);
+});
+$("club-copy-id-btn")?.addEventListener("click",()=>{
+ if(!selectedClubId)return;
+ if(navigator.clipboard?.writeText)navigator.clipboard.writeText(selectedClubId).then(()=>alert("ID copiado!")).catch(()=>alert("Não foi possível copiar o ID."));
+});
 $("club-overview-tab").addEventListener("click", () => {
   $("club-settings-name").value = $("club-details-title").textContent;
   $("club-settings-city").value = $("club-details-city").textContent.split(" - ")[0];
@@ -11062,122 +11078,34 @@ $("club-settings-logo").addEventListener("change", () => {
 
 
 $("save-club-settings-btn").addEventListener("click", async () => {
-  if (!selectedClubId) return;
-
-  const name = $("club-settings-name").value.trim();
-  const city = $("club-settings-city").value.trim();
-  const state = $("club-settings-state").value.trim();
-  const description = $("club-settings-description").value.trim();
-  const address = $("club-settings-address").value.trim();
-  const file = $("club-settings-logo").files[0];
-
-  if (!name) {
-    alert("Informe o nome do clube.");
-    return;
-  }
-
-  let latitude = null;
-  let longitude = null;
-
-  if (address) {
-    try {
-      const query = encodeURIComponent(
-  `${address}, ${city}, ${state}, Brasil`
-);
-
-     const response = await fetch(
-  `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${query}`
-);
-
-if (!response.ok) {
-  throw new Error("Falha na consulta do endereço.");
-}
-
-const geoData = await response.json();
-const coordinates = geoData[0];
-
-if (!coordinates) {
-  alert("Endereço não localizado. Confira o endereço informado.");
-  return;
-}
-
-longitude = parseFloat(coordinates.lon);
-latitude = parseFloat(coordinates.lat);
-
-    } catch (error) {
-      alert("Não foi possível localizar o endereço. Tente novamente.");
-      console.error("Erro ao localizar clube:", error);
-      return;
-    }
-  }
-
+ if(!selectedClubId)return;
+ const button=$("save-club-settings-btn");button.disabled=true;button.textContent="Salvando...";
+ try {
+  const name=$("club-settings-name").value.trim(),city=$("club-settings-city").value.trim(),state=$("club-settings-state").value.trim().toUpperCase();
+  const description=$("club-settings-description").value.trim(),address=$("club-settings-address").value.trim(),postal_code=$("club-settings-postal-code").value.trim();
+  const cnpj=$("club-settings-cnpj").value.trim(),contact_ddi=$("club-settings-ddi").value.trim()||"+55",contact_phone=$("club-settings-phone").value.trim();
+  const instagram_handle=$("club-settings-instagram").value.trim().replace(/^@/,""),whatsapp=$("club-settings-whatsapp").value.trim();
+  const logoFile=$("club-settings-logo").files[0],bannerFiles=Array.from($("club-settings-banners").files||[]);
+  if(!name){alert("Informe o nome do estabelecimento.");return;}
+  let latitude=null,longitude=null;
+  if(address){const q=encodeURIComponent(address+", "+city+", "+state+", Brasil");const response=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q="+q);if(!response.ok)throw new Error("Falha ao localizar o endereço.");const geo=await response.json(),point=geo[0];if(!point){alert("Endereço não localizado. Confira o endereço informado.");return;}latitude=parseFloat(point.lat);longitude=parseFloat(point.lon);}
   let logo_url;
-
-  if (file) {
-    const extension = file.type === "image/png" ? "png" :
-      file.type === "image/webp" ? "webp" : "jpg";
-
-    const path = `${selectedClubId}/${Date.now()}.${extension}`;
-
-    const { error: uploadError } = await db.storage
-      .from("club-logos")
-      .upload(path, file, {
-        contentType: file.type,
-        upsert: false
-      });
-
-    if (uploadError) {
-      alert("Erro ao enviar logo: " + uploadError.message);
-      return;
-    }
-
-    const { data: urlData } = db.storage
-      .from("club-logos")
-      .getPublicUrl(path);
-
-    logo_url = urlData.publicUrl;
-  }
-
-  const updates = {
-    name,
-    city,
-    state,
-    address,
-    latitude,
-    longitude,
-    description
-  };
-
-  if (logo_url) {
-    updates.logo_url = logo_url;
-  }
-
-  const { error } = await db
-    .from("clubs")
-    .update(updates)
-    .eq("id", selectedClubId);
-
-  if (error) {
-    alert("Erro ao salvar: " + error.message);
-    return;
-  }
-
-  $("club-details-title").textContent = name;
-  $("club-details-city").textContent = city + " - " + state;
-  $("club-details-address").textContent =
-    address || "Endereço não informado.";
-
-  $("club-details-description").textContent =
-    description || "Nenhuma descrição cadastrada.";
-
-  $("club-settings-area").classList.add("hidden");
-
-  alert("Configurações salvas com sucesso!");
+  if(logoFile){const ext=logoFile.type==="image/png"?"png":logoFile.type==="image/webp"?"webp":"jpg";const path=selectedClubId+"/"+Date.now()+"."+ext;const {error}=await db.storage.from("club-logos").upload(path,logoFile,{contentType:logoFile.type,upsert:false});if(error)throw new Error("Erro ao enviar logo: "+error.message);logo_url=db.storage.from("club-logos").getPublicUrl(path).data.publicUrl;}
+  let banners=Array.isArray(clubProfileBanners)?[...clubProfileBanners]:[];
+  for(const file of bannerFiles){if(file.size>50*1024*1024)throw new Error("O arquivo "+file.name+" ultrapassa 50 MB.");const ext=(file.name.split(".").pop()||"bin").replace(/[^a-z0-9]/gi,"").toLowerCase();const path=selectedClubId+"/banners/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;const {error}=await db.storage.from("club-logos").upload(path,file,{contentType:file.type,upsert:false});if(error)throw new Error("Erro ao enviar "+file.name+": "+error.message);const url=db.storage.from("club-logos").getPublicUrl(path).data.publicUrl;banners.push({url:url,type:file.type.startsWith("video/")?"video":"image",name:file.name});}
+  const updates={name:name,city:city,state:state,address:address,postal_code:postal_code,latitude:latitude,longitude:longitude,description:description,cnpj:cnpj,contact_ddi:contact_ddi,contact_phone:contact_phone,instagram_handle:instagram_handle,whatsapp:whatsapp,banners:banners};if(logo_url)updates.logo_url=logo_url;
+  const {error}=await db.from("clubs").update(updates).eq("id",selectedClubId);if(error)throw error;
+  clubProfileBanners=banners;renderClubProfileBanners(banners);$("club-details-title").textContent=name;$("club-details-city").textContent=city+" - "+state;$("club-details-address").textContent=address||"Endereço não informado.";$("club-details-description").textContent=description||"Nenhuma descrição cadastrada.";
+  $("club-settings-map").src=latitude!==null&&longitude!==null?"https://www.google.com/maps?q="+latitude+","+longitude+"&output=embed":"";$("club-settings-address-summary").textContent=[address,city,state,postal_code].filter(Boolean).join(", ")||"Informe o endereço para visualizar o mapa.";
+  if(logo_url){$("club-details-logo").src=logo_url;$("club-details-logo").style.display="block";$("club-logo-preview").src=logo_url;}
+  $("club-settings-logo").value="";$("club-settings-banners").value="";alert("Perfil do estabelecimento salvo com sucesso!");
+ }catch(error){console.error("Erro ao salvar perfil do clube:",error);alert("Não foi possível salvar o perfil: "+(error.message||error));}
+ finally{button.disabled=false;button.textContent="Salvar alterações";}
 });
 
 $("club-create-tournament-btn").addEventListener("click", () => {
   $("club-tournaments-area").classList.add("hidden");
-  $("club-settings-area").classList.add("hidden");
+  $("club-profile-edit-area")?.classList.add("hidden");
   $("club-management-area").classList.add("hidden");
   $("create-tournament-area").classList.remove("hidden");
 });
@@ -11594,7 +11522,22 @@ if (isStaff) {
 }
 
   $("club-details-title").textContent = club.name;
+  $("club-settings-id").textContent = club.id;
+  $("club-settings-name").value = club.name || "";
+  $("club-settings-cnpj").value = club.cnpj || "";
+  $("club-settings-description").value = club.description || "";
+  $("club-settings-ddi").value = club.contact_ddi || "+55";
+  $("club-settings-phone").value = club.contact_phone || "";
+  $("club-settings-instagram").value = club.instagram_handle || "";
+  $("club-settings-whatsapp").value = club.whatsapp || "";
+  $("club-settings-postal-code").value = club.postal_code || "";
+  $("club-settings-city").value = club.city || "";
+  $("club-settings-state").value = club.state || "";
   $("club-settings-address").value = club.address || "";
+  clubProfileBanners=Array.isArray(club.banners)?club.banners:[];
+  renderClubProfileBanners(clubProfileBanners);
+  $("club-settings-address-summary").textContent=[club.address,club.city,club.state,club.postal_code].filter(Boolean).join(", ")||"Informe o endereço para visualizar o mapa.";
+  $("club-settings-map").src=club.latitude!=null&&club.longitude!=null?"https://www.google.com/maps?q="+club.latitude+","+club.longitude+"&output=embed":"";
   $("club-details-city").textContent =
     (club.city || "") + " - " + (club.state || "");
   $("club-details-address").textContent =
