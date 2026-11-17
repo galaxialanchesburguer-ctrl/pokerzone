@@ -13554,21 +13554,27 @@ async function loadNearbyClubs() {
  const status=$("nearby-location-status");
  if(!navigator.geolocation){status.textContent="Este navegador não oferece suporte à localização.";return;}
  status.textContent="Localizando você...";
+ let finished=false;
+ const finishError=message=>{if(finished)return;finished=true;clearTimeout(locationWatchdog);status.textContent=message;};
+ const locationWatchdog=setTimeout(()=>finishError("A localização não respondeu. Confira se o acesso à localização está permitido no navegador e tente novamente."),18000);
  navigator.geolocation.getCurrentPosition(position=>{
+  if(finished)return;finished=true;clearTimeout(locationWatchdog);
   const latitude=position.coords.latitude,longitude=position.coords.longitude;
   nearbyUserLocation={latitude,longitude};
   status.textContent="Localização identificada com sucesso!";
-  if(!nearbyMap){
-   nearbyMap=L.map("nearby-tournaments-map").setView([latitude,longitude],12);
-   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap"}).addTo(nearbyMap);
-  }else{nearbyMap.setView([latitude,longitude],12);nearbyMap.invalidateSize();}
-  if(nearbyUserMarker)nearbyMap.removeLayer(nearbyUserMarker);
-  nearbyUserMarker=L.marker([latitude,longitude],{icon:L.divIcon({className:"",html:`<div style="width:24px;height:24px;background:rgba(66,133,244,.20);border-radius:50%;display:flex;align-items:center;justify-content:center"><div style="width:12px;height:12px;background:#4285F4;border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div></div>`,iconSize:[24,24],iconAnchor:[12,12]})}).addTo(nearbyMap).bindPopup("Você está aqui!").openPopup();
-  loadNearbyClubs();
+  try{
+   if(!nearbyMap){
+    nearbyMap=L.map("nearby-tournaments-map").setView([latitude,longitude],12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap"}).addTo(nearbyMap);
+   }else{nearbyMap.setView([latitude,longitude],12);nearbyMap.invalidateSize();}
+   if(nearbyUserMarker)nearbyMap.removeLayer(nearbyUserMarker);
+   nearbyUserMarker=L.marker([latitude,longitude],{icon:L.divIcon({className:"",html:`<div style="width:24px;height:24px;background:rgba(66,133,244,.20);border-radius:50%;display:flex;align-items:center;justify-content:center"><div style="width:12px;height:12px;background:#4285F4;border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div></div>`,iconSize:[24,24],iconAnchor:[12,12]})}).addTo(nearbyMap).bindPopup("Você está aqui!").openPopup();
+   loadNearbyClubs();
+  }catch(error){console.error("Erro ao exibir mapa de torneios próximos:",error);status.textContent="Localização identificada, mas não foi possível carregar o mapa.";}
  },error=>{
   const messages={1:"Permissão de localização negada. Libere o acesso à localização nas configurações do navegador e tente novamente.",2:"Não foi possível identificar sua posição. Verifique o GPS ou a conexão e tente novamente.",3:"A localização demorou demais para responder. Tente novamente."};
-  status.textContent=messages[error.code]||"Não foi possível obter sua localização. Tente novamente.";
- },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+  finishError(messages[error.code]||"Não foi possível obter sua localização. Tente novamente.");
+ },{enableHighAccuracy:false,timeout:12000,maximumAge:120000});
 }
 $("nearby-location-btn").addEventListener("click",requestNearbyTournamentLocation);
 
@@ -13591,19 +13597,25 @@ function requestNearbyClubsLocation(){
  const status=$("nearby-clubs-location-status");
  if(!navigator.geolocation){status.textContent="Este navegador não oferece suporte à localização.";return;}
  status.textContent="Localizando você...";
+ let finished=false;
+ const finishError=message=>{if(finished)return;finished=true;clearTimeout(locationWatchdog);status.textContent=message;};
+ const locationWatchdog=setTimeout(()=>finishError("A localização não respondeu. Confira se o acesso à localização está permitido no navegador e tente novamente."),18000);
  navigator.geolocation.getCurrentPosition(position=>{
+  if(finished)return;finished=true;clearTimeout(locationWatchdog);
   const latitude=position.coords.latitude,longitude=position.coords.longitude;
   nearbyClubsUserLocation={latitude,longitude};
   status.textContent="Localização identificada! Clubes ordenados pela distância.";
-  if(!nearbyClubsMap){nearbyClubsMap=L.map("nearby-clubs-map").setView([latitude,longitude],12);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap"}).addTo(nearbyClubsMap);}
-  else{nearbyClubsMap.setView([latitude,longitude],12);nearbyClubsMap.invalidateSize();}
-  if(nearbyClubsUserMarker)nearbyClubsMap.removeLayer(nearbyClubsUserMarker);
-  nearbyClubsUserMarker=L.marker([latitude,longitude]).addTo(nearbyClubsMap).bindPopup("Você está aqui!").openPopup();
-  loadNearbyPublicClubs();
+  try{
+   if(!nearbyClubsMap){nearbyClubsMap=L.map("nearby-clubs-map").setView([latitude,longitude],12);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap"}).addTo(nearbyClubsMap);}
+   else{nearbyClubsMap.setView([latitude,longitude],12);nearbyClubsMap.invalidateSize();}
+   if(nearbyClubsUserMarker)nearbyClubsMap.removeLayer(nearbyClubsUserMarker);
+   nearbyClubsUserMarker=L.marker([latitude,longitude]).addTo(nearbyClubsMap).bindPopup("Você está aqui!").openPopup();
+   loadNearbyPublicClubs();
+  }catch(error){console.error("Erro ao exibir mapa de clubes próximos:",error);status.textContent="Localização identificada, mas não foi possível carregar o mapa.";}
  },error=>{
   const messages={1:"Permissão de localização negada. Libere o acesso à localização nas configurações do navegador e tente novamente.",2:"Não foi possível identificar sua posição. Verifique o GPS ou a conexão e tente novamente.",3:"A localização demorou demais para responder. Tente novamente."};
-  status.textContent=messages[error.code]||"Não foi possível obter sua localização. Tente novamente.";
- },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+  finishError(messages[error.code]||"Não foi possível obter sua localização. Tente novamente.");
+ },{enableHighAccuracy:false,timeout:12000,maximumAge:120000});
 }
 $("nearby-clubs-location-btn").addEventListener("click",requestNearbyClubsLocation);
 $("close-tournament-search").addEventListener("click", () => {
