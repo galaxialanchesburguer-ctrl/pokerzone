@@ -10667,6 +10667,7 @@ function setClubManagementTab(tab){
   });
   if(tab==="overview") $("club-details-area")?.classList.remove("club-subview-active");
   else $("club-management-area")?.classList.add("hidden");
+  if(tab==="organizers") $("club-organizers-area")?.classList.remove("hidden");
 }
 document.querySelectorAll(".club-management-tab").forEach(button=>button.addEventListener("click",()=>{
   const tab=button.dataset.clubTab;
