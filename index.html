@@ -11556,7 +11556,7 @@ async function createClub() {
   }
 }
 
-async function openClub(clubId) {
+async function openClub(clubId) {\n  try {
   setPublicHomeChrome(false);
   $("tournament-app")?.classList.add("hidden");
   $("nearby-tournaments-screen")?.classList.add("hidden");
@@ -12606,8 +12606,19 @@ async function loadClubTournaments() {
     `).join("");
 
     list.querySelectorAll(".open-club-btn").forEach(button => {
-      button.addEventListener("click", () => {
-        openClub(button.dataset.clubId);
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = "Abrindo clube...";
+        try {
+          await openClub(button.dataset.clubId);
+        } catch (error) {
+          console.error("Falha ao abrir clube pelo botão:", error);
+          alert("Falha ao abrir clube: " + (error?.message || "Tente novamente."));
+        } finally {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
       });
     });
   } catch (error) {
