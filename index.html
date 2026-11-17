@@ -11556,7 +11556,8 @@ async function createClub() {
   }
 }
 
-async function openClub(clubId) {\n  try {
+async function openClub(clubId) {
+  try {
   setPublicHomeChrome(false);
   $("tournament-app")?.classList.add("hidden");
   $("nearby-tournaments-screen")?.classList.add("hidden");
@@ -11632,6 +11633,10 @@ if (club.logo_url) {
 }
 
 $("club-settings-logo").value = "";
+  } catch (error) {
+    console.error("Erro inesperado ao abrir clube:", error);
+    throw error;
+  }
 }
 
 /* ===== CONTAS DOS JOGADORES ===== */
