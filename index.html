@@ -11571,11 +11571,12 @@ $("recent-tournaments-list").parentElement.classList.add("hidden");
 
 $("club-management-area").classList.add("hidden");
 $("club-tournaments-area").classList.add("hidden");
-$("club-settings-area").classList.add("hidden");
+$("club-profile-edit-area")?.classList.add("hidden");
 $("club-clock-area").classList.add("hidden");
 
 if (isStaff) {
   $("club-management-area").classList.remove("hidden");
+  setClubManagementTab("overview");
 } else {
   $("club-tournaments-area").classList.remove("hidden");
   loadClubTournaments();
