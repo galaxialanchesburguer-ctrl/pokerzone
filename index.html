@@ -1193,12 +1193,12 @@ input:focus,select:focus {
   width: 100%;
 }
 
-.club-management-tabs-wrap{margin:22px 0 8px;border-bottom:1px solid var(--border,#ddd)}
-.club-management-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding:0 2px 10px}
-.club-management-tab{flex:0 0 auto;border:1px solid var(--border,#ddd);background:transparent;color:inherit;border-radius:10px;padding:11px 16px;font:inherit;font-weight:650;cursor:pointer;white-space:nowrap;transition:background .18s,border-color .18s}
-.club-management-tab:hover{background:rgba(128,128,128,.10)}
-.club-management-tab.active{background:var(--accent,#e84b3c);border-color:var(--accent,#e84b3c);color:#fff}
-@media(max-width:640px){.club-management-tabs{gap:6px}.club-management-tab{padding:10px 12px;font-size:13px}}
+.club-management-tabs-wrap{margin:22px 0 14px}
+.club-management-tabs{display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:thin;padding:7px;background:#141414;border:1px solid #302727;border-radius:10px;width:fit-content;max-width:100%}
+.club-management-tab{flex:0 0 auto;border:0;background:transparent;color:#999;border-radius:7px;padding:13px 22px;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .2s ease,color .2s ease,box-shadow .2s ease}
+.club-management-tab:hover{color:#fff;background:#292020}
+.club-management-tab.active{background:linear-gradient(135deg,#ed3038,#a90d18);border:0;color:#fff;box-shadow:0 4px 14px rgba(237,48,56,.2)}
+@media(max-width:640px){.club-management-tabs{width:100%;gap:6px}.club-management-tab{padding:12px 15px;font-size:13px}}
 #club-tournaments-back-btn {
   margin-top: 22px;
 }
