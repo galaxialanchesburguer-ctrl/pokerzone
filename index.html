@@ -13845,7 +13845,7 @@ init();
 const PRICING_RECIPES_KEY="pokerzone_astro_recipes_v1";let pricingRecipes=[];let pricingRecipeLines=[];let pricingCurrentRecipeId=null;
 try{const x=JSON.parse(localStorage.getItem(PRICING_RECIPES_KEY)||"[]");pricingRecipes=Array.isArray(x)?x:[];}catch(e){pricingRecipes=[];}
 
-let pricingCloudReady=false;
+var pricingCloudReady=false;
 function pricingReadLocalArray(key){
   try{const value=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(value)?value:[];}catch(error){return [];}
 }
