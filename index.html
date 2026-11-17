@@ -7693,7 +7693,7 @@ async function handleAdminSidebarNavigation(key) {
     }
 
     if (selectedClubId && !$("club-details-area").classList.contains("hidden")) {
-      $("club-haver-btn").click();
+      $("club-haver-btn")?.click();
       setAdminSidebarActive("clients");
     } else {
       openAdminClubs();
@@ -10692,7 +10692,7 @@ document.querySelectorAll(".club-management-tab").forEach(button=>button.addEven
   const tab=button.dataset.clubTab;
   setClubManagementTab(tab);
 }));
-$("club-tournaments-btn").addEventListener("click", async () => {
+$("club-tournaments-btn")?.addEventListener("click", async () => {
   setClubManagementTab("tournaments");
   $("club-tournaments-area").classList.remove("hidden");
   await loadClubTournaments();
