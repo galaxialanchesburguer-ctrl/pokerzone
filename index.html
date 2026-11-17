@@ -5499,7 +5499,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
     <label for="password">Senha</label>
     <input id="password" type="password" autocomplete="current-password" placeholder="Digite sua senha">
 
-    <button class="btn" id="login-btn">Entrar</button>
+    <button type="button" class="btn" id="login-btn">Entrar</button>
     <div id="login-message"></div>
   </div>
 </div>
@@ -5516,6 +5516,16 @@ let rankingThroughStageNumber = null;
 let managedClubId=null, isClubManager=false;
 let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}, tournamentEntryCustomers=[], activeTournamentStage=null, selectedTournamentEntryPlayerId="";
 const $=id=>document.getElementById(id);
+
+// Registra o login antes dos demais módulos para evitar que falhas posteriores bloqueiem o acesso.
+const loginButton = $("login-btn");
+if (loginButton) loginButton.addEventListener("click", handleSystemLogin);
+["email", "password"].forEach(id => {
+  const field = $(id);
+  if (field) field.addEventListener("keydown", event => {
+    if (event.key === "Enter") handleSystemLogin();
+  });
+});
 
 // Ações da tela pública: registradas no início para não depender da inicialização administrativa.
 function closeHomeSearches() {
@@ -11317,12 +11327,7 @@ async function handleSystemLogin() {
     button.textContent = "Entrar";
   }
 }
-$("login-btn").addEventListener("click", handleSystemLogin);
-["email", "password"].forEach(id => {
-  $(id).addEventListener("keydown", event => {
-    if (event.key === "Enter") handleSystemLogin();
-  });
-});
+// Os eventos de login são registrados no início do script.
 $("logout-btn").addEventListener("click",async()=>{await db.auth.signOut();await checkSession();await refreshAll()});
 
 
