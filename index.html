@@ -12848,7 +12848,7 @@ async function createTournament() {
   const endDate = $("new-tournament-end").value;
   const isPublic = $("new-tournament-visibility").value === "true";
   const coverFile = $("new-tournament-cover")?.files?.[0] || null;
-  if (coverFile && (!["image/jpeg","image/png","image/webp"].includes(coverFile.type) || coverFile.size > 8*1024*1024)) { message.textContent = "Escolha uma imagem JPG, PNG ou WebP de até 8 MB."; return; }
+  if (coverFile && (!["image/jpeg","image/png","image/webp"].includes(coverFile.type) || coverFile.size > 8*1024*1024)) { $("create-tournament-message").textContent = "Escolha uma imagem JPG, PNG ou WebP de até 8 MB."; return; }
 
   const rankingEnabled =
     $("tournament-ranking-enabled").value === "true";
