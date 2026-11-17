@@ -4023,6 +4023,7 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
   <button id="nearby-tournaments-btn" class="btn secondary">
     📍 Torneios próximos de mim
   </button>
+  <button id="nearby-clubs-btn" class="btn secondary">♣ Clubes perto de mim</button>
  
 </div>
 
@@ -5170,6 +5171,20 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 
  <!-- TORNEIOS PRÓXIMOS -->
 <section id="nearby-tournaments-screen" class="hidden">
+<section id="nearby-clubs-screen" class="hidden">
+ <div class="box">
+  <div class="box-head"><h2>CLUBES PERTO DE MIM</h2><button id="nearby-clubs-back-btn" class="btn secondary">Voltar</button></div>
+  <div class="panel-pad">
+   <p class="nearby-description">Encontre clubes de poker próximos da sua localização.</p>
+   <button id="nearby-clubs-location-btn" class="btn nearby-location-button">📍 Usar minha localização</button>
+   <p id="nearby-clubs-location-status">Sua localização ainda não foi identificada.</p>
+   <div id="nearby-clubs-list"><div class="empty">Os clubes próximos aparecerão aqui.</div></div>
+   <h3>MAPA DOS CLUBES</h3>
+   <div id="nearby-clubs-map" style="width:100%;height:350px;border-radius:12px;"></div>
+  </div>
+ </div>
+</section>
+
 
   <div class="box">
     <div class="box-head">
@@ -5588,6 +5603,11 @@ $("nearby-tournaments-btn").addEventListener("click", () => {
   closeHomeSearches();
   $("home-tournaments").classList.add("hidden");
   $("nearby-tournaments-screen").classList.remove("hidden");
+});
+$("nearby-clubs-btn").addEventListener("click", () => {
+ closeHomeSearches();
+ $("home-tournaments").classList.add("hidden");
+ $("nearby-clubs-screen").classList.remove("hidden");
 });
 
 
@@ -7638,6 +7658,7 @@ async function handleAdminSidebarNavigation(key) {
     $("tournament-tree")?.classList.add("hidden");
     $("tournament-app")?.classList.add("hidden");
     $("nearby-tournaments-screen")?.classList.add("hidden");
+  $("nearby-clubs-screen")?.classList.add("hidden");
 
     // Gestor autenticado: abre diretamente o clube vinculado à própria conta.
     if (isClubManager && managedClubId) {
@@ -11480,6 +11501,7 @@ async function openClub(clubId) {
   setPublicHomeChrome(false);
   $("tournament-app")?.classList.add("hidden");
   $("nearby-tournaments-screen")?.classList.add("hidden");
+  $("nearby-clubs-screen")?.classList.add("hidden");
   hideStageSidebar();
   if (isClubManager && managedClubId && clubId !== managedClubId) {
     alert("Sua conta tem acesso somente ao clube vinculado.");
@@ -13059,6 +13081,10 @@ $("nearby-back-btn").addEventListener("click", () => {
   $("nearby-tournaments-screen").classList.add("hidden");
   $("home-tournaments").classList.remove("hidden");
 });
+$("nearby-clubs-back-btn").addEventListener("click", () => {
+ $("nearby-clubs-screen").classList.add("hidden");
+ $("home-tournaments").classList.remove("hidden");
+});
 
 $("nearby-back-btn").addEventListener("click", () => {
   $("nearby-tournaments-screen").classList.add("hidden");
@@ -13368,6 +13394,31 @@ async function loadNearbyClubs() {
   );
 });
 
+
+/* ===== CLUBES PERTO DE MIM ===== */
+let nearbyClubsMap=null, nearbyClubsUserMarker=null, nearbyClubsMarkers=[], nearbyClubsUserLocation=null;
+async function loadNearbyPublicClubs(){
+ const list=$("nearby-clubs-list");
+ list.innerHTML='<div class="empty">Buscando clubes próximos...</div>';
+ const {data:clubs,error}=await db.from("clubs").select("id,name,city,state,address,latitude,longitude,description,logo_url").eq("is_public",true);
+ if(error){console.error("Erro ao buscar clubes próximos:",error);list.innerHTML='<div class="empty">Não foi possível carregar os clubes. Tente novamente.</div>';return;}
+ const results=(clubs||[]).filter(c=>c.latitude!=null&&c.longitude!=null&&Number.isFinite(Number(c.latitude))&&Number.isFinite(Number(c.longitude))).map(club=>({...club,distance:calculateDistanceKm(nearbyClubsUserLocation.latitude,nearbyClubsUserLocation.longitude,Number(club.latitude),Number(club.longitude))})).sort((a,b)=>a.distance-b.distance);
+ nearbyClubsMarkers.forEach(marker=>nearbyClubsMap?.removeLayer(marker));nearbyClubsMarkers=[];
+ results.forEach(club=>{const marker=L.marker([Number(club.latitude),Number(club.longitude)]).addTo(nearbyClubsMap).bindPopup('<strong>'+esc(club.name)+'</strong><br>'+esc((club.city||'')+(club.state?' - '+club.state:'')));nearbyClubsMarkers.push(marker);});
+ if(!results.length){list.innerHTML='<div class="empty">Nenhum clube público com localização cadastrada foi encontrado.</div>';return;}
+ list.innerHTML=results.map(club=>`<div class="nearby-tournament-card"><h3>${esc(club.name)}</h3><p><strong>Cidade:</strong><span>${esc((club.city||'Não informada')+(club.state?' - '+club.state:''))}</span></p><p><strong>Endereço:</strong><span>${esc(club.address||'Não informado')}</span></p><p><strong>Distância:</strong><span>${club.distance.toFixed(1)} km</span></p><button class="btn secondary nearby-club-show-map" data-lat="${club.latitude}" data-lng="${club.longitude}">Ver no mapa</button><button class="btn nearby-club-open" data-club-id="${esc(club.id)}">Abrir clube</button></div>`).join('');
+ list.querySelectorAll(".nearby-club-show-map").forEach(button=>button.addEventListener("click",()=>{const lat=Number(button.dataset.lat),lng=Number(button.dataset.lng);nearbyClubsMap.invalidateSize();nearbyClubsMap.setView([lat,lng],16,{animate:true});const marker=nearbyClubsMarkers.find(m=>{const p=m.getLatLng();return Math.abs(p.lat-lat)<.000001&&Math.abs(p.lng-lng)<.000001;});if(marker)marker.openPopup();$("nearby-clubs-map").scrollIntoView({behavior:"smooth",block:"center"});}));
+ list.querySelectorAll(".nearby-club-open").forEach(button=>button.addEventListener("click",async()=>{const club=results.find(item=>String(item.id)===button.dataset.clubId);if(club)saveRecentClub(club);$("nearby-clubs-screen").classList.add("hidden");await openClub(button.dataset.clubId);}));
+}
+$("nearby-clubs-location-btn").addEventListener("click",()=>{
+ const status=$("nearby-clubs-location-status");status.textContent="Localizando você...";
+ if(!navigator.geolocation){status.textContent="Este navegador não oferece suporte à localização.";return;}
+ navigator.geolocation.getCurrentPosition(position=>{
+  const latitude=position.coords.latitude,longitude=position.coords.longitude;nearbyClubsUserLocation={latitude,longitude};status.textContent="Localização identificada! Clubes ordenados pela distância.";
+  if(!nearbyClubsMap){nearbyClubsMap=L.map("nearby-clubs-map").setView([latitude,longitude],12);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap"}).addTo(nearbyClubsMap);}else nearbyClubsMap.setView([latitude,longitude],12);
+  if(nearbyClubsUserMarker)nearbyClubsMap.removeLayer(nearbyClubsUserMarker);nearbyClubsUserMarker=L.marker([latitude,longitude]).addTo(nearbyClubsMap).bindPopup("Você está aqui!").openPopup();loadNearbyPublicClubs();
+ },()=>{status.textContent="Não foi possível obter sua localização. Verifique a permissão do navegador."},{enableHighAccuracy:true,timeout:15000});
+});
 $("close-tournament-search").addEventListener("click", () => {
   $("tournament-search-area").classList.add("hidden");
 });
