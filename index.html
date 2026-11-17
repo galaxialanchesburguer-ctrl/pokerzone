@@ -11106,7 +11106,7 @@ async function clubAddressSearch(query,sequence){
   if(!response.ok)throw new Error("Busca temporariamente indisponível.");
   const data=await response.json();
   if(sequence!==clubAddressSearchSequence)return;
-  const features=(data.features||[]).filter(f=>f.geometry?.coordinates&&f.properties?.countrycode==="BR");
+  const features=(data.features||[]).filter(f=>f.geometry?.coordinates&&String(f.properties?.countrycode||"").toUpperCase()==="BR");
   const list=$("club-address-suggestions");
   if(!features.length){list.classList.add("hidden");$("club-address-search-status").textContent="Nenhum endereço encontrado. Tente informar rua, cidade ou CEP.";return;}
   list.innerHTML=features.map((feature,index)=>{
