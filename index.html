@@ -7358,7 +7358,7 @@ function openSidebarTournamentCreation() {
   $("staff-tournaments-cards")?.classList.add("hidden");
   $("home-tournaments").classList.remove("hidden");
   $("tournament-app").classList.add("hidden");
-  ["manage-clubs-area","club-details-area","club-tournaments-area","club-settings-area","club-clock-area","create-tournament-area","tournament-search-area","public-tournament-search","public-player-search"].forEach(id => $(id)?.classList.add("hidden"));
+  ["manage-clubs-area","club-details-area","club-tournaments-area","club-profile-edit-area","club-clock-area","create-tournament-area","tournament-search-area","public-tournament-search","public-player-search"].forEach(id => $(id)?.classList.add("hidden"));
   $("create-tournament-area").classList.remove("hidden");
   setPublicHomeChrome(false);
   creatingTournamentFromSidebar = true;
@@ -10616,7 +10616,7 @@ $("close-club-details").addEventListener("click", () => {
   $("club-details-area").classList.add("hidden");
   $("manage-clubs-area").classList.add("hidden");
   $("club-tournaments-area").classList.add("hidden");
-  $("club-settings-area").classList.add("hidden");
+  $("club-profile-edit-area")?.classList.add("hidden");
   $("club-clock-area").classList.add("hidden");
   $("club-blinds-area").classList.add("hidden");
   $("create-tournament-area").classList.add("hidden");
@@ -11491,7 +11491,7 @@ async function openClub(clubId) {
   blindClockTournament = null;
   const { data: club, error } = await db
     .from("clubs")
-    .select("id, name, city, state, address, latitude, longitude, description, logo_url")
+    .select("id, name, city, state, address, postal_code, latitude, longitude, description, logo_url, cnpj, contact_ddi, contact_phone, instagram_handle, whatsapp, banners")
     .eq("id", clubId)
     .single();
 
