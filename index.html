@@ -12484,7 +12484,7 @@ async function saveClubHaverEntry() {
   await loadClubHaverLedger();
   await loadClubHaver();
 }
-$("club-haver-btn").addEventListener("click",async()=>{
+$("club-haver-btn")?.addEventListener("click",async()=>{
   if (!isStaff || !selectedClubId) { alert("Acesso restrito à equipe do clube."); return; }
   setClubManagementTab("haver");
   $("club-haver-area").classList.remove("hidden");
@@ -13564,7 +13564,7 @@ async function loadNearbyClubs() {
 $("nearby-location-btn").addEventListener("click",requestNearbyTournamentLocation);
 
 /* ===== CLUBES PERTO DE MIM ===== */
-let nearbyClubsMap=null, nearbyClubsUserMarker=null, nearbyClubsMarkers=[], nearbyClubsUserLocation=null;
+var nearbyClubsMap=null, nearbyClubsUserMarker=null, nearbyClubsMarkers=[], nearbyClubsUserLocation=null;
 async function loadNearbyPublicClubs(){
  const list=$("nearby-clubs-list");
  list.innerHTML='<div class="empty">Buscando clubes próximos...</div>';
