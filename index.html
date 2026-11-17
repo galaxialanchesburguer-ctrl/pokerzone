@@ -5565,6 +5565,28 @@ let managedClubId=null, isClubManager=false;
 let tournamentEntryPlayers=[], tournamentEntryRows=[], tournamentEntryDetails={}, tournamentEntryCustomers=[], activeTournamentStage=null, selectedTournamentEntryPlayerId="";
 const $=id=>document.getElementById(id);
 
+/* Abre a janela de endereço por delegação global, mesmo se módulos posteriores falharem. */
+document.addEventListener("click",event=>{
+ const trigger=event.target.closest("#club-edit-address-btn");
+ if(!trigger)return;
+ event.preventDefault();
+ const modal=document.getElementById("club-address-editor-modal");
+ if(!modal){console.error("Janela de atualização de endereço não encontrada.");return;}
+ const search=document.getElementById("club-address-search-input");
+ const number=document.getElementById("club-address-number-input");
+ const suggestions=document.getElementById("club-address-suggestions");
+ const status=document.getElementById("club-address-search-status");
+ const confirm=document.getElementById("club-address-confirm");
+ if(search)search.value="";
+ if(number)number.value="";
+ if(suggestions){suggestions.innerHTML="";suggestions.classList.add("hidden");}
+ if(status)status.textContent="Comece digitando o nome da rua ou o CEP.";
+ if(confirm)confirm.disabled=true;
+ modal.classList.remove("hidden");
+ if(search)setTimeout(()=>search.focus(),80);
+},true);
+
+
 // Registra o login antes dos demais módulos para evitar que falhas posteriores bloqueiem o acesso.
 const loginButton = $("login-btn");
 if (loginButton) loginButton.addEventListener("click", handleSystemLogin);
