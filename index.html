@@ -11305,7 +11305,7 @@ $("save-club-settings-btn").addEventListener("click", async () => {
  try {
   const name=$("club-settings-name").value.trim(),city=$("club-settings-city").value.trim(),state=$("club-settings-state").value.trim().toUpperCase();
   const description=$("club-settings-description").value.trim(),address=$("club-settings-address").value.trim(),postal_code=$("club-settings-postal-code").value.trim();
-  const cnpj=$("club-settings-cnpj").value.trim(),contact_ddi=$("club-settings-ddi").value.trim()||"+55",contact_phone=$("club-settings-phone").value.trim();
+  const cnpj=$("club-settings-cnpj").value.trim(),contact_ddi="+55",contact_phone=$("club-settings-phone").value.trim();
   const instagram_handle=$("club-settings-instagram").value.trim().replace(/^@/,""),whatsapp=$("club-settings-whatsapp").value.trim();
   const logoFile=$("club-settings-logo").files[0],coverFile=$("club-settings-cover").files[0],bannerFiles=Array.from($("club-settings-banners").files||[]);
   if(!name){alert("Informe o nome do estabelecimento.");return;}
@@ -11768,11 +11768,9 @@ if (isStaff) {
 }
 
   $("club-details-title").textContent = club.name;
-  $("club-settings-id").textContent = club.id;
   $("club-settings-name").value = club.name || "";
   $("club-settings-cnpj").value = club.cnpj || "";
   $("club-settings-description").value = club.description || "";
-  $("club-settings-ddi").value = club.contact_ddi || "+55";
   $("club-settings-phone").value = club.contact_phone || "";
   $("club-settings-instagram").value = club.instagram_handle || "";
   $("club-settings-whatsapp").value = club.whatsapp || "";
