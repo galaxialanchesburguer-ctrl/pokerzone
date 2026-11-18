@@ -8569,12 +8569,10 @@ function renderMarketMapObjects() {
         if (dir.includes("n")) top = Math.max(0, Math.min(bottom - 1.5, action.y + dy));
         item.x = left; item.y = top; item.w = right - left; item.h = bottom - top;
       }
-      if (action.mode === "resize") {
-        shape.style.left = item.x + "%";
-        shape.style.top = item.y + "%";
-        shape.style.width = item.w + "%";
-        shape.style.height = item.h + "%";
-      }
+      shape.style.left = item.x + "%";
+      shape.style.top = item.y + "%";
+      shape.style.width = item.w + "%";
+      shape.style.height = item.h + "%";
     });
     const finishPointer = event => {
       if (!marketMapPointerAction || marketMapPointerAction.id !== item.id) return;
