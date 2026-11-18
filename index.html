@@ -8359,6 +8359,41 @@ const MARKET_MAP_CORRIDORS_KEY = "pokerzone_market_map_corridors";
 let marketMapObjects = [];
 let selectedMarketMapObjectId = null;
 let marketMapPointerAction = null;
+let marketMapClipboardObject = null;
+function marketMapCopySelected(cut = false) {
+  const item = selectedMarketMapObject();
+  if (!item) return false;
+  marketMapClipboardObject = JSON.parse(JSON.stringify(item));
+  if (cut) marketMapDeleteSelected();
+  return true;
+}
+function marketMapPasteCopied() {
+  if (!marketMapClipboardObject) return false;
+  const source = marketMapClipboardObject;
+  const copy = {
+    ...JSON.parse(JSON.stringify(source)),
+    id: "market-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+    x: Math.max(0, Math.min(100 - source.w, Number(source.x) + 3)),
+    y: Math.max(0, Math.min(100 - source.h, Number(source.y) + 3))
+  };
+  marketMapObjects.push(copy);
+  saveMarketMapObjects();
+  selectMarketMapObject(copy.id);
+  renderMarketMapObjects();
+  return true;
+}
+function marketMapDeleteSelected() {
+  const item = selectedMarketMapObject();
+  if (!item) return false;
+  marketMapObjects = marketMapObjects.filter(entry => entry.id !== item.id);
+  selectedMarketMapObjectId = null;
+  const input = $("market-map-object-name"), remove = $("market-map-delete-object");
+  if (input) { input.value = ""; input.disabled = true; }
+  if (remove) remove.disabled = true;
+  saveMarketMapObjects();
+  renderMarketMapObjects();
+  return true;
+}
 function saveMarketMapObjects() {
   try { localStorage.setItem(MARKET_MAP_CORRIDORS_KEY, JSON.stringify({ objects: marketMapObjects })); }
   catch (error) { console.warn("Não foi possível salvar o mapa do mercado.", error); }
@@ -8562,6 +8597,37 @@ function renderMarketMap() {
   renderMarketMapObjects();
 }
 document.querySelectorAll("[data-market-object]").forEach(button => button.addEventListener("click", () => addMarketMapObject(button.dataset.marketObject)));
+document.addEventListener("keydown", event => {
+  const screen = $("admin-market-map-screen");
+  if (!screen || screen.classList.contains("hidden")) return;
+  const target = event.target;
+  const typing = target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+  const key = event.key.toLowerCase();
+  if ((event.ctrlKey || event.metaKey) && key === "c") {
+    if (typing) return;
+    if (marketMapCopySelected(false)) event.preventDefault();
+    return;
+  }
+  if ((event.ctrlKey || event.metaKey) && key === "x") {
+    if (typing) return;
+    if (marketMapCopySelected(true)) event.preventDefault();
+    return;
+  }
+  if ((event.ctrlKey || event.metaKey) && key === "v") {
+    if (typing) return;
+    if (marketMapPasteCopied()) event.preventDefault();
+    return;
+  }
+  if ((event.ctrlKey || event.metaKey) && key === "d") {
+    if (typing) return;
+    if (marketMapCopySelected(false)) { marketMapPasteCopied(); event.preventDefault(); }
+    return;
+  }
+  if ((key === "delete" || key === "backspace") && !typing && selectedMarketMapObject()) {
+    event.preventDefault();
+    marketMapDeleteSelected();
+  }
+});
 $("market-map-object-name")?.addEventListener("input", event => {
   const item = selectedMarketMapObject();
   if (!item) return;
