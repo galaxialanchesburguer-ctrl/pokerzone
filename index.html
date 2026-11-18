@@ -8495,12 +8495,7 @@ function renderMarketMapObjects() {
     remove.addEventListener("click", event => {
       event.stopPropagation();
       marketMapObjects = marketMapObjects.filter(entry => entry.id !== item.id);
-      if (selectedMarketMapObjectId === item.id) {
-        selectedMarketMapObjectId = null;
-        const input = $("market-map-object-name"), deleteButton = $("market-map-delete-object");
-        if (input) { input.value = ""; input.disabled = true; }
-        if (deleteButton) deleteButton.disabled = true;
-      }
+      if (selectedMarketMapObjectIds.includes(item.id)) marketMapSetSelection(selectedMarketMapObjectIds.filter(id => id !== item.id), null);
       saveMarketMapObjects();
       renderMarketMapObjects();
     });
