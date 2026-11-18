@@ -8514,7 +8514,6 @@ function renderMarketMapObjects() {
       const rotate = document.createElement("button");
       rotate.type = "button"; rotate.className = "market-map-rotate-handle"; rotate.textContent = "↻";
       rotate.title = "Girar elemento"; rotate.setAttribute("aria-label", "Girar elemento");
-      rotate.addEventListener("pointerdown", event => event.stopPropagation());
       rotate.addEventListener("click", event => event.stopPropagation());
       shape.appendChild(rotate);
       ["nw","n","ne","e","se","s","sw","w"].forEach(position => {
@@ -8537,8 +8536,13 @@ function renderMarketMapObjects() {
       if (!selectedMarketMapObjectIds.includes(item.id)) marketMapSetSelection([item.id], item.id);
       else marketMapSetSelection(selectedMarketMapObjectIds, item.id);
       board.querySelectorAll(".market-map-object").forEach(node => node.classList.toggle("selected", selectedMarketMapObjectIds.includes(node.dataset.marketObjectId)));
-      board.querySelectorAll(".market-map-resize").forEach(node => node.remove());
+      board.querySelectorAll(".market-map-resize, .market-map-rotate-handle").forEach(node => node.remove());
       if (selectedMarketMapObjectIds.length === 1) {
+        const rotate = document.createElement("button");
+        rotate.type = "button"; rotate.className = "market-map-rotate-handle"; rotate.textContent = "↻";
+        rotate.title = "Girar elemento"; rotate.setAttribute("aria-label", "Girar elemento");
+        rotate.addEventListener("click", event => event.stopPropagation());
+        shape.appendChild(rotate);
         ["nw","n","ne","e","se","s","sw","w"].forEach(position => {
           const handle = document.createElement("span");
           handle.className = "market-map-resize market-map-resize-" + position;
