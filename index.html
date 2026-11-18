@@ -8358,38 +8358,39 @@ $("motoboy-rate-save")?.addEventListener("click",()=>{const name=$("motoboy-rate
 const MARKET_MAP_CORRIDORS_KEY = "pokerzone_market_map_corridors";
 let marketMapObjects = [];
 let selectedMarketMapObjectId = null;
+let selectedMarketMapObjectIds = [];
 let marketMapPointerAction = null;
-let marketMapClipboardObject = null;
+let marketMapClipboardObjects = [];
+function marketMapSelectedObjects() { return marketMapObjects.filter(item => selectedMarketMapObjectIds.includes(item.id)); }
+function marketMapSetSelection(ids, primaryId) {
+  selectedMarketMapObjectIds = [...new Set(ids)].filter(id => marketMapObjects.some(item => item.id === id));
+  selectedMarketMapObjectId = primaryId && selectedMarketMapObjectIds.includes(primaryId) ? primaryId : (selectedMarketMapObjectIds[selectedMarketMapObjectIds.length - 1] || null);
+  const selected = marketMapSelectedObjects();
+  const input = $("market-map-object-name"), remove = $("market-map-delete-object");
+  if (input) { input.disabled = selected.length !== 1; input.value = selected.length === 1 ? selected[0].name : (selected.length > 1 ? selected.length + " elementos selecionados" : ""); }
+  if (remove) remove.disabled = selected.length === 0;
+}
 function marketMapCopySelected(cut = false) {
-  const item = selectedMarketMapObject();
-  if (!item) return false;
-  marketMapClipboardObject = JSON.parse(JSON.stringify(item));
+  const selected = marketMapSelectedObjects();
+  if (!selected.length) return false;
+  marketMapClipboardObjects = JSON.parse(JSON.stringify(selected));
   if (cut) marketMapDeleteSelected();
   return true;
 }
 function marketMapPasteCopied() {
-  if (!marketMapClipboardObject) return false;
-  const source = marketMapClipboardObject;
-  const copy = {
-    ...JSON.parse(JSON.stringify(source)),
-    id: "market-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7),
-    x: Math.max(0, Math.min(100 - source.w, Number(source.x) + 3)),
-    y: Math.max(0, Math.min(100 - source.h, Number(source.y) + 3))
-  };
-  marketMapObjects.push(copy);
+  if (!marketMapClipboardObjects.length) return false;
+  const copies = marketMapClipboardObjects.map((source, index) => ({ ...JSON.parse(JSON.stringify(source)), id: "market-" + Date.now() + "-" + index + "-" + Math.random().toString(36).slice(2, 7), x: Math.max(0, Math.min(100 - source.w, Number(source.x) + 3)), y: Math.max(0, Math.min(100 - source.h, Number(source.y) + 3)) }));
+  marketMapObjects.push(...copies);
   saveMarketMapObjects();
-  selectMarketMapObject(copy.id);
+  marketMapSetSelection(copies.map(item => item.id), copies[copies.length - 1].id);
   renderMarketMapObjects();
   return true;
 }
 function marketMapDeleteSelected() {
-  const item = selectedMarketMapObject();
-  if (!item) return false;
-  marketMapObjects = marketMapObjects.filter(entry => entry.id !== item.id);
-  selectedMarketMapObjectId = null;
-  const input = $("market-map-object-name"), remove = $("market-map-delete-object");
-  if (input) { input.value = ""; input.disabled = true; }
-  if (remove) remove.disabled = true;
+  if (!selectedMarketMapObjectIds.length) return false;
+  const ids = new Set(selectedMarketMapObjectIds);
+  marketMapObjects = marketMapObjects.filter(entry => !ids.has(entry.id));
+  marketMapSetSelection([], null);
   saveMarketMapObjects();
   renderMarketMapObjects();
   return true;
@@ -8430,13 +8431,15 @@ function selectedMarketMapObject() {
   return marketMapObjects.find(item => item.id === selectedMarketMapObjectId) || null;
 }
 function selectMarketMapObject(id, skipRender) {
-  selectedMarketMapObjectId = id;
-  const item = selectedMarketMapObject();
-  const input = $("market-map-object-name"), remove = $("market-map-delete-object");
-  if (input) { input.disabled = !item; input.value = item ? item.name : ""; }
-  if (remove) remove.disabled = !item;
+  marketMapSetSelection(id ? [id] : [], id);
   if (!skipRender) renderMarketMapObjects();
 }
+document.addEventListener("pointerdown", event => {
+  const board = $("market-map-board");
+  if (!board || event.target !== board) return;
+  marketMapSetSelection([], null);
+  renderMarketMapObjects();
+});
 function renderMarketMapObjects() {
   const board = $("market-map-board"), count = $("market-map-object-count");
   if (!board || !count) return;
@@ -8451,7 +8454,7 @@ function renderMarketMapObjects() {
   }
   marketMapObjects.forEach(item => {
     const shape = document.createElement("div");
-    shape.className = "market-map-object market-map-object-" + item.type + (item.id === selectedMarketMapObjectId ? " selected" : "");
+    shape.className = "market-map-object market-map-object-" + item.type + (selectedMarketMapObjectIds.includes(item.id) ? " selected" : "");
     shape.style.left = item.x + "%";
     shape.style.top = item.y + "%";
     shape.style.width = item.w + "%";
@@ -8502,7 +8505,7 @@ function renderMarketMapObjects() {
       renderMarketMapObjects();
     });
     shape.appendChild(remove);
-    if (item.id === selectedMarketMapObjectId) {
+    if (item.id === selectedMarketMapObjectId && selectedMarketMapObjectIds.length === 1) {
       ["nw","n","ne","e","se","s","sw","w"].forEach(position => {
         const handle = document.createElement("span");
         handle.className = "market-map-resize market-map-resize-" + position;
@@ -8513,9 +8516,18 @@ function renderMarketMapObjects() {
     }
     shape.addEventListener("pointerdown", event => {
       if (event.button !== 0) return;
-      selectMarketMapObject(item.id, true);
-      board.querySelectorAll(".market-map-object").forEach(node => node.classList.toggle("selected", node === shape));
-      if (!shape.querySelector(".market-map-resize")) {
+      if (event.ctrlKey || event.metaKey) {
+        const next = selectedMarketMapObjectIds.includes(item.id) ? selectedMarketMapObjectIds.filter(id => id !== item.id) : [...selectedMarketMapObjectIds, item.id];
+        marketMapSetSelection(next, item.id);
+        renderMarketMapObjects();
+        event.preventDefault();
+        return;
+      }
+      if (!selectedMarketMapObjectIds.includes(item.id)) marketMapSetSelection([item.id], item.id);
+      else marketMapSetSelection(selectedMarketMapObjectIds, item.id);
+      board.querySelectorAll(".market-map-object").forEach(node => node.classList.toggle("selected", selectedMarketMapObjectIds.includes(node.dataset.marketObjectId)));
+      board.querySelectorAll(".market-map-resize").forEach(node => node.remove());
+      if (selectedMarketMapObjectIds.length === 1) {
         ["nw","n","ne","e","se","s","sw","w"].forEach(position => {
           const handle = document.createElement("span");
           handle.className = "market-map-resize market-map-resize-" + position;
@@ -8525,16 +8537,32 @@ function renderMarketMapObjects() {
         });
       }
       const boardRect = board.getBoundingClientRect();
-      const resizeDirection = event.target.dataset.resizeDirection || "";
-      marketMapPointerAction = { id: item.id, mode: resizeDirection ? "resize" : "move", direction: resizeDirection, startX: event.clientX, startY: event.clientY, x: item.x, y: item.y, w: item.w, h: item.h, boardWidth: boardRect.width, boardHeight: boardRect.height };
+      const resizeDirection = selectedMarketMapObjectIds.length === 1 ? (event.target.dataset.resizeDirection || "") : "";
+      const snapshots = marketMapSelectedObjects().map(selected => ({ id: selected.id, x: selected.x, y: selected.y, w: selected.w, h: selected.h }));
+      marketMapPointerAction = { id: item.id, snapshots, mode: resizeDirection ? "resize" : "move", direction: resizeDirection, startX: event.clientX, startY: event.clientY, x: item.x, y: item.y, w: item.w, h: item.h, boardWidth: boardRect.width, boardHeight: boardRect.height };
       shape.setPointerCapture(event.pointerId);
+      event.preventDefault();
     });
     shape.addEventListener("pointermove", event => {
       if (!marketMapPointerAction || marketMapPointerAction.id !== item.id) return;
       const action = marketMapPointerAction;
       const dx = (event.clientX - action.startX) / action.boardWidth * 100;
       const dy = (event.clientY - action.startY) / action.boardHeight * 100;
-      if (action.mode === "move") {
+      if (action.mode === "move" && action.snapshots.length > 1) {
+        const minDx = Math.max(...action.snapshots.map(entry => -entry.x));
+        const maxDx = Math.min(...action.snapshots.map(entry => 100 - entry.w - entry.x));
+        const minDy = Math.max(...action.snapshots.map(entry => -entry.y));
+        const maxDy = Math.min(...action.snapshots.map(entry => 100 - entry.h - entry.y));
+        const moveX = Math.max(minDx, Math.min(maxDx, dx));
+        const moveY = Math.max(minDy, Math.min(maxDy, dy));
+        action.snapshots.forEach(snapshot => {
+          const moving = marketMapObjects.find(entry => entry.id === snapshot.id);
+          const node = board.querySelector('[data-market-object-id="' + snapshot.id + '"]');
+          if (!moving) return;
+          moving.x = snapshot.x + moveX; moving.y = snapshot.y + moveY;
+          if (node) { node.style.left = moving.x + "%"; node.style.top = moving.y + "%"; }
+        });
+      } else if (action.mode === "move") {
         item.x = Math.max(0, Math.min(100 - item.w, action.x + dx));
         item.y = Math.max(0, Math.min(100 - item.h, action.y + dy));
       } else {
@@ -8546,10 +8574,12 @@ function renderMarketMapObjects() {
         if (dir.includes("n")) top = Math.max(0, Math.min(bottom - 1.5, action.y + dy));
         item.x = left; item.y = top; item.w = right - left; item.h = bottom - top;
       }
-      shape.style.left = item.x + "%";
-      shape.style.top = item.y + "%";
-      shape.style.width = item.w + "%";
-      shape.style.height = item.h + "%";
+      if (action.mode === "resize") {
+        shape.style.left = item.x + "%";
+        shape.style.top = item.y + "%";
+        shape.style.width = item.w + "%";
+        shape.style.height = item.h + "%";
+      }
     });
     const finishPointer = event => {
       if (!marketMapPointerAction || marketMapPointerAction.id !== item.id) return;
@@ -8590,10 +8620,7 @@ function addMarketMapObject(type) {
 }
 function renderMarketMap() {
   loadMarketMapObjects();
-  selectedMarketMapObjectId = null;
-  const input = $("market-map-object-name"), remove = $("market-map-delete-object");
-  if (input) { input.value = ""; input.disabled = true; }
-  if (remove) remove.disabled = true;
+  marketMapSetSelection([], null);
   renderMarketMapObjects();
 }
 document.querySelectorAll("[data-market-object]").forEach(button => button.addEventListener("click", () => addMarketMapObject(button.dataset.marketObject)));
@@ -8623,29 +8650,25 @@ document.addEventListener("keydown", event => {
     if (marketMapCopySelected(false)) { marketMapPasteCopied(); event.preventDefault(); }
     return;
   }
-  if ((key === "delete" || key === "backspace") && !typing && selectedMarketMapObject()) {
+  if ((key === "delete" || key === "backspace") && !typing && selectedMarketMapObjectIds.length) {
     event.preventDefault();
     marketMapDeleteSelected();
   }
 });
 $("market-map-object-name")?.addEventListener("input", event => {
   const item = selectedMarketMapObject();
-  if (!item) return;
+  if (!item || selectedMarketMapObjectIds.length !== 1) return;
   item.name = event.target.value;
   const label = document.querySelector('[data-market-object-id="' + item.id + '"] .market-map-object-label');
   if (label) label.textContent = item.name;
   saveMarketMapObjects();
 });
 $("market-map-delete-object")?.addEventListener("click", () => {
-  const item = selectedMarketMapObject();
-  if (!item || !confirm('Excluir "' + item.name + '" do mapa?')) return;
-  marketMapObjects = marketMapObjects.filter(entry => entry.id !== item.id);
-  selectedMarketMapObjectId = null;
-  const input = $("market-map-object-name"), remove = $("market-map-delete-object");
-  if (input) { input.value = ""; input.disabled = true; }
-  if (remove) remove.disabled = true;
-  saveMarketMapObjects();
-  renderMarketMapObjects();
+  const selected = marketMapSelectedObjects();
+  if (!selected.length) return;
+  const message = selected.length === 1 ? ('Excluir "' + selected[0].name + '" do mapa?') : ('Excluir os ' + selected.length + ' elementos selecionados do mapa?');
+  if (!confirm(message)) return;
+  marketMapDeleteSelected();
 });
 $("open-market-map-card")?.addEventListener("click", () => {
   showAdminScreen("admin-market-map-screen","astro");
