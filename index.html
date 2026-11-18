@@ -8361,6 +8361,9 @@ let selectedMarketMapObjectId = null;
 let selectedMarketMapObjectIds = [];
 let marketMapPointerAction = null;
 let marketMapClipboardObjects = [];
+let marketMapUndoStack = [];
+function marketMapRecordUndo() { marketMapUndoStack.push(JSON.stringify(marketMapObjects)); if (marketMapUndoStack.length > 100) marketMapUndoStack.shift(); }
+function marketMapUndo() { if (!marketMapUndoStack.length) return false; marketMapObjects = JSON.parse(marketMapUndoStack.pop()); marketMapSetSelection([], null); saveMarketMapObjects(); renderMarketMapObjects(); return true; }
 function marketMapSelectedObjects() { return marketMapObjects.filter(item => selectedMarketMapObjectIds.includes(item.id)); }
 function marketMapSetSelection(ids, primaryId) {
   selectedMarketMapObjectIds = [...new Set(ids)].filter(id => marketMapObjects.some(item => item.id === id));
@@ -8379,6 +8382,7 @@ function marketMapCopySelected(cut = false) {
 }
 function marketMapPasteCopied() {
   if (!marketMapClipboardObjects.length) return false;
+  marketMapRecordUndo();
   const copies = marketMapClipboardObjects.map((source, index) => ({ ...JSON.parse(JSON.stringify(source)), id: "market-" + Date.now() + "-" + index + "-" + Math.random().toString(36).slice(2, 7), x: Math.max(0, Math.min(100 - source.w, Number(source.x) + 3)), y: Math.max(0, Math.min(100 - source.h, Number(source.y) + 3)) }));
   marketMapObjects.push(...copies);
   saveMarketMapObjects();
@@ -8388,6 +8392,7 @@ function marketMapPasteCopied() {
 }
 function marketMapDeleteSelected() {
   if (!selectedMarketMapObjectIds.length) return false;
+  marketMapRecordUndo();
   const ids = new Set(selectedMarketMapObjectIds);
   marketMapObjects = marketMapObjects.filter(entry => !ids.has(entry.id));
   marketMapSetSelection([], null);
@@ -8473,6 +8478,7 @@ function renderMarketMapObjects() {
     duplicate.addEventListener("pointerdown", event => event.stopPropagation());
     duplicate.addEventListener("click", event => {
       event.stopPropagation();
+      marketMapRecordUndo();
       const copy = {
         ...item,
         id: "market-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7),
@@ -8494,6 +8500,7 @@ function renderMarketMapObjects() {
     remove.addEventListener("pointerdown", event => event.stopPropagation());
     remove.addEventListener("click", event => {
       event.stopPropagation();
+      marketMapRecordUndo();
       marketMapObjects = marketMapObjects.filter(entry => entry.id !== item.id);
       if (selectedMarketMapObjectIds.includes(item.id)) marketMapSetSelection(selectedMarketMapObjectIds.filter(id => id !== item.id), null);
       saveMarketMapObjects();
@@ -8531,6 +8538,7 @@ function renderMarketMapObjects() {
           shape.appendChild(handle);
         });
       }
+      marketMapRecordUndo();
       const boardRect = board.getBoundingClientRect();
       const resizeDirection = selectedMarketMapObjectIds.length === 1 ? (event.target.dataset.resizeDirection || "") : "";
       const snapshots = marketMapSelectedObjects().map(selected => ({ id: selected.id, x: selected.x, y: selected.y, w: selected.w, h: selected.h }));
@@ -8585,6 +8593,7 @@ function renderMarketMapObjects() {
       if (event.target.closest(".market-map-object-remove") || event.target.classList.contains("market-map-resize")) return;
       const nextName = prompt("Nome deste elemento:", item.name);
       if (nextName !== null && nextName.trim()) {
+        marketMapRecordUndo();
         item.name = nextName.trim().slice(0, 60);
         const input = $("market-map-object-name");
         if (input && selectedMarketMapObjectId === item.id) input.value = item.name;
@@ -8605,6 +8614,7 @@ function addMarketMapObject(type) {
   };
   const preset = presets[type];
   if (!preset) return;
+  marketMapRecordUndo();
   const index = marketMapObjects.length;
   const item = { id: "market-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7), type, name: preset.name, x: Math.min(76, 4 + (index % 3) * 8), y: Math.min(82, 5 + (index % 6) * 12), w: preset.w, h: preset.h };
   marketMapObjects.push(item);
@@ -8623,6 +8633,11 @@ document.addEventListener("keydown", event => {
   const target = event.target;
   const typing = target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
   const key = event.key.toLowerCase();
+  if ((event.ctrlKey || event.metaKey) && key === "z") {
+    if (typing) return;
+    if (marketMapUndo()) event.preventDefault();
+    return;
+  }
   if ((event.ctrlKey || event.metaKey) && key === "c") {
     if (typing) return;
     if (marketMapCopySelected(false)) event.preventDefault();
@@ -8651,6 +8666,7 @@ document.addEventListener("keydown", event => {
 $("market-map-object-name")?.addEventListener("input", event => {
   const item = selectedMarketMapObject();
   if (!item || selectedMarketMapObjectIds.length !== 1) return;
+  marketMapRecordUndo();
   item.name = event.target.value;
   const label = document.querySelector('[data-market-object-id="' + item.id + '"] .market-map-object-label');
   if (label) label.textContent = item.name;
