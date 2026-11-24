@@ -4093,6 +4093,12 @@ body.admin-sidebar-active footer{width:calc(100% - 248px)}
 /* Cards de torneios no perfil público acessado por Clubes perto de mim */
 .nearby-public-tournaments{margin-top:26px}.nearby-public-tournaments-heading{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px}.nearby-public-tournaments-heading>div>span{font-size:10px;font-weight:900;letter-spacing:2px;color:var(--red)}.nearby-public-tournaments-heading h3{font-size:23px;margin:5px 0}.nearby-public-tournaments-heading p{font-size:13px;color:var(--muted)}.nearby-public-tournaments-heading>strong{flex-shrink:0;padding:8px 12px;border-radius:20px;background:#281719;color:#ff9da3;font-size:11px}.nearby-public-tournaments-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:16px}.nearby-public-tournament-card{overflow:hidden;min-width:0;border:1px solid var(--border);border-radius:16px;background:var(--card);transition:transform .2s,border-color .2s}.nearby-public-tournament-card:hover{transform:translateY(-3px);border-color:var(--red)}.nearby-public-tournament-media{height:155px;position:relative;overflow:hidden;background:#211719}.nearby-public-tournament-media>img,.nearby-public-tournament-placeholder{width:100%;height:100%;object-fit:cover;display:flex;align-items:center;justify-content:center}.nearby-public-tournament-media>span{position:absolute;top:12px;left:12px;padding:6px 9px;border-radius:5px;background:#111d;color:#fff;font-size:9px;font-weight:900;letter-spacing:1px}.nearby-public-tournament-placeholder{flex-direction:column;color:var(--red);background:radial-gradient(circle,#482126,#171717 72%)}.nearby-public-tournament-placeholder span{font-size:52px}.nearby-public-tournament-placeholder small{font-size:9px;letter-spacing:3px;color:#bbb}.nearby-public-tournament-content{padding:16px}.nearby-public-tournament-content h3{font-size:18px;margin:0 0 7px}.nearby-public-tournament-content>p{min-height:38px;margin:0 0 13px;color:var(--muted);font-size:12px;line-height:1.5}.nearby-public-season{display:flex;flex-direction:column;gap:5px;padding:11px;margin-bottom:13px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}.nearby-public-season span{align-self:flex-start;padding:4px 7px;border-radius:4px;background:#203326;color:#8bd5a0;font-size:9px;font-weight:900}.nearby-public-season strong{font-size:13px}.nearby-public-season small{font-size:11px;color:var(--muted)}.nearby-public-tournament-content .btn{width:100%}@media(max-width:600px){.nearby-public-tournaments-heading{align-items:flex-start}.nearby-public-tournaments-heading h3{font-size:20px}.nearby-public-tournaments-grid{grid-template-columns:1fr}.nearby-public-tournament-media{height:175px}}
 .pricing-product-card-wrap{position:relative;min-width:0}.pricing-product-card-wrap>.pricing-product-card{width:100%;height:100%}
+
+/* Faixa de classificação para a mesa final: posições 4 a 9 */
+.final-table-qualified-row{background:linear-gradient(90deg,rgba(45,185,121,.18),rgba(45,185,121,.045))!important}
+.final-table-qualified-row td:first-child{border-left:4px solid #35b979!important;color:#69e3a8;font-weight:900}
+.final-table-qualified-row:hover td{background:rgba(45,185,121,.12)!important}
+.final-table-qualified-row .qualified-badge{display:inline-block;margin-left:9px;padding:4px 7px;border-radius:5px;background:#185d40;border:1px solid #35b979;color:#e2fff0;font-size:9px;font-weight:900;letter-spacing:.4px;vertical-align:middle}
 </style>
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -6457,7 +6463,7 @@ async function generateRankingImage(){
  const headerName=await getRankingClubName();
  const rows=[...$("ranking").querySelectorAll("tr")].map(row=>({
   position:row.children[0]?.textContent.trim()||"",
-  name:row.children[1]?.textContent.trim()||"",
+  name:row.querySelector(".player-profile-link")?.textContent.trim()||row.children[1]?.textContent.trim()||"",
   points:row.children[2]?.textContent.trim()||"",
   stages:row.children[3]?.textContent.trim()||""
  })).filter(row=>row.name && !row.name.includes("Nenhum jogador"));
@@ -6488,14 +6494,16 @@ async function generateRankingImage(){
  ctx.textAlign="right";ctx.fillText("PONTOS",950,startY+33);
  rows.forEach((row,index)=>{
   const y=startY+52+index*rowHeight;
-  ctx.fillStyle=index%2===0?"#211d22":"#19161b";
+  const positionNumber=parseInt(row.position,10),isFinalTableQualified=positionNumber>=4&&positionNumber<=9;
+  ctx.fillStyle=isFinalTableQualified?"rgba(45,155,105,.28)":(index%2===0?"#211d22":"#19161b");
   ctx.fillRect(50,y,width-100,rowHeight);
-  ctx.strokeStyle="#393238";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(50,y+rowHeight);ctx.lineTo(width-50,y+rowHeight);ctx.stroke();
+  if(isFinalTableQualified){ctx.fillStyle="#35b979";ctx.fillRect(50,y,7,rowHeight);ctx.strokeStyle="rgba(83,220,155,.7)";ctx.lineWidth=1.5;ctx.strokeRect(50,y,width-100,rowHeight);}else{ctx.strokeStyle="#393238";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(50,y+rowHeight);ctx.lineTo(width-50,y+rowHeight);ctx.stroke();}
   ctx.textAlign="left";ctx.font=index<3?"800 25px Arial":"600 23px Arial";
   ctx.fillStyle=index===0?"#ffd166":index===1?"#d9dce2":index===2?"#d99a70":"#f5443b";
   ctx.fillText(row.position,82,y+47);
   ctx.fillStyle="#fff";ctx.font=index<3?"700 24px Arial":"500 22px Arial";
   ctx.fillText(row.name.length>34?row.name.slice(0,31)+"...":row.name,205,y+47);
+  if(isFinalTableQualified){ctx.textAlign="right";ctx.fillStyle="#69e3a8";ctx.font="800 15px Arial";ctx.fillText("MESA FINAL",870,y+46);}
   ctx.textAlign="right";ctx.fillStyle="#fff";ctx.font="800 24px Arial";
   ctx.fillText(row.points,950,y+47);
  });
@@ -6517,7 +6525,7 @@ async function generateFinalRankingImage(){
  const rows=[...$("final-ranking").querySelectorAll("tr")].map(row=>({
   position:row.children[0]?.textContent.trim()||"",
   playerId:row.querySelector("[data-player-id]")?.dataset.playerId||"",
-  name:row.children[1]?.textContent.trim()||"",
+  name:row.querySelector(".player-profile-link")?.textContent.trim()||row.children[1]?.textContent.trim()||"",
   total:row.children[2]?.textContent.trim()||"",
   discarded:row.children[3]?.textContent.trim()||"",
   final:row.children[4]?.textContent.trim()||""
@@ -6578,8 +6586,10 @@ async function generateFinalRankingImage(){
   const y=y0+52+index*rowHeight;
   const podiumColors=["#ffd166","#d9dce2","#d99a70"];
   const podiumFills=["#332a18","#292d33","#30231d"];
-  ctx.fillStyle=index<3?podiumFills[index]:(index%2===0?"#211d22":"#19161b");
+  const positionNumber=parseInt(row.position,10),isFinalTableQualified=positionNumber>=4&&positionNumber<=9;
+  ctx.fillStyle=index<3?podiumFills[index]:(isFinalTableQualified?"rgba(45,155,105,.28)":(index%2===0?"#211d22":"#19161b"));
   ctx.fillRect(50,y,width-100,rowHeight);
+  if(isFinalTableQualified){ctx.fillStyle="#35b979";ctx.fillRect(50,y,7,rowHeight);ctx.strokeStyle="rgba(83,220,155,.7)";ctx.lineWidth=1.5;ctx.strokeRect(50,y,width-100,rowHeight);}
   if(index<3){
    ctx.fillStyle=podiumColors[index];ctx.fillRect(50,y,8,rowHeight);
    ctx.strokeStyle=podiumColors[index];ctx.lineWidth=2;ctx.strokeRect(50,y,width-100,rowHeight);
@@ -6594,6 +6604,7 @@ async function generateFinalRankingImage(){
   ctx.fillText(row.position,122,y+47);
   ctx.fillStyle="#fff";ctx.font=index<3?"700 24px Arial":"500 22px Arial";
   ctx.fillText(row.name.length>30?row.name.slice(0,27)+"...":row.name,230,y+47);
+  if(isFinalTableQualified){ctx.textAlign="right";ctx.fillStyle="#69e3a8";ctx.font="800 15px Arial";ctx.fillText("MESA FINAL",770,y+46);}
   ctx.textAlign="right";ctx.font="600 22px Arial";ctx.fillStyle="#c9c1c4";
   ctx.fillText(row.total,800,y+47);ctx.fillText(row.discarded,1050,y+47);
   ctx.font="800 25px Arial";ctx.fillStyle="#fff";ctx.fillText(row.final,1320,y+47);
@@ -6619,12 +6630,13 @@ function renderRanking(list){
  }
 
  tb.innerHTML=list.map((p,i)=>`
-  <tr>
-   <td class="rank-number">${i+1}º</td>
+  <tr class="${(()=>{const rank=players.findIndex(player=>player.id===p.id)+1;return rank>=4&&rank<=9?'final-table-qualified-row':''})()}">
+   <td class="rank-number">${players.findIndex(player=>player.id===p.id)+1}º</td>
    <td class="player-cell">
     <button class="player-profile-link" data-player-id="${p.id}">
      ${esc(p.name)}
     </button>
+    ${(()=>{const rank=players.findIndex(player=>player.id===p.id)+1;return rank>=4&&rank<=9?'<span class="qualified-badge">MESA FINAL</span>':''})()}
    </td>
    <td class="points-cell">${p.points.toLocaleString("pt-BR")}</td>
    <td>${p.stagesPlayed}</td>
@@ -6947,9 +6959,9 @@ async function loadRanking(){
   .sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name,"pt-BR"));
 
  $("final-ranking").innerHTML=finalSorted.map((p,i)=>`
-  <tr class="${i<10?"qualified-row":""}">
+  <tr class="${i>=3&&i<=8?'final-table-qualified-row':''}">
    <td>${i+1}º</td>
-   <td class="player-cell"><button class="player-profile-link" data-player-id="${p.id}">${esc(p.name)}</button></td>
+   <td class="player-cell"><button class="player-profile-link" data-player-id="${p.id}">${esc(p.name)}</button>${i>=3&&i<=8?'<span class="qualified-badge">MESA FINAL</span>':''}</td>
    <td>${p.sumPoints.toLocaleString("pt-BR")}</td>
    <td>${p.discardedPoints.toLocaleString("pt-BR")}</td>
    <td><strong>${p.points.toLocaleString("pt-BR")}</strong></td>
